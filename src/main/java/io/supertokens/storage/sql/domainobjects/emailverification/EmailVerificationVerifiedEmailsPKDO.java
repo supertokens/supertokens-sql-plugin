@@ -14,10 +14,28 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.dao.emailpassword;
+package io.supertokens.storage.sql.domainobjects.emailverification;
 
-import io.supertokens.storage.sql.dao.DAO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public interface EmailPasswordUsersInterfaceDAO extends DAO<EmailPasswordUsersDO> {
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import java.io.Serializable;
+
+@Embeddable
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class EmailVerificationVerifiedEmailsPKDO implements Serializable {
+
+    @Column(length = 128, unique = false)
+    private String user_id;
+
+    @Column(length = 256, unique = false)
+    private String email;
+
 }

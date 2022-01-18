@@ -14,28 +14,21 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobjects.emailverification;
+package io.supertokens.storage.sql.dataaccessobjects;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.io.Serializable;
+import java.util.List;
 
-import javax.persistence.*;
+public interface DAO<T> {
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "emailverification_verified_emails")
-public class EmailVerificationVerifiedEmailsDO {
+    Serializable create(T entity) throws Exception;
 
-//    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTable() + " ("
-//            + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL," + "PRIMARY KEY (user_id, email));";
+    T get(Object id) throws Exception;
 
+    List<T> getAll();
 
-    @EmbeddedId
-    EmailVerificationVerifiedEmailsPKDO primary_key;
+    void removeWhereUserIdEquals(Object id) throws Exception;
+
+    void removeAll();
 
 }

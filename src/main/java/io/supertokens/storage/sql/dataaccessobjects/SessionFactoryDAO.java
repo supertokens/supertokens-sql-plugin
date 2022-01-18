@@ -14,10 +14,19 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.dao.emailpassword;
+package io.supertokens.storage.sql.dataaccessobjects;
 
-import io.supertokens.storage.sql.dao.DAO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
+import org.hibernate.SessionFactory;
 
-public interface EmailPasswordPswdResetTokensInterfaceDAO extends DAO<EmailPasswordPswdResetTokensDO> {
+/**
+ * Holds session factory objects for DAO's to interact with the database
+ */
+public class SessionFactoryDAO {
+
+    protected final SessionFactory sessionFactory;
+
+    public SessionFactoryDAO(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
 }

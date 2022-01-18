@@ -20,6 +20,7 @@ import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
+// TODO: add comments
 public class CustomNamingStrategy implements PhysicalNamingStrategy {
 
     private final static String PREFIX = "SUPERTOKENS_";

@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.domainobjects.general;
 
-import io.supertokens.storage.sql.config.Config;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

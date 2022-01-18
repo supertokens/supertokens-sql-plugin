@@ -14,19 +14,16 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.dao;
-
-import org.hibernate.SessionFactory;
+package io.supertokens.storage.sql.exceptions;
 
 /**
- * Holds session factory objects for DAO's to interact with the database
+ * This exception is thrown when session handle is not found in the table session_info
  */
-public class SessionFactoryDAO {
+public class SessionHandleNotFoundException extends Exception {
 
-    protected final SessionFactory sessionFactory;
+    private static final long serialVersionUID = 1123L;
 
-    public SessionFactoryDAO(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public SessionHandleNotFoundException(String message) {
+        super(message);
     }
-
 }

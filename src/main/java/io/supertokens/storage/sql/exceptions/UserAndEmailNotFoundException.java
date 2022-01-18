@@ -14,28 +14,13 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobjects.emailverification;
+package io.supertokens.storage.sql.exceptions;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import javax.persistence.*;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "emailverification_verified_emails")
-public class EmailVerificationVerifiedEmailsDO {
-
-//    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTable() + " ("
-//            + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL," + "PRIMARY KEY (user_id, email));";
-
-
-    @EmbeddedId
-    EmailVerificationVerifiedEmailsPKDO primary_key;
+/**
+ * Exception is thrown when user and email ID does not match in the table emailverification_verified_emails
+ * or emailverification_tokens
+ */
+public class UserAndEmailNotFoundException extends Exception {
+    private static final long serialVersionUID = -8903927332291557321L;
 
 }

@@ -16,7 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.emailpassword;
 
-import io.supertokens.storage.sql.config.Config;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,11 +25,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.math.BigInteger;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "emailpassword_users")
 public class EmailPasswordUsersDO {
@@ -50,6 +50,6 @@ public class EmailPasswordUsersDO {
     private String password_hash;
 
     @Column(nullable = false)
-    BigInteger time_joined;
+    long time_joined;
 
 }

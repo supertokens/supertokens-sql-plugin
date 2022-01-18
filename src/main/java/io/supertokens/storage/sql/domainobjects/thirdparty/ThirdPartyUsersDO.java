@@ -16,7 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.thirdparty;
 
-import io.supertokens.storage.sql.config.Config;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,6 +27,7 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "thirdparty_users")
 public class ThirdPartyUsersDO {
@@ -36,13 +37,8 @@ public class ThirdPartyUsersDO {
 //            + "user_id CHAR(36) NOT NULL UNIQUE," + "email VARCHAR(256) NOT NULL,"
 //            + "time_joined BIGINT  NOT NULL," + "PRIMARY KEY (third_party_id, third_party_user_id));";
 
-    @Id
-    @Column(length = 28)
-    private String third_party_id;
-
-    @Id
-    @Column(length = 128)
-    private String third_party_user_id;
+    @EmbeddedId
+    ThirdPartyUsersPKDO primary_key;
 
     @Column(length = 36, unique = true, nullable = false)
     private String user_id;
@@ -51,6 +47,6 @@ public class ThirdPartyUsersDO {
     private String email;
 
     @Column(nullable = false)
-    private BigInteger time_joined;
+    private long time_joined;
 
 }

@@ -16,7 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.session;
 
-import io.supertokens.storage.sql.config.Config;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,6 +31,7 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "session_access_token_signing_keys")
 public class SessionAccessTokenSigningKeysDO {
@@ -39,7 +40,7 @@ public class SessionAccessTokenSigningKeysDO {
 //            + "created_at_time BIGINT  NOT NULL," + "value TEXT," + "PRIMARY KEY(created_at_time)" + " );";
 
     @Id
-    private BigInteger created_at_time;
+    private long created_at_time;
 
     @Column
     @Type(type = "text")

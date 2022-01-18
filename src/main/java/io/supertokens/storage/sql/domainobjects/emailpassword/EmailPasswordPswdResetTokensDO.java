@@ -16,22 +16,18 @@
 
 package io.supertokens.storage.sql.domainobjects.emailpassword;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
-import java.io.Serializable;
-import java.math.BigInteger;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Entity
 @Table(name = "emailpassword_pswd_reset_tokens", indexes = { @Index(columnList = "token_expiry") })
-public class EmailPasswordPswdResetTokensDO implements Serializable {
+public class EmailPasswordPswdResetTokensDO {
 
 //    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getPasswordResetTokensTable() + " ("
 //            + "user_id CHAR(36) NOT NULL," + "token VARCHAR(128) NOT NULL UNIQUE,"
@@ -44,9 +40,9 @@ public class EmailPasswordPswdResetTokensDO implements Serializable {
 //
 
     @EmbeddedId
-    private EmailPasswordPswdResetTokensDOPK primaryKey;
+    private EmailPasswordPswdResetTokensPKDO primaryKey;
 
     @Column(nullable = false)
-    private BigInteger token_expiry;
+    private long token_expiry;
 
 }

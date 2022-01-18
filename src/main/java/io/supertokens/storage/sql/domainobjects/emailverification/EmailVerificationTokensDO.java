@@ -16,17 +16,17 @@
 
 package io.supertokens.storage.sql.domainobjects.emailverification;
 
-import io.supertokens.storage.sql.config.Config;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.math.BigInteger;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "emailverification_tokens", indexes = { @Index(columnList = "token_expiry") })
 public class EmailVerificationTokensDO {
@@ -39,18 +39,9 @@ public class EmailVerificationTokensDO {
 //    return "CREATE INDEX emailverification_tokens_index ON "
 //            + Config.getConfig(start).getEmailVerificationTokensTable() + "(token_expiry);";
 
-    @Id
-    @Column(length = 128)
-    private String user_id;
-
-    @Id
-    @Column(length = 256)
-    private String email;
-
-    @Id
-    @Column(length = 128, unique = true)
-    private String token;
+    @EmbeddedId
+    EmailVerificationTokensPKDO primary_key;
 
     @Column(nullable = false)
-    private BigInteger token_expiry;
+    private long token_expiry;
 }

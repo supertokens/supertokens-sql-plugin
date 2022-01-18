@@ -21,9 +21,24 @@ import java.math.BigInteger;
 public class TestConstants {
     public static final String EMAIL = "sample@email.com";
     public static final String PASS_HASH = "4FC83A05D38771371FC53AA81AAD869C1FEB7A28";
-    public static final BigInteger CREATED_AT = BigInteger.TEN;
+    public static final long CREATED_AT = 10l;
     public static final String USER_ID = "sample_user";
     public static final String TOKEN = "sample_token";
-    public static final BigInteger TOKEN_EXPIRY = BigInteger.TEN;
+    public static final long TOKEN_EXPIRY = 20l;
 
+    public static final String KEY = "key";
+    public static final String KEY_STRING = "key_string";
+    public static final String ALGORITHM = "algorithm";
+
+
+    public static final String SESSION_HANDLE = "SESSION_HANDLE";
+    public static final String REFRESH_TOKEN_HASH_TWO = "REFRESH_TOKEN_HASH_TWO";
+    public static final String SESSION_DATA = "SESSION_DATA";
+    public static final long EXPIRES_AT = 50l;
+    public static final String JWT_USER_PAYLOAD = "JWT_USER_PAYLOAD";
+    public static final String VALUE = "VALUE";
+
+    public static final String THIRD_PARTY_ID = "THIRD_PARTY_ID";
+    public static final String THIRD_PARTY_USER_ID = "THIRD_PARTY_USER_ID";
+    public static final long TIME_JOINED = 20l;
 }

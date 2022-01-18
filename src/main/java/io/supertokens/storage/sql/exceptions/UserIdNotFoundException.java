@@ -14,21 +14,16 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.dao;
+package io.supertokens.storage.sql.exceptions;
 
-import java.io.Serializable;
-import java.util.List;
+/**
+ * thrown when user_id is not found in session_info table
+ */
+public class UserIdNotFoundException extends Exception {
 
-public interface DAO<T> {
+    private static final long serialVersionUID = 1123L;
 
-    Serializable create(T entity);
-
-    T get(Object id);
-
-    List<T> getAll();
-
-    void remove(Object id);
-
-    void removeAll();
-
+    public UserIdNotFoundException(String message) {
+        super(message);
+    }
 }

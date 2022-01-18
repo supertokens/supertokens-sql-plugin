@@ -14,18 +14,16 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobjects.emailpassword;
+package io.supertokens.storage.sql.domainobjects.thirdparty;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Cascade;
-import javax.persistence.CascadeType;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.Id;
 import java.io.Serializable;
 
 @Embeddable
@@ -33,13 +31,12 @@ import java.io.Serializable;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class EmailPasswordPswdResetTokensDOPK implements Serializable {
+public class ThirdPartyUsersPKDO implements Serializable {
 
-    @ManyToOne
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false)
-    private EmailPasswordUsersDO user_id;
+    @Column(length = 28, unique = false)
+    private String third_party_id;
 
-    @Column(length = 128, nullable = false, unique = true)
-    private String token;
+    @Column(length = 128, unique = false)
+    private String third_party_user_id;
+
 }

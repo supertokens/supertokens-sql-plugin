@@ -16,7 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.session;
 
-import io.supertokens.storage.sql.config.Config;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,11 +26,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.math.BigInteger;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "session_info")
 public class SessionInfoDO {
@@ -56,10 +56,10 @@ public class SessionInfoDO {
     private String sessions_data;
 
     @Column(nullable = false)
-    private BigInteger expires_at;
+    private long expires_at;
 
     @Column(nullable = false)
-    private BigInteger created_at_time;
+    private long created_at_time;
 
     @Column
     @Type(type = "text")

@@ -38,7 +38,7 @@ public class HibernateUtil {
     private static SessionFactory sessionFactory;
 
     public static SessionFactory getSessionFactory(Start start) {
-        if (sessionFactory == null) {
+        if (sessionFactory == null || sessionFactory.isClosed()) {
 
             if (!start.enabled) {
                 throw new RuntimeException("Connection refused"); // emulates exception thrown by Hikari

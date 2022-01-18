@@ -14,43 +14,30 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobjects.jwtsigning;
+package io.supertokens.storage.sql.domainobjects.emailverification;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.Embeddable;
+import java.io.Serializable;
 
+@Embeddable
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "jwt_signing_keys")
-public class JWTSigningKeysDO {
+@NoArgsConstructor
+public class EmailVerificationTokensPKDO implements Serializable {
 
-//        return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getJWTSigningKeysTable() + " ("
-//            + "key_id VARCHAR(255) NOT NULL," + "key_string TEXT NOT NULL," + "algorithm VARCHAR(10) NOT NULL,"
-//            + "created_at BIGINT ," + "PRIMARY KEY(key_id));";
+    @Column(length = 128, unique = false)
+    private String user_id;
 
-    @Id
-    @Column(length = 255)
-    private String key_id;
+    @Column(length = 256, unique = false)
+    private String email;
 
-    @Column(nullable = false)
-    @Type(type = "text")
-    private String key_string;
-
-    @Column(length = 10, nullable = false)
-    private String algorithm;
-
-    @Column
-    long created_at;
-
+    @Column(length = 128, unique = false)
+    private String token;
 }
