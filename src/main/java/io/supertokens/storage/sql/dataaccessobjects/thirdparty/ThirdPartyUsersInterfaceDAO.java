@@ -40,37 +40,35 @@ public interface ThirdPartyUsersInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "UPDATE " + Config.getConfig(start).getThirdPartyUsersTable()
-     *                 + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
+     * + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
      */
     public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-                                                                            String ThirdPartyUserId,
-                                                                            String email);
+            String ThirdPartyUserId, String email);
 
     /**
-     *  String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-     *                 + Config.getConfig(start).getThirdPartyUsersTable()
-     *                 + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
+     * String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+     * + Config.getConfig(start).getThirdPartyUsersTable()
+     * + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
      */
     public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(String thirdPartyId,
-                                                                                 String thirdPartyUserId);
+            String thirdPartyUserId);
 
     /**
      * String sqlQuery = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-     *                 + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
+     * + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
      */
     public List<ThirdPartyUsersDO> getWhereEmailEquals(String email);
 
     /**
      * String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-     *                 + Config.getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
-     *                 + ", user_id DESC LIMIT ?";
+     * + Config.getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
+     * + ", user_id DESC LIMIT ?";
      */
-    public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder, String userIdOrder,
-                                                                        Integer limit) throws InvalidOrderTypeException;
-
+    public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder,
+            String userIdOrder, Integer limit) throws InvalidOrderTypeException;
 
     /**
-     *  String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
+     * String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
      */
     public Long getCount();
 }

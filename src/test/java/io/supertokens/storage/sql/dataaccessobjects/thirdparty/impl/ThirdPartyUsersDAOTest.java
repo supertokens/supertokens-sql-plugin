@@ -118,13 +118,11 @@ public class ThirdPartyUsersDAOTest {
     public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals() {
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID, THIRD_PARTY_USER_ID, USER_ID, EMAIL, TIME_JOINED);
 
-        thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(
-                THIRD_PARTY_ID, THIRD_PARTY_USER_ID, EMAIL + "Hello"
-        );
+        thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID,
+                THIRD_PARTY_USER_ID, EMAIL + "Hello");
 
-        ThirdPartyUsersDO usersDO = thirdPartyUsersDAO.getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(
-                THIRD_PARTY_ID, THIRD_PARTY_USER_ID
-        );
+        ThirdPartyUsersDO usersDO = thirdPartyUsersDAO
+                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID, THIRD_PARTY_USER_ID);
 
         assertTrue(usersDO.getEmail().equals(EMAIL + "Hello"));
     }
@@ -134,14 +132,13 @@ public class ThirdPartyUsersDAOTest {
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID, THIRD_PARTY_USER_ID, USER_ID, EMAIL, TIME_JOINED);
 
         try {
-            thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(
-                    THIRD_PARTY_ID, THIRD_PARTY_USER_ID + "B", EMAIL + ".com"
-            );
+            thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID,
+                    THIRD_PARTY_USER_ID + "B", EMAIL + ".com");
         } catch (NoResultException e) {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
 
         fail();
@@ -213,16 +210,16 @@ public class ThirdPartyUsersDAOTest {
 
     @Test
     public void getByTimeJoinedOrderAndUserIdOrderAndLimit() throws InvalidOrderTypeException {
-        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL, TIME_JOINED);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
+                TIME_JOINED);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID, USER_ID + "Two", EMAIL,
                 TIME_JOINED);
-        thirdPartyUsersDAO
-                .insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL, TIME_JOINED + 10l);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL,
+                TIME_JOINED + 10l);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Four", THIRD_PARTY_USER_ID, USER_ID + "Four", EMAIL,
                 TIME_JOINED - 20l);
-        List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit(
-                "DESC", "DESC", 3
-        );
+        List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
+                "DESC", 3);
         assertTrue(resultList.size() == 3);
         assertTrue(resultList.get(0).getTime_joined() == 30l);
         assertTrue(resultList.get(1).getTime_joined() == 20l);
@@ -231,22 +228,21 @@ public class ThirdPartyUsersDAOTest {
         assertTrue(resultList.get(2).getTime_joined() == 20l);
         assertTrue(resultList.get(2).getUser_id().equals(USER_ID + "One"));
 
-
     }
 
     @Test
     public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionOrderType() throws InvalidOrderTypeException {
-        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL, TIME_JOINED);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
+                TIME_JOINED);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID, USER_ID + "Two", EMAIL,
                 TIME_JOINED);
-        thirdPartyUsersDAO
-                .insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL, TIME_JOINED + 10l);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL,
+                TIME_JOINED + 10l);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Four", THIRD_PARTY_USER_ID, USER_ID + "Four", EMAIL,
                 TIME_JOINED - 20l);
         try {
-            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit(
-                    "DESCC", "DESC", 3
-            );
+            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESCC",
+                    "DESC", 3);
         } catch (InvalidOrderTypeException e) {
             assertTrue(true);
         } catch (Exception e) {
@@ -254,47 +250,41 @@ public class ThirdPartyUsersDAOTest {
         }
 
         try {
-            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit(
-                    "DESC", "DESCC", 3
-            );
+            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
+                    "DESCC", 3);
         } catch (InvalidOrderTypeException e) {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
         fail();
 
-
-
     }
-
 
     @Test
     public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionNoResult() throws InvalidOrderTypeException {
         try {
-            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit(
-                    "DESC", "DESC", 3
-            );
+            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
+                    "DESC", 3);
         } catch (NoResultException e) {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case
+            // do nothing failure case
         }
         fail();
 
-
     }
-
 
     @Test
     public void getCount() {
-        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL, TIME_JOINED);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
+                TIME_JOINED);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID, USER_ID + "Two", EMAIL,
                 TIME_JOINED);
-        thirdPartyUsersDAO
-                .insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL, TIME_JOINED + 10l);
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID, USER_ID + "Three", EMAIL,
+                TIME_JOINED + 10l);
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Four", THIRD_PARTY_USER_ID, USER_ID + "Four", EMAIL,
                 TIME_JOINED - 20l);
 

@@ -34,7 +34,6 @@ public class EmailVerificationVerifiedEmailsDO {
 //    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTable() + " ("
 //            + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL," + "PRIMARY KEY (user_id, email));";
 
-
     @EmbeddedId
     EmailVerificationVerifiedEmailsPKDO primary_key;
 

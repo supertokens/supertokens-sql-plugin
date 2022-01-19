@@ -16,7 +16,14 @@
 
 package io.supertokens.storage.sql;
 
+import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
+
+import javax.persistence.Column;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import java.math.BigInteger;
+import java.util.List;
 
 public class TestConstants {
     public static final String EMAIL = "sample@email.com";
@@ -40,4 +47,10 @@ public class TestConstants {
     public static final String THIRD_PARTY_ID = "THIRD_PARTY_ID";
     public static final String THIRD_PARTY_USER_ID = "THIRD_PARTY_USER_ID";
     public static final long TIME_JOINED = 20l;
+
+    public static final String DEVICE_ID_HASH = "DEVICE_ID_HASH";
+    public static final String PHONE_NUMBER = "PHONE_NUMBER";
+    public static final String LINK_CODE_SALT = "LINK_CODE_SALT";
+    public static final int FAILED_ATTEMPTS = 2;
+
 }

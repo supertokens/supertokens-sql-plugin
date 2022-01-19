@@ -16,7 +16,9 @@
 
 package io.supertokens.storage.sql.domainobjects.passwordless;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -25,6 +27,8 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "passwordless_devices", indexes = { @Index(columnList = "email"), @Index(columnList = "phone_number") })
 public class PasswordlessDevicesDO {
 

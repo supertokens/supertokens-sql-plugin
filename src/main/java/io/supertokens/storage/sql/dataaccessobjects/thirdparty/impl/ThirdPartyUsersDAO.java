@@ -132,26 +132,22 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
 
     @Override
     public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-                                                                            String thirdPartyUserId,
-                                                                            String email) {
+            String thirdPartyUserId, String email) {
 
         Session session = sessionFactory.openSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaUpdate<ThirdPartyUsersDO> criteriaUpdate =
-                criteriaBuilder.createCriteriaUpdate(ThirdPartyUsersDO.class);
+        CriteriaUpdate<ThirdPartyUsersDO> criteriaUpdate = criteriaBuilder
+                .createCriteriaUpdate(ThirdPartyUsersDO.class);
 
         Root<ThirdPartyUsersDO> root = criteriaUpdate.from(ThirdPartyUsersDO.class);
 
         criteriaUpdate.set(root.get("email"), email);
         Predicate predicateOne = criteriaBuilder.equal(root.get("primary_key").get("third_party_id"), thirdPartyId);
-        Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("third_party_user_id"), thirdPartyUserId);
+        Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("third_party_user_id"),
+                thirdPartyUserId);
 
-        criteriaUpdate.where(
-                criteriaBuilder.and(
-                        predicateOne, predicateTwo
-                )
-        );
+        criteriaUpdate.where(criteriaBuilder.and(predicateOne, predicateTwo));
 
         Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaUpdate).executeUpdate();
@@ -161,12 +157,11 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         if (rowsUpdated == 0)
             throw new NoResultException();
 
-
     }
 
     @Override
     public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(String thirdPartyId,
-                                                                                        String thirdPartyUserId) {
+            String thirdPartyUserId) {
         Session session = sessionFactory.openSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
@@ -204,7 +199,6 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
         Root<ThirdPartyUsersDO> root = criteriaQuery.from(ThirdPartyUsersDO.class);
 
-
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         List<ThirdPartyUsersDO> thirdPartyUsersDOs = null;
 
@@ -227,9 +221,8 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
     }
 
     @Override
-    public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder, String userIdOrder,
-                                                                        Integer limit)
-            throws InvalidOrderTypeException {
+    public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder,
+            String userIdOrder, Integer limit) throws InvalidOrderTypeException {
 
         Session session = sessionFactory.openSession();
 
@@ -257,8 +250,8 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         criteriaQuery.orderBy(ordersList);
 
         Transaction transaction = session.beginTransaction();
-        List<ThirdPartyUsersDO> resultList = session.createQuery(criteriaQuery)
-                .setFirstResult(0).setMaxResults(limit).getResultList();
+        List<ThirdPartyUsersDO> resultList = session.createQuery(criteriaQuery).setFirstResult(0).setMaxResults(limit)
+                .getResultList();
         transaction.commit();
         session.close();
 
