@@ -34,8 +34,8 @@ import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.List;
 
-public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO implements
-        SessionAccessTokenSigningKeysInterfaceDAO {
+public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
+        implements SessionAccessTokenSigningKeysInterfaceDAO {
 
     public SessionAccessTokenSigningKeysDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -56,7 +56,8 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO implemen
 
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<SessionAccessTokenSigningKeysDO> criteria = criteriaBuilder.createQuery(SessionAccessTokenSigningKeysDO.class);
+        CriteriaQuery<SessionAccessTokenSigningKeysDO> criteria = criteriaBuilder
+                .createQuery(SessionAccessTokenSigningKeysDO.class);
         Root<SessionAccessTokenSigningKeysDO> root = criteria.from(SessionAccessTokenSigningKeysDO.class);
         criteria.select(root);
         Query<SessionAccessTokenSigningKeysDO> query = session.createQuery(criteria);
@@ -89,9 +90,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO implemen
     public long insertIntoTableValues(long createdAtTime, String value) {
         Session session = sessionFactory.openSession();
 
-        SessionAccessTokenSigningKeysDO keysDO = new SessionAccessTokenSigningKeysDO(
-                createdAtTime, value
-        );
+        SessionAccessTokenSigningKeysDO keysDO = new SessionAccessTokenSigningKeysDO(createdAtTime, value);
 
         Transaction transaction = session.beginTransaction();
         long createdAt = (long) session.save(keysDO);
@@ -107,16 +106,11 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO implemen
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
-        CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(
-                SessionAccessTokenSigningKeysDO.class
-        );
+        CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder
+                .createCriteriaDelete(SessionAccessTokenSigningKeysDO.class);
         Root<SessionAccessTokenSigningKeysDO> root = criteriaDelete.from(SessionAccessTokenSigningKeysDO.class);
 
-        criteriaDelete.where(
-                criteriaBuilder.lessThan(
-                        root.get("created_at_time"), createdAtTime
-                )
-        );
+        criteriaDelete.where(criteriaBuilder.lessThan(root.get("created_at_time"), createdAtTime));
 
         Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();

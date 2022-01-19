@@ -27,8 +27,8 @@ import java.util.List;
 public interface EmailVerificationTokensInterfaceDAO extends DAO {
 
     /**
-     *         String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
-     *                 + " WHERE token_expiry < ?";
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
+     * + " WHERE token_expiry < ?";
      */
     public void deleteFromTableWhereTokenExpiryIsLessThan(long tokenExpiry);
 
@@ -39,34 +39,35 @@ public interface EmailVerificationTokensInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
-     *                 + " WHERE user_id = ? AND email = ?";
+     * + " WHERE user_id = ? AND email = ?";
      */
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
             throws UserAndEmailNotFoundException;
 
     /**
      * tring QUERY = "SELECT user_id, token, token_expiry, email FROM "
-     *                 + Config.getConfig(start).getEmailVerificationTokensTable() + " WHERE token = ?";
+     * + Config.getConfig(start).getEmailVerificationTokensTable() + " WHERE token = ?";
      */
-    public EmailVerificationTokensDO getEmailVerificationTokenWhereTokenEquals(String token)
-            throws NoResultException;
+    public EmailVerificationTokensDO getEmailVerificationTokenWhereTokenEquals(String token) throws NoResultException;
 
     /**
      * String QUERY = "SELECT user_id, token, token_expiry, email FROM "
-     *                 + Config.getConfig(start).getEmailVerificationTokensTable()
-     *                 + " WHERE user_id = ? AND email = ? FOR UPDATE";
+     * + Config.getConfig(start).getEmailVerificationTokensTable()
+     * + " WHERE user_id = ? AND email = ? FOR UPDATE";
      */
-    public List<EmailVerificationTokensDO> getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId, String email);
+    public List<EmailVerificationTokensDO> getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId,
+            String email);
 
     /**
      * String QUERY = "SELECT user_id, token, token_expiry, email FROM "
-     *                 + Config.getConfig(start).getEmailVerificationTokensTable() + " WHERE user_id = ? AND email = ?";
+     * + Config.getConfig(start).getEmailVerificationTokensTable() + " WHERE user_id = ? AND email = ?";
      */
-    public List<EmailVerificationTokensDO> getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId, String email);
+    public List<EmailVerificationTokensDO> getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId,
+            String email);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
-     *                 + " WHERE user_id = ? AND email = ?";
+     * + " WHERE user_id = ? AND email = ?";
      */
     public void deleteWhereUserIdEqualsAndEmailEquals(String userId, String email);
 }

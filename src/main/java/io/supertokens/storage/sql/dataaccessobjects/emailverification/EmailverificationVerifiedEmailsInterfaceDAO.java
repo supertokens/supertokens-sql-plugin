@@ -26,26 +26,26 @@ public interface EmailverificationVerifiedEmailsInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getEmailVerificationTable()
-     *                     + "(user_id, email) VALUES(?, ?)";
+     * + "(user_id, email) VALUES(?, ?)";
      */
     public Serializable insertIntoTable(String userId, String email);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTable()
-     *                     + " WHERE user_id = ? AND email = ?";
+     * + " WHERE user_id = ? AND email = ?";
      */
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
             throws UserAndEmailNotFoundException;
 
     /**
      * String QUERY = "SELECT * FROM " + Config.getConfig(start).getEmailVerificationTable()
-     *                 + " WHERE user_id = ? AND email = ?";
+     * + " WHERE user_id = ? AND email = ?";
      */
     public EmailVerificationVerifiedEmailsDO getWhereUserIdEqualsAndEmailEquals(String userId, String email);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTable()
-     *                             + " WHERE user_id = ?";
+     * + " WHERE user_id = ?";
      */
     public void deleteWhereUserIdEquals(String userId);
 

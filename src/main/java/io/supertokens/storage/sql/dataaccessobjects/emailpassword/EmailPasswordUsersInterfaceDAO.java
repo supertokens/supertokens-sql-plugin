@@ -37,19 +37,19 @@ public interface EmailPasswordUsersInterfaceDAO extends DAO<EmailPasswordUsersDO
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getEmailPasswordUsersTable()
-     *                             + "(user_id, email, password_hash, time_joined)" + " VALUES(?, ?, ?, ?)";
+     * + "(user_id, email, password_hash, time_joined)" + " VALUES(?, ?, ?, ?)";
      */
     public Serializable insert(String userId, String email, String passwordHash, long timeJoined);
 
     /**
      * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-     *                 + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE user_id = ? FOR UPDATE";
+     * + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE user_id = ? FOR UPDATE";
      */
     public EmailPasswordUsersDO getWhereUserIdEquals(String userId);
 
     /**
      * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-     *                 + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
+     * + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
      */
     public EmailPasswordUsersDO getWhereEmailEquals(String email);
 }

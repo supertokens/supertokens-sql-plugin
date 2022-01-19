@@ -195,12 +195,7 @@ public class EmailPasswordUsersDAO extends SessionFactoryDAO implements EmailPas
 
     @Override
     public String insert(String userId, String email, String passwordHash, long timeJoined) {
-        EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO(
-                userId,
-                email,
-                passwordHash,
-                timeJoined
-        );
+        EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO(userId, email, passwordHash, timeJoined);
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
         String userIdSaved = (String) session.save(emailPasswordUsersDO);
@@ -213,8 +208,7 @@ public class EmailPasswordUsersDAO extends SessionFactoryDAO implements EmailPas
     public EmailPasswordUsersDO getWhereUserIdEquals(String userId) throws NoResultException {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder
-                .createQuery(EmailPasswordUsersDO.class);
+        CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
 
         Root<EmailPasswordUsersDO> root = criteriaQuery.from(EmailPasswordUsersDO.class);
         criteriaQuery.select(root);
@@ -232,8 +226,7 @@ public class EmailPasswordUsersDAO extends SessionFactoryDAO implements EmailPas
     public EmailPasswordUsersDO getWhereEmailEquals(String email) {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder
-                .createQuery(EmailPasswordUsersDO.class);
+        CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
 
         Root<EmailPasswordUsersDO> root = criteriaQuery.from(EmailPasswordUsersDO.class);
         criteriaQuery.select(root);
@@ -245,6 +238,5 @@ public class EmailPasswordUsersDAO extends SessionFactoryDAO implements EmailPas
         session.close();
         return result;
     }
-
 
 }

@@ -26,13 +26,13 @@ public interface JwtSigningInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getJWTSigningKeysTable()
-     *                 + "(key_id, key_string, created_at, algorithm) VALUES(?, ?, ?, ?)";
+     * + "(key_id, key_string, created_at, algorithm) VALUES(?, ?, ?, ?)";
      */
     public Serializable insert(String keyId, String keyString, String algorithm, long createdAt);
 
     /**
      * String QUERY = "SELECT * FROM " + Config.getConfig(start).getJWTSigningKeysTable()
-     *                 + " ORDER BY created_at DESC FOR UPDATE";
+     * + " ORDER BY created_at DESC FOR UPDATE";
      */
     public List<JWTSigningKeysDO> getAllOrderByCreatedAtDesc_locked();
 }

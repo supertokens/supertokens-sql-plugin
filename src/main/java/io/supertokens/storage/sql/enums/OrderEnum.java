@@ -14,15 +14,8 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.exceptions;
+package io.supertokens.storage.sql.enums;
 
-/**
- * This exception is thrown when a corresponding entry is not found in the table emailpassword_users
- */
-public class EmailPasswordUserNotFoundException extends Exception {
-    private static final long serialVersionUID = 1123L;
-
-    public EmailPasswordUserNotFoundException(String message) {
-        super(message);
-    }
+public enum OrderEnum {
+    DESC, ASC
 }

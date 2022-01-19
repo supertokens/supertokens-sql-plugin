@@ -50,7 +50,7 @@ public class EmailPasswordUsersDAOTest {
     }
 
     private EmailPasswordUsersDO createEmailPasswordUsersDO(String email, String passHash, long createdAt,
-                                                            String userId) {
+            String userId) {
         EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO();
         emailPasswordUsersDO.setEmail(email);
         emailPasswordUsersDO.setPassword_hash(passHash);
@@ -94,9 +94,8 @@ public class EmailPasswordUsersDAOTest {
 
         try {
             this.createOnce();
-            EmailPasswordUsersDO emailPasswordUsersDO = createEmailPasswordUsersDO(
-                    EMAIL + ".com", PASS_HASH, CREATED_AT, USER_ID
-            );
+            EmailPasswordUsersDO emailPasswordUsersDO = createEmailPasswordUsersDO(EMAIL + ".com", PASS_HASH,
+                    CREATED_AT, USER_ID);
             Serializable savedId = emailPasswordUsersDAO.create(emailPasswordUsersDO);
         } catch (PersistenceException p) {
 
@@ -147,7 +146,7 @@ public class EmailPasswordUsersDAOTest {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing, failure case
+            // do nothing, failure case
         }
         fail();
     }
@@ -218,12 +217,7 @@ public class EmailPasswordUsersDAOTest {
     @Test
     public void insert() {
 
-        String id = emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        String id = emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
         assertTrue(id != null && id.equals(USER_ID));
         assertTrue(emailPasswordUsersDAO.getAll().size() == 1);
@@ -233,20 +227,10 @@ public class EmailPasswordUsersDAOTest {
     @Test
     public void insertException() {
 
-        emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
         try {
-            emailPasswordUsersDAO.insert(
-                    USER_ID,
-                    EMAIL + "change",
-                    PASS_HASH,
-                    CREATED_AT
-            );
+            emailPasswordUsersDAO.insert(USER_ID, EMAIL + "change", PASS_HASH, CREATED_AT);
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
@@ -257,19 +241,9 @@ public class EmailPasswordUsersDAOTest {
 
     @Test
     public void getWhereUserIdEquals() {
-        emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
-        emailPasswordUsersDAO.insert(
-                USER_ID + "two",
-                EMAIL + "two",
-                PASS_HASH + "two",
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID + "two", EMAIL + "two", PASS_HASH + "two", CREATED_AT);
 
         EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWhereUserIdEquals(USER_ID);
 
@@ -283,19 +257,9 @@ public class EmailPasswordUsersDAOTest {
 
     @Test
     public void getWhereUserIdEqualsException() {
-        emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
-        emailPasswordUsersDAO.insert(
-                USER_ID + "two",
-                EMAIL + "two",
-                PASS_HASH + "two",
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID + "two", EMAIL + "two", PASS_HASH + "two", CREATED_AT);
         try {
             emailPasswordUsersDAO.getWhereUserIdEquals(USER_ID + "three");
         } catch (Exception n) {
@@ -309,40 +273,20 @@ public class EmailPasswordUsersDAOTest {
 
     @Test
     public void getWhereEmailEquals() {
-        emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
-        emailPasswordUsersDAO.insert(
-                USER_ID + "two",
-                EMAIL + "two",
-                PASS_HASH + "two",
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID + "two", EMAIL + "two", PASS_HASH + "two", CREATED_AT);
 
         assertTrue(emailPasswordUsersDAO.getWhereEmailEquals(EMAIL) != null);
-        assertTrue(emailPasswordUsersDAO.getWhereEmailEquals(EMAIL+"two") != null);
+        assertTrue(emailPasswordUsersDAO.getWhereEmailEquals(EMAIL + "two") != null);
 
     }
 
     @Test
     public void getWhereEmailEqualsNull() {
-        emailPasswordUsersDAO.insert(
-                USER_ID,
-                EMAIL,
-                PASS_HASH,
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID, EMAIL, PASS_HASH, CREATED_AT);
 
-        emailPasswordUsersDAO.insert(
-                USER_ID + "two",
-                EMAIL + "two",
-                PASS_HASH + "two",
-                CREATED_AT
-        );
+        emailPasswordUsersDAO.insert(USER_ID + "two", EMAIL + "two", PASS_HASH + "two", CREATED_AT);
 
         try {
             emailPasswordUsersDAO.getWhereEmailEquals(EMAIL + "three");

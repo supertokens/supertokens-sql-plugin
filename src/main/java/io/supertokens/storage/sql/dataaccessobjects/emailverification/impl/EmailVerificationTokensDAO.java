@@ -56,9 +56,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
     @Override
     public Serializable insertIntoTable(String userId, String email, String token, long tokenExpiry) {
         EmailVerificationTokensDO emailVerificationTokensDO = new EmailVerificationTokensDO(
-                new EmailVerificationTokensPKDO(userId, email, token),
-                tokenExpiry
-        );
+                new EmailVerificationTokensPKDO(userId, email, token), tokenExpiry);
 
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
@@ -80,11 +78,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
         Predicate predicateUserId = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateUserEmail = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
 
-        criteriaDelete.where(
-                criteriaBuilder.and(
-                        predicateUserId, predicateUserEmail
-                )
-        );
+        criteriaDelete.where(criteriaBuilder.and(predicateUserId, predicateUserEmail));
         Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
         transaction.commit();
@@ -95,8 +89,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
     }
 
     @Override
-    public EmailVerificationTokensDO getEmailVerificationTokenWhereTokenEquals(String token)
-            throws NoResultException {
+    public EmailVerificationTokensDO getEmailVerificationTokenWhereTokenEquals(String token) throws NoResultException {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationTokensDO> criteriaQuery = criteriaBuilder
@@ -112,8 +105,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
 
     @Override
     public List<EmailVerificationTokensDO> getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId,
-                                                                                                          String email)
-    throws NoResultException {
+            String email) throws NoResultException {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationTokensDO> criteriaQuery = criteriaBuilder
@@ -121,9 +113,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
         Root<EmailVerificationTokensDO> root = criteriaQuery.from(EmailVerificationTokensDO.class);
         Predicate predicateOne = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
-        criteriaQuery.where(
-                criteriaBuilder.and( predicateOne, predicateTwo )
-        );
+        criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         Transaction transaction = session.beginTransaction();
         List<EmailVerificationTokensDO> emailVerificationTokensDOList = session.createQuery(criteriaQuery)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
@@ -138,8 +128,7 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
 
     @Override
     public List<EmailVerificationTokensDO> getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId,
-                                                                                                    String email)
-    throws NoResultException{
+            String email) throws NoResultException {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationTokensDO> criteriaQuery = criteriaBuilder
@@ -147,11 +136,10 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
         Root<EmailVerificationTokensDO> root = criteriaQuery.from(EmailVerificationTokensDO.class);
         Predicate predicateOne = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
-        criteriaQuery.where(
-                criteriaBuilder.and( predicateOne, predicateTwo )
-        );
+        criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         Transaction transaction = session.beginTransaction();
-        List<EmailVerificationTokensDO> emailVerificationTokensDOList = session.createQuery(criteriaQuery).getResultList();
+        List<EmailVerificationTokensDO> emailVerificationTokensDOList = session.createQuery(criteriaQuery)
+                .getResultList();
         transaction.commit();
         session.close();
 
@@ -171,18 +159,13 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
         Predicate predicateOne = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
 
-        criteriaDelete.where(
-                criteriaBuilder.and(
-                        predicateOne, predicateTwo
-                )
-        );
+        criteriaDelete.where(criteriaBuilder.and(predicateOne, predicateTwo));
 
         Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
         transaction.commit();
         session.close();
     }
-
 
     @Override
     public Serializable create(Object entity) throws Exception {
@@ -198,7 +181,8 @@ public class EmailVerificationTokensDAO extends SessionFactoryDAO implements Ema
     public List getAll() {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaQuery<EmailVerificationTokensDO> criteria = criteriaBuilder.createQuery(EmailVerificationTokensDO.class);
+        CriteriaQuery<EmailVerificationTokensDO> criteria = criteriaBuilder
+                .createQuery(EmailVerificationTokensDO.class);
         Root<EmailVerificationTokensDO> root = criteria.from(EmailVerificationTokensDO.class);
         criteria.select(root);
         Query<EmailVerificationTokensDO> query = session.createQuery(criteria);

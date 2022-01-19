@@ -28,37 +28,35 @@ public interface SessionInfoInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getSessionInfoTable()
-     *                 + "(session_handle, user_id, refresh_token_hash_2, session_data, expires_at, jwt_user_payload, "
-     *                 + "created_at_time)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
+     * + "(session_handle, user_id, refresh_token_hash_2, session_data, expires_at, jwt_user_payload, "
+     * + "created_at_time)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
      */
 
     public Serializable insertIntoTableValues(String sessionHandle, String userId, String refreshTokenHashTwo,
-                                              String sessionData, long expiresAt, long createdAtTime,
-                                              String jwtUserPayload);
+            String sessionData, long expiresAt, long createdAtTime, String jwtUserPayload);
 
     /**
      * String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-     *                 + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
-     *                 + " WHERE session_handle = ? FOR UPDATE";
+     * + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
+     * + " WHERE session_handle = ? FOR UPDATE";
      */
     public SessionInfoDO getWhereSessionHandleEquals_locked(String sessionHandle) throws NoResultException;
 
     /**
      * String QUERY = "UPDATE " + Config.getConfig(start).getSessionInfoTable()
-     *                 + " SET refresh_token_hash_2 = ?, expires_at = ?" + " WHERE session_handle = ?";
+     * + " SET refresh_token_hash_2 = ?, expires_at = ?" + " WHERE session_handle = ?";
      */
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo,
-                                                                            long expiresAt, String sessionHandle)
-            throws SessionHandleNotFoundException;
+    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
+            String sessionHandle) throws SessionHandleNotFoundException;
 
     /**
-     *  String QUERY = "DELETE FROM " + Config.getConfig(start).getSessionInfoTable() + " WHERE user_id = ?";
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getSessionInfoTable() + " WHERE user_id = ?";
      */
     public void deleteWhereUserIdEquals(String userId) throws UserIdNotFoundException;
 
     /**
      * String QUERY = "SELECT session_handle FROM " + Config.getConfig(start).getSessionInfoTable()
-     *                 + " WHERE user_id = ?";
+     * + " WHERE user_id = ?";
      */
     public String[] getSessionHandlesWhereUserIdEquals(String userId) throws UserIdNotFoundException;
 
@@ -69,8 +67,8 @@ public interface SessionInfoInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-     *                 + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
-     *                 + " WHERE session_handle = ?";
+     * + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
+     * + " WHERE session_handle = ?";
      */
     public SessionInfoDO getWhereSessionHandleEquals(String sessionHandle);
 

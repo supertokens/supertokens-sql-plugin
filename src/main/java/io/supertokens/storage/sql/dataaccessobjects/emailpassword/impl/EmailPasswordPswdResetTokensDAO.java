@@ -193,8 +193,7 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
             throw new UnknownUserIdException();
 
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = new EmailPasswordPswdResetTokensDO(
-                new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, token), tokenExpiry
-        );
+                new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, token), tokenExpiry);
         Transaction transaction = session.beginTransaction();
         Serializable key = session.save(emailPasswordPswdResetTokensDO);
         transaction.commit();

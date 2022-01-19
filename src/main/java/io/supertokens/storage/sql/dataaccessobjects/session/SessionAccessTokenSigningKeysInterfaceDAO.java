@@ -25,13 +25,13 @@ public interface SessionAccessTokenSigningKeysInterfaceDAO extends DAO {
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getAccessTokenSigningKeysTable()
-     *                 + "(created_at_time, value)" + " VALUES(?, ?)";
+     * + "(created_at_time, value)" + " VALUES(?, ?)";
      */
     public long insertIntoTableValues(long createdAtTime, String value);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getAccessTokenSigningKeysTable()
-     *                 + " WHERE created_at_time < ?";
+     * + " WHERE created_at_time < ?";
      */
     public void deleteWhereCreatedAtTimeLessThan(long createdAtTime);
 }

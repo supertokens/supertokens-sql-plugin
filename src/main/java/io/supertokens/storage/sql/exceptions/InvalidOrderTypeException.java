@@ -17,12 +17,12 @@
 package io.supertokens.storage.sql.exceptions;
 
 /**
- * This exception is thrown when a corresponding entry is not found in the table emailpassword_users
+ * Thrown when an invalid order type is passed for SQL queries. That is if it is not either ASC or DESC
  */
-public class EmailPasswordUserNotFoundException extends Exception {
+public class InvalidOrderTypeException extends Exception {
     private static final long serialVersionUID = 1123L;
 
-    public EmailPasswordUserNotFoundException(String message) {
+    public InvalidOrderTypeException(String message) {
         super(message);
     }
 }

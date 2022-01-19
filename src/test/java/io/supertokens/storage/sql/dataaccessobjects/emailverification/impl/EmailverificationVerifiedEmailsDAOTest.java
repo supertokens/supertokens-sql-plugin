@@ -38,7 +38,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(HibernateUtilTest.getSessionFactory());
+        emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                HibernateUtilTest.getSessionFactory());
     }
 
     @Before
@@ -51,15 +52,11 @@ public class EmailverificationVerifiedEmailsDAOTest {
         emailverificationVerifiedEmailsDAO.removeAll();
     }
 
-
     @Test
     public void insertIntoTable() {
 
         EmailVerificationVerifiedEmailsPKDO pkdo = (EmailVerificationVerifiedEmailsPKDO) emailverificationVerifiedEmailsDAO
-                .insertIntoTable(
-                USER_ID,
-                 EMAIL
-        );
+                .insertIntoTable(USER_ID, EMAIL);
 
         assertTrue(pkdo.getEmail().equals(EMAIL));
         assertTrue(pkdo.getUser_id().equals(USER_ID));
@@ -69,16 +66,10 @@ public class EmailverificationVerifiedEmailsDAOTest {
     @Test
     public void insertIntoTableException() {
 
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID,
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
         try {
-            emailverificationVerifiedEmailsDAO.insertIntoTable(
-                    USER_ID,
-                    EMAIL
-            );
+            emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
@@ -94,9 +85,7 @@ public class EmailverificationVerifiedEmailsDAOTest {
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL + "two");
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
-        emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(
-                USER_ID, EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
 
         assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 2);
     }
@@ -109,9 +98,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
         try {
-            emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(
-                    USER_ID + "three", EMAIL + "two"
-            );
+            emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "three",
+                    EMAIL + "two");
         } catch (UserAndEmailNotFoundException e) {
             assertTrue(true);
             return;
@@ -124,19 +112,12 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
     @Test
     public void getWhereUserIdEqualsAndEmailEquals() {
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID,
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID + "two",
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
-        EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO =
-                emailverificationVerifiedEmailsDAO.getWhereUserIdEqualsAndEmailEquals(USER_ID,
-                        EMAIL);
+        EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
+                .getWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
 
         assertTrue(emailVerificationVerifiedEmailsDO != null);
         assertTrue(emailVerificationVerifiedEmailsDO.getPrimary_key().getEmail().equals(EMAIL));
@@ -146,20 +127,13 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
     @Test
     public void getWhereUserIdEqualsAndEmailEqualsException() {
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID,
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID + "two",
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
         try {
-            EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO =
-                    emailverificationVerifiedEmailsDAO.getWhereUserIdEqualsAndEmailEquals(USER_ID + "three",
-                            EMAIL);
+            EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
+                    .getWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
         } catch (NoResultException e) {
             assertTrue(true);
             return;
@@ -171,31 +145,19 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
     @Test
     public void deleteWhereUserIdEquals() throws Exception {
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID,
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID + "two",
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
-        emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID+"two");
+        emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "two");
         assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 1);
     }
 
     @Test
     public void deleteWhereUserIdEqualsException() throws Exception {
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID,
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
-        emailverificationVerifiedEmailsDAO.insertIntoTable(
-                USER_ID + "two",
-                EMAIL
-        );
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
         try {
             emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "twoe");
@@ -203,7 +165,7 @@ public class EmailverificationVerifiedEmailsDAOTest {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
         fail();
     }

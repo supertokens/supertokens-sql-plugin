@@ -31,8 +31,8 @@ import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
 
-public class EmailverificationVerifiedEmailsDAO extends SessionFactoryDAO implements
-        EmailverificationVerifiedEmailsInterfaceDAO {
+public class EmailverificationVerifiedEmailsDAO extends SessionFactoryDAO
+        implements EmailverificationVerifiedEmailsInterfaceDAO {
 
     public EmailverificationVerifiedEmailsDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -100,12 +100,12 @@ public class EmailverificationVerifiedEmailsDAO extends SessionFactoryDAO implem
     public Serializable insertIntoTable(String userId, String email) {
 
         EmailVerificationVerifiedEmailsDO emailVerificationTokensDO = new EmailVerificationVerifiedEmailsDO(
-                new EmailVerificationVerifiedEmailsPKDO(userId, email)
-        );
+                new EmailVerificationVerifiedEmailsPKDO(userId, email));
 
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
-        EmailVerificationVerifiedEmailsPKDO emailsPKDO = (EmailVerificationVerifiedEmailsPKDO) session.save(emailVerificationTokensDO);
+        EmailVerificationVerifiedEmailsPKDO emailsPKDO = (EmailVerificationVerifiedEmailsPKDO) session
+                .save(emailVerificationTokensDO);
         transaction.commit();
         session.close();
         return emailsPKDO;
@@ -133,7 +133,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionFactoryDAO implem
 
     @Override
     public EmailVerificationVerifiedEmailsDO getWhereUserIdEqualsAndEmailEquals(String userId, String email)
-    throws NoResultException {
+            throws NoResultException {
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationVerifiedEmailsDO> criteriaQuery = criteriaBuilder
@@ -142,11 +142,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionFactoryDAO implem
         criteriaQuery.select(root);
         Predicate predicateOne = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
-        criteriaQuery.where(
-            criteriaBuilder.and(
-                    predicateOne, predicateTwo
-            )
-        );
+        criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         Query<EmailVerificationVerifiedEmailsDO> query = session.createQuery(criteriaQuery);
         EmailVerificationVerifiedEmailsDO result = query.getSingleResult();
         session.close();

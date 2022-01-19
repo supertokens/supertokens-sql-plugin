@@ -39,9 +39,7 @@ public class JwtSigningDAOTest {
 
     @BeforeClass
     public static void beforeClass() {
-        jwtSigningDAO = new JwtSigningDAO(
-                HibernateUtilTest.getSessionFactory()
-        );
+        jwtSigningDAO = new JwtSigningDAO(HibernateUtilTest.getSessionFactory());
     }
 
     @Before
@@ -57,32 +55,24 @@ public class JwtSigningDAOTest {
     @Test
     public void insert() throws Exception {
 
-        jwtSigningDAO.insert(
-                KEY, KEY_STRING, ALGORITHM, CREATED_AT
-        );
+        jwtSigningDAO.insert(KEY, KEY_STRING, ALGORITHM, CREATED_AT);
 
-        assertTrue(
-            jwtSigningDAO.getAll().size() == 1
-        );
+        assertTrue(jwtSigningDAO.getAll().size() == 1);
 
     }
 
     @Test
     public void insertException() throws Exception {
 
-        jwtSigningDAO.insert(
-                KEY, KEY_STRING, ALGORITHM, CREATED_AT
-        );
+        jwtSigningDAO.insert(KEY, KEY_STRING, ALGORITHM, CREATED_AT);
 
         try {
-            jwtSigningDAO.insert(
-                    KEY, KEY_STRING, ALGORITHM, CREATED_AT
-            );
+            jwtSigningDAO.insert(KEY, KEY_STRING, ALGORITHM, CREATED_AT);
         } catch (PersistenceException e) {
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
         } catch (Exception e) {
-            //do nothing, failure case scenario
+            // do nothing, failure case scenario
         }
         fail();
 
@@ -90,18 +80,10 @@ public class JwtSigningDAOTest {
 
     @Test
     public void getAllOrderByCreatedAtDesc_locked() {
-        jwtSigningDAO.insert(
-                KEY, KEY_STRING, ALGORITHM, CREATED_AT
-        );
-        jwtSigningDAO.insert(
-                KEY + "1", KEY_STRING, ALGORITHM, CREATED_AT + 10l
-        );
-        jwtSigningDAO.insert(
-                KEY + "2", KEY_STRING, ALGORITHM, CREATED_AT + 20l
-        );
-        jwtSigningDAO.insert(
-                KEY + "3", KEY_STRING, ALGORITHM, CREATED_AT + 30l
-        );
+        jwtSigningDAO.insert(KEY, KEY_STRING, ALGORITHM, CREATED_AT);
+        jwtSigningDAO.insert(KEY + "1", KEY_STRING, ALGORITHM, CREATED_AT + 10l);
+        jwtSigningDAO.insert(KEY + "2", KEY_STRING, ALGORITHM, CREATED_AT + 20l);
+        jwtSigningDAO.insert(KEY + "3", KEY_STRING, ALGORITHM, CREATED_AT + 30l);
 
         List<JWTSigningKeysDO> list = jwtSigningDAO.getAllOrderByCreatedAtDesc_locked();
         assertTrue(list.size() == 4);

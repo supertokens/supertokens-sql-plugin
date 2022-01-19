@@ -34,9 +34,7 @@ public class SessionAccessTokenSigningKeysDAOTest {
 
     @BeforeClass
     public static void beforeClass() {
-        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
-                HibernateUtilTest.getSessionFactory()
-        );
+        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(HibernateUtilTest.getSessionFactory());
     }
 
     @Before
@@ -52,24 +50,16 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @Test
     public void insertIntoTableValues() throws Exception {
 
-        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(
-                CREATED_AT, VALUE
-        );
+        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
 
         assertTrue(sessionAccessTokenSigningKeysDAO.getAll().size() == 1);
     }
 
     @Test
     public void deleteWhereCreatedAtTimeLessThan() throws Exception {
-        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(
-                CREATED_AT, VALUE
-        );
-        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(
-                CREATED_AT + 10l, VALUE
-        );
-        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(
-                CREATED_AT + 20l, VALUE
-        );
+        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
+        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT + 10l, VALUE);
+        sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT + 20l, VALUE);
 
         sessionAccessTokenSigningKeysDAO.deleteWhereCreatedAtTimeLessThan(CREATED_AT + 10l);
 

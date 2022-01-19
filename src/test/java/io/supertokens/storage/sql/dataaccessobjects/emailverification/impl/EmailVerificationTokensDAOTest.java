@@ -55,24 +55,9 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void deleteFromTableWhereTokenExpiryIsLessThan() throws Exception {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID,
-                EMAIL,
-                TOKEN,
-                TOKEN_EXPIRY
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "three",
-                EMAIL + "three",
-                TOKEN,
-                TOKEN_EXPIRY + 10
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two",
-                EMAIL + "two",
-                TOKEN,
-                TOKEN_EXPIRY + 20
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "three", EMAIL + "three", TOKEN, TOKEN_EXPIRY + 10);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL + "two", TOKEN, TOKEN_EXPIRY + 20);
 
         emailVerificationTokensDAO.deleteFromTableWhereTokenExpiryIsLessThan(TOKEN_EXPIRY + 10);
         assertTrue(emailVerificationTokensDAO.getAll().size() == 2);
@@ -82,17 +67,12 @@ public class EmailVerificationTokensDAOTest {
     @Test
     public void insertIntoTable() throws Exception {
 
-        EmailVerificationTokensPKDO entity = (EmailVerificationTokensPKDO) emailVerificationTokensDAO.insertIntoTable(
-                USER_ID,
-                EMAIL,
-                TOKEN,
-                TOKEN_EXPIRY
-        );
+        EmailVerificationTokensPKDO entity = (EmailVerificationTokensPKDO) emailVerificationTokensDAO
+                .insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
         assertTrue(entity.getUser_id().equals(USER_ID));
         assertTrue(entity.getToken().equals(TOKEN));
         assertTrue(entity.getEmail().equals(EMAIL));
-
 
         assertTrue(emailVerificationTokensDAO.getAll().size() == 1);
 
@@ -101,20 +81,10 @@ public class EmailVerificationTokensDAOTest {
     @Test
     public void insertIntoTableException() throws Exception {
 
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID,
-                EMAIL,
-                TOKEN,
-                TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
         try {
-            emailVerificationTokensDAO.insertIntoTable(
-                    USER_ID,
-                    EMAIL,
-                    TOKEN,
-                    TOKEN_EXPIRY
-            );
+            emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
@@ -145,34 +115,22 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals() throws Exception {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(
-                USER_ID, EMAIL
-        );
+        emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
 
         assertTrue(emailVerificationTokensDAO.getAll().size() == 1);
     }
 
     @Test
     public void deleteFromTableWhereUserIdEqualsAndEmailEqualsException() throws Exception {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
         try {
-            emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(
-                    USER_ID + "three", EMAIL
-            );
+            emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
         } catch (Exception e) {
             assertTrue(e instanceof UserAndEmailNotFoundException);
             return;
@@ -182,12 +140,10 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void getEmailVerificationTokenWhereTokenEquals() throws NoResultException {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        EmailVerificationTokensDO emailVerificationTokensDO =
-                emailVerificationTokensDAO.getEmailVerificationTokenWhereTokenEquals(TOKEN);
+        EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereTokenEquals(TOKEN);
 
         assertTrue(emailVerificationTokensDO != null);
         assertTrue(emailVerificationTokensDO.getToken_expiry() == TOKEN_EXPIRY);
@@ -196,18 +152,16 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void getEmailVerificationTokenWhereTokenEqualsException() {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
         try {
-            EmailVerificationTokensDO emailVerificationTokensDO =
-                    emailVerificationTokensDAO.getEmailVerificationTokenWhereTokenEquals(TOKEN + "@");
+            EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
+                    .getEmailVerificationTokenWhereTokenEquals(TOKEN + "@");
         } catch (NoResultException e) {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case
+            // do nothing failure case
         }
         fail();
 
@@ -215,47 +169,31 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals() {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        List<EmailVerificationTokensDO> emailVerificationTokensDOList =
-                emailVerificationTokensDAO.getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals
-                        (
-                                USER_ID+"two", EMAIL
-                        );
+        List<EmailVerificationTokensDO> emailVerificationTokensDOList = emailVerificationTokensDAO
+                .getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "two", EMAIL);
 
         assertTrue(emailVerificationTokensDOList.size() == 1);
 
         EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDOList.get(0);
         assertTrue(emailVerificationTokensDO != null);
-        assertTrue(emailVerificationTokensDO.getPrimary_key().getUser_id().equals(USER_ID+"two"));
+        assertTrue(emailVerificationTokensDO.getPrimary_key().getUser_id().equals(USER_ID + "two"));
         assertTrue(emailVerificationTokensDO.getPrimary_key().getEmail().equals(EMAIL));
         assertTrue(emailVerificationTokensDO.getPrimary_key().getToken().equals(TOKEN));
         assertTrue(emailVerificationTokensDO.getToken_expiry() == TOKEN_EXPIRY);
 
-
     }
-
 
     @Test
     public void getEmailVerificationTokenWhereUserIdEqualsAndEmailEqualsException() {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
 
         try {
-            List<EmailVerificationTokensDO> emailVerificationTokensDO =
-                    emailVerificationTokensDAO.getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals
-                            (
-                                    USER_ID + "three", EMAIL
-                            );
+            List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
+                    .getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
         } catch (NoResultException e) {
             assertTrue(true);
             return;
@@ -268,43 +206,30 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void testGetEmailVerificationTokenWhereUserIdEqualsAndEmailEquals() {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
 
-        List<EmailVerificationTokensDO> emailVerificationTokensDOList =
-                emailVerificationTokensDAO.getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals
-                        (
-                                USER_ID+"two", EMAIL
-                        );
+        List<EmailVerificationTokensDO> emailVerificationTokensDOList = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "two", EMAIL);
 
         assertTrue(emailVerificationTokensDOList.size() == 1);
 
         EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDOList.get(0);
         assertTrue(emailVerificationTokensDO != null);
-        assertTrue(emailVerificationTokensDO.getPrimary_key().getUser_id().equals(USER_ID+"two"));
+        assertTrue(emailVerificationTokensDO.getPrimary_key().getUser_id().equals(USER_ID + "two"));
         assertTrue(emailVerificationTokensDO.getPrimary_key().getEmail().equals(EMAIL));
         assertTrue(emailVerificationTokensDO.getPrimary_key().getToken().equals(TOKEN));
         assertTrue(emailVerificationTokensDO.getToken_expiry() == TOKEN_EXPIRY);
     }
+
     @Test
     public void testGetEmailVerificationTokenWhereUserIdEqualsAndEmailEqualsException() {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID + "two", EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
+        emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
 
         try {
-            List<EmailVerificationTokensDO> emailVerificationTokensDO =
-                    emailVerificationTokensDAO.getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals
-                            (
-                                    USER_ID + "three", EMAIL
-                            );
+            List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
+                    .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
         } catch (NoResultException e) {
             assertTrue(true);
             return;
@@ -316,9 +241,7 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void testDeleteFromTableWhereUserIdEqualsAndEmailEquals() throws Exception {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
         emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
         assertTrue(emailVerificationTokensDAO.getAll().size() == 0);
@@ -326,9 +249,7 @@ public class EmailVerificationTokensDAOTest {
 
     @Test
     public void testDeleteFromTableWhereUserIdEqualsAndEmailEqualsException() throws Exception {
-        emailVerificationTokensDAO.insertIntoTable(
-                USER_ID, EMAIL ,TOKEN, TOKEN_EXPIRY
-        );
+        emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
 
         try {
             emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "two", EMAIL);
@@ -336,7 +257,7 @@ public class EmailVerificationTokensDAOTest {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
         fail();
     }

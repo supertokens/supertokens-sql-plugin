@@ -69,8 +69,7 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
 
         Session session = sessionFactory.openSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-        CriteriaDelete<JWTSigningKeysDO> criteriaDelete = criteriaBuilder
-                .createCriteriaDelete(JWTSigningKeysDO.class);
+        CriteriaDelete<JWTSigningKeysDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteriaDelete.from(JWTSigningKeysDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("key_id")));
         Transaction transaction = session.beginTransaction();
@@ -83,9 +82,7 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
     @Override
     public Serializable insert(String keyId, String keyString, String algorithm, long createdAt) {
 
-        JWTSigningKeysDO jwtSigningKeysDO = new JWTSigningKeysDO(
-                keyId, keyString, algorithm, createdAt
-        );
+        JWTSigningKeysDO jwtSigningKeysDO = new JWTSigningKeysDO(keyId, keyString, algorithm, createdAt);
 
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();

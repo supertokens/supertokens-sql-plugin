@@ -137,7 +137,8 @@ public class EmailPasswordPswdResetTokensDAOTest {
     public void remove() throws Exception {
         createSuccess();
         EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.get(USER_ID);
-        emailPasswordPswdResetTokensDAO.removeWhereUserIdEquals(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
+        emailPasswordPswdResetTokensDAO
+                .removeWhereUserIdEquals(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
         List<EmailPasswordPswdResetTokensDO> results = emailPasswordPswdResetTokensDAO.getAll();
         assertTrue(results.size() == 0);
 
@@ -242,9 +243,8 @@ public class EmailPasswordPswdResetTokensDAOTest {
     public void insertPasswordResetTokenInfoException() {
 
         try {
-            EmailPasswordPswdResetTokensPKDO key = emailPasswordPswdResetTokensDAO.insertPasswordResetTokenInfo(
-                    USER_ID, TOKEN, TOKEN_EXPIRY
-            );
+            EmailPasswordPswdResetTokensPKDO key = emailPasswordPswdResetTokensDAO.insertPasswordResetTokenInfo(USER_ID,
+                    TOKEN, TOKEN_EXPIRY);
 
         } catch (Exception e) {
             assertTrue(e instanceof UnknownUserIdException);
@@ -257,12 +257,9 @@ public class EmailPasswordPswdResetTokensDAOTest {
 
     @Test
     public void insertPasswordResetTokenInfoSuccess() throws Exception {
-         emailPasswordUsersDAO.create(
-            getEmailPasswordUsersDO()
-        );
-        EmailPasswordPswdResetTokensPKDO key = emailPasswordPswdResetTokensDAO.insertPasswordResetTokenInfo(
-                USER_ID, TOKEN, TOKEN_EXPIRY
-        );
+        emailPasswordUsersDAO.create(getEmailPasswordUsersDO());
+        EmailPasswordPswdResetTokensPKDO key = emailPasswordPswdResetTokensDAO.insertPasswordResetTokenInfo(USER_ID,
+                TOKEN, TOKEN_EXPIRY);
 
         assertTrue(key != null);
         assertTrue(key.getToken().equals(TOKEN));

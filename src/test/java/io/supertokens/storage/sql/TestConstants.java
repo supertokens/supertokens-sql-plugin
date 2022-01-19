@@ -30,7 +30,6 @@ public class TestConstants {
     public static final String KEY_STRING = "key_string";
     public static final String ALGORITHM = "algorithm";
 
-
     public static final String SESSION_HANDLE = "SESSION_HANDLE";
     public static final String REFRESH_TOKEN_HASH_TWO = "REFRESH_TOKEN_HASH_TWO";
     public static final String SESSION_DATA = "SESSION_DATA";

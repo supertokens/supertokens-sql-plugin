@@ -37,9 +37,7 @@ public class SessionInfoDAOTest {
 
     @BeforeClass
     public static void beforeClass() {
-        sessionInfoDAO = new SessionInfoDAO(
-                HibernateUtilTest.getSessionFactory()
-        );
+        sessionInfoDAO = new SessionInfoDAO(HibernateUtilTest.getSessionFactory());
     }
 
     @Before
@@ -52,19 +50,11 @@ public class SessionInfoDAOTest {
         sessionInfoDAO.removeAll();
     }
 
-
     @Test
     public void insertIntoTableValues() throws Exception {
 
-        String id = (String) sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        String id = (String) sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO,
+                SESSION_DATA, EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
 
         assertTrue(sessionInfoDAO.getAll().size() == 1);
         assertTrue(id.equals(SESSION_HANDLE));
@@ -74,26 +64,12 @@ public class SessionInfoDAOTest {
     @Test
     public void insertIntoTableValuesException() throws Exception {
 
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         try {
-            sessionInfoDAO.insertIntoTableValues(
-                    SESSION_HANDLE,
-                    USER_ID + "two",
-                    REFRESH_TOKEN_HASH_TWO,
-                    SESSION_DATA,
-                    EXPIRES_AT,
-                    CREATED_AT,
-                    JWT_USER_PAYLOAD
-            );
+            sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID + "two", REFRESH_TOKEN_HASH_TWO, SESSION_DATA,
+                    EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
         } catch (Exception e) {
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
@@ -104,15 +80,8 @@ public class SessionInfoDAOTest {
 
     @Test
     public void getWhereSessionHandle_lockedEquals() {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE);
         assertTrue(sessionInfoDO != null);
@@ -124,20 +93,12 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getCreated_at_time() == CREATED_AT);
         assertTrue(sessionInfoDO.getJwt_user_payload().equals(JWT_USER_PAYLOAD));
 
-
     }
 
     @Test
     public void getWhereSessionHandleEquals_lockedException() {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         try {
             SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE + "Two");
@@ -149,27 +110,15 @@ public class SessionInfoDAOTest {
         }
         fail();
 
-
-
     }
 
     @Test
     public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals() throws SessionHandleNotFoundException {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
-        sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(
-                REFRESH_TOKEN_HASH_TWO + "UPDATED",
-                EXPIRES_AT + 30l,
-                SESSION_HANDLE
-                );
+        sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(REFRESH_TOKEN_HASH_TWO + "UPDATED",
+                EXPIRES_AT + 30l, SESSION_HANDLE);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE);
 
@@ -177,25 +126,15 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getRefresh_token_hash_2().equals(REFRESH_TOKEN_HASH_TWO + "UPDATED"));
     }
 
-
     @Test
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException() throws SessionHandleNotFoundException {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException()
+            throws SessionHandleNotFoundException {
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         try {
-            sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(
-                    REFRESH_TOKEN_HASH_TWO + "UPDATED",
-                    EXPIRES_AT + 30l,
-                    SESSION_HANDLE + "TWO"
-            );
+            sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(REFRESH_TOKEN_HASH_TWO + "UPDATED",
+                    EXPIRES_AT + 30l, SESSION_HANDLE + "TWO");
         } catch (SessionHandleNotFoundException e) {
             assertTrue(true);
             return;
@@ -208,15 +147,8 @@ public class SessionInfoDAOTest {
     @Test
     public void deleteWhereUserIdEquals() throws Exception {
 
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
         assertTrue(sessionInfoDAO.getAll().size() == 1);
 
         sessionInfoDAO.deleteWhereUserIdEquals(USER_ID);
@@ -226,15 +158,8 @@ public class SessionInfoDAOTest {
     @Test
     public void deleteWhereUserIdEqualsException() throws Exception {
 
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
         assertTrue(sessionInfoDAO.getAll().size() == 1);
 
         try {
@@ -243,49 +168,21 @@ public class SessionInfoDAOTest {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
         fail();
     }
 
     @Test
     public void getSessionHandlesWhereUserIdEquals() throws UserIdNotFoundException {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE + "two",
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE + "three",
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE + "four",
-                USER_ID + "three",
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE + "two", USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA,
+                EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE + "three", USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA,
+                EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE + "four", USER_ID + "three", REFRESH_TOKEN_HASH_TWO,
+                SESSION_DATA, EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
 
         String[] sessionHandles = sessionInfoDAO.getSessionHandlesWhereUserIdEquals(USER_ID);
 
@@ -294,15 +191,8 @@ public class SessionInfoDAOTest {
 
     @Test
     public void getSessionHandlesWhereUserIdEqualsException() {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         try {
             sessionInfoDAO.getSessionHandlesWhereUserIdEquals(USER_ID + "two");
@@ -310,22 +200,15 @@ public class SessionInfoDAOTest {
             assertTrue(true);
             return;
         } catch (Exception e) {
-            //do nothing failure case scenario
+            // do nothing failure case scenario
         }
         fail();
     }
 
     @Test
     public void getWhereSessionHandleEquals() {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals(SESSION_HANDLE);
         assertTrue(sessionInfoDO != null);
@@ -337,20 +220,12 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getCreated_at_time() == CREATED_AT);
         assertTrue(sessionInfoDO.getJwt_user_payload().equals(JWT_USER_PAYLOAD));
 
-
     }
 
     @Test
     public void getWhereSessionHandleEqualsException() {
-        sessionInfoDAO.insertIntoTableValues(
-                SESSION_HANDLE,
-                USER_ID,
-                REFRESH_TOKEN_HASH_TWO,
-                SESSION_DATA,
-                EXPIRES_AT,
-                CREATED_AT,
-                JWT_USER_PAYLOAD
-        );
+        sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
+                CREATED_AT, JWT_USER_PAYLOAD);
 
         try {
             SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals(SESSION_HANDLE + "Two");
@@ -361,8 +236,6 @@ public class SessionInfoDAOTest {
             // do nothing failure case scenario
         }
         fail();
-
-
 
     }
 }

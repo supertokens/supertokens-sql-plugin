@@ -18,22 +18,59 @@ package io.supertokens.storage.sql.dataaccessobjects.thirdparty;
 
 import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface ThirdPartyUsersInterfaceDAO extends DAO {
     /**
      * String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-     *                 + Config.getConfig(start).getThirdPartyUsersTable()
-     *                 + " WHERE third_party_id = ? AND third_party_user_id = ?";
+     * + Config.getConfig(start).getThirdPartyUsersTable()
+     * + " WHERE third_party_id = ? AND third_party_user_id = ?";
      */
     public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-                                                                                 String thirdPartyUserId);
-
+            String thirdPartyUserId);
 
     /**
      * insert values into table
      */
-    public Serializable insertValues(String thirdPartyId, String thirdPartyUserId, String userId,
-                                     String email, long timeJoined);
+    public Serializable insertValues(String thirdPartyId, String thirdPartyUserId, String userId, String email,
+            long timeJoined);
+
+    /**
+     * String QUERY = "UPDATE " + Config.getConfig(start).getThirdPartyUsersTable()
+     *                 + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
+     */
+    public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
+                                                                            String ThirdPartyUserId,
+                                                                            String email);
+
+    /**
+     *  String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+     *                 + Config.getConfig(start).getThirdPartyUsersTable()
+     *                 + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
+     */
+    public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(String thirdPartyId,
+                                                                                 String thirdPartyUserId);
+
+    /**
+     * String sqlQuery = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+     *                 + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
+     */
+    public List<ThirdPartyUsersDO> getWhereEmailEquals(String email);
+
+    /**
+     * String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+     *                 + Config.getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
+     *                 + ", user_id DESC LIMIT ?";
+     */
+    public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder, String userIdOrder,
+                                                                        Integer limit) throws InvalidOrderTypeException;
+
+
+    /**
+     *  String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
+     */
+    public Long getCount();
 }
