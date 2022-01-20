@@ -17,11 +17,11 @@
 package io.supertokens.storage.sql;
 
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
+import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
 
-import javax.persistence.Column;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -52,5 +52,8 @@ public class TestConstants {
     public static final String PHONE_NUMBER = "PHONE_NUMBER";
     public static final String LINK_CODE_SALT = "LINK_CODE_SALT";
     public static final int FAILED_ATTEMPTS = 2;
+
+    public static final String CODE_ID = "CODE_ID";
+    public static final String LINKED_CODE_HASH = "LINKED_CODE_HASH";
 
 }

@@ -16,7 +16,9 @@
 
 package io.supertokens.storage.sql.domainobjects.passwordless;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
@@ -28,6 +30,8 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(indexes = { @Index(columnList = "created_at") })
 public class PasswordlessCodesDO {
 
@@ -44,6 +48,6 @@ public class PasswordlessCodesDO {
     String link_code_hash;
 
     @Column(columnDefinition = "BIGINT  NOT NULL")
-    BigInteger created_at;
+    long created_at;
 
 }

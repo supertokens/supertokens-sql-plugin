@@ -60,6 +60,9 @@
         <mapping class="io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO" />
         <mapping class="io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO" />
         <mapping class="io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO" />
+        <mapping class="io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO" />
+        <mapping class="io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO" />
+        <mapping class="io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO" />
 
 
 

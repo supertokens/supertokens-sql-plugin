@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.passwordless;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,9 +30,17 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "passwordless_users")
 public class PasswordlessUsersDO {
+
+    /**
+     * return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getPasswordlessUsersTable() + " ("
+     * + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) UNIQUE," + "phone_number VARCHAR(256)
+     * UNIQUE,"
+     * + "time_joined BIGINT UNSIGNED NOT NULL," + "PRIMARY KEY (user_id));";
+     */
 
     @Id
     @Column(length = 36)
@@ -44,5 +53,5 @@ public class PasswordlessUsersDO {
     String phone_number;
 
     @Column(columnDefinition = "BIGINT  NOT NULL")
-    BigInteger time_joined;
+    long time_joined;
 }

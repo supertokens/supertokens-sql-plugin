@@ -150,4 +150,80 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
             throw new NoResultException();
 
     }
+
+    @Override
+    public void deleteWherePhoneNumberEquals(String phoneNumber) {
+        Session session = sessionFactory.openSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+
+        CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
+                .createCriteriaDelete(PasswordlessDevicesDO.class);
+
+        Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
+        criteriaDelete.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
+
+        Transaction transaction = session.beginTransaction();
+        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
+        transaction.commit();
+        session.close();
+
+        if (rowsUpdated == 0)
+            throw new NoResultException();
+    }
+
+    @Override
+    public void deleteWhereEmailEquals(String email) {
+        Session session = sessionFactory.openSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+
+        CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
+                .createCriteriaDelete(PasswordlessDevicesDO.class);
+
+        Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
+        criteriaDelete.where(criteriaBuilder.equal(root.get("email"), email));
+
+        Transaction transaction = session.beginTransaction();
+        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
+        transaction.commit();
+        session.close();
+
+        if (rowsUpdated == 0)
+            throw new NoResultException();
+    }
+
+    @Override
+    public List<PasswordlessDevicesDO> getDevicesWhereEmailEquals(String email) {
+        Session session = sessionFactory.openSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
+        Root<PasswordlessDevicesDO> root = criteriaQuery.from(PasswordlessDevicesDO.class);
+        criteriaQuery.select(root);
+        criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
+        Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
+        List<PasswordlessDevicesDO> result = query.getResultList();
+        session.close();
+
+        if (result.size() == 0)
+            throw new NoResultException();
+
+        return result;
+    }
+
+    @Override
+    public List<PasswordlessDevicesDO> getDevicesWherePhoneNumberEquals(String phoneNumber) {
+        Session session = sessionFactory.openSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
+        Root<PasswordlessDevicesDO> root = criteriaQuery.from(PasswordlessDevicesDO.class);
+        criteriaQuery.select(root);
+        criteriaQuery.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
+        Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
+        List<PasswordlessDevicesDO> result = query.getResultList();
+        session.close();
+
+        if (result.size() == 0)
+            throw new NoResultException();
+
+        return result;
+    }
 }

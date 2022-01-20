@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
-import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.junit.After;
@@ -138,5 +137,111 @@ public class PasswordlessDevicesDAOTest {
         }
         fail();
 
+    }
+
+    @Test
+    public void deleteWherePhoneNumberEquals() {
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+
+        assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
+        passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
+        assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
+    }
+
+    @Test
+    public void deleteWherePhoneNumberEqualsException() {
+        try {
+            passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
+        } catch (NoResultException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+            // do nothing failure case
+        }
+        fail();
+
+    }
+
+    @Test
+    public void deleteWhereEmailEquals() {
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+
+        assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
+        passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+        assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
+    }
+
+    @Test
+    public void deleteWhereEmailEqualsException() {
+        try {
+            passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+        } catch (NoResultException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+            // do nothing failure case
+        }
+        fail();
+
+    }
+
+    @Test
+    public void getDevicesWhereEmailEquails() {
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "1", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "2", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "3", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "4", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "5", EMAIL + ".com", PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+
+        assertTrue(passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL).size() == 4);
+    }
+
+    @Test
+    public void getDevicesWhereEmailEquailsException() {
+        try {
+            passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL);
+        } catch (NoResultException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+            // do nothing, failure case scenario
+        }
+        fail();
+    }
+
+    @Test
+    public void getDevicesWherePhoneNumberEquals() {
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "1", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "2", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "3", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "4", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+        passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "5", EMAIL, PHONE_NUMBER + "1", LINK_CODE_SALT,
+                FAILED_ATTEMPTS, null);
+
+        assertTrue(passwordlessDevicesDAO.getDevicesWherePhoneNumberEquals(PHONE_NUMBER).size() == 4);
+    }
+
+    @Test
+    public void getDevicesWherePhoneNumberEqualsException() {
+        try {
+            passwordlessDevicesDAO.getDevicesWherePhoneNumberEquals(PHONE_NUMBER);
+        } catch (NoResultException e) {
+            assertTrue(true);
+            return;
+        } catch (Exception e) {
+            // do nothing, failure case scenario
+        }
+        fail();
     }
 }

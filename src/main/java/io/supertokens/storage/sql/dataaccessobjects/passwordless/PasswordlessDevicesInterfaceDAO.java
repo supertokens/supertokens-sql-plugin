@@ -49,4 +49,29 @@ public interface PasswordlessDevicesInterfaceDAO extends DAO {
      * + " WHERE device_id_hash = ?";
      */
     public void deleteWhereDeviceIdHashEquals(String deviceIdHash);
+
+    /**
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
+     * + " WHERE phone_number = ?";
+     */
+    public void deleteWherePhoneNumberEquals(String phoneNumber);
+
+    /**
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE email
+     * = ?";
+     */
+    public void deleteWhereEmailEquals(String email);
+
+    /**
+     * String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
+     * + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE email = ?";
+     */
+    public List<PasswordlessDevicesDO> getDevicesWhereEmailEquals(String email);
+
+    /**
+     * String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
+     * + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE phone_number = ?";
+     */
+    public List<PasswordlessDevicesDO> getDevicesWherePhoneNumberEquals(String phoneNumber);
+
 }
