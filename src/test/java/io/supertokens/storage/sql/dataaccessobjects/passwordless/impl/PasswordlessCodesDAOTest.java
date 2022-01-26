@@ -20,6 +20,8 @@ import io.supertokens.pluginInterface.passwordless.PasswordlessCode;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -33,25 +35,30 @@ import static org.junit.Assert.*;
 
 public class PasswordlessCodesDAOTest {
 
-    static PasswordlessCodesDAO passwordlessCodesDAO;
-    static PasswordlessDevicesDAO passwordlessDevicesDAO;
+    PasswordlessCodesDAO passwordlessCodesDAO;
+    PasswordlessDevicesDAO passwordlessDevicesDAO;
+    Session session;
 
-    @BeforeClass
-    public static void beforeClass() {
-        passwordlessCodesDAO = new PasswordlessCodesDAO(HibernateUtilTest.getSessionFactory());
-        passwordlessDevicesDAO = new PasswordlessDevicesDAO(HibernateUtilTest.getSessionFactory());
-    }
 
     @Before
     public void before() {
+        session = HibernateUtilTest.getSessionFactory().openSession();
+        passwordlessCodesDAO = new PasswordlessCodesDAO(session);
+        passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
+
+        Transaction transaction = session.beginTransaction();
         passwordlessCodesDAO.removeAll();
         passwordlessDevicesDAO.removeAll();
+        transaction.commit();
     }
 
     @After
     public void after() {
+        Transaction transaction = session.beginTransaction();
         passwordlessCodesDAO.removeAll();
         passwordlessDevicesDAO.removeAll();
+        transaction.commit();
+        session.close();
     }
 
     @Test
@@ -59,7 +66,9 @@ public class PasswordlessCodesDAOTest {
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 0);
 
+        Transaction transaction = session.beginTransaction();
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
+        transaction.commit();
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 1);
 
@@ -68,12 +77,15 @@ public class PasswordlessCodesDAOTest {
     @Test
     public void getCodesWhereDeviceIdHashEquals() {
 
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
 
-        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, passwordlessDevicesDO, LINKED_CODE_HASH, CREATED_AT);
+        transaction.commit();
 
         List<PasswordlessCodesDO> codesDO = passwordlessCodesDAO.getCodesWhereDeviceIdHashEquals(passwordlessDevicesDO);
 
@@ -82,18 +94,23 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getCodesWhereDeviceIdHashEqualsException() {
+        Transaction transaction = session.beginTransaction();
 
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
 
-        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
 
         try {
             List<PasswordlessCodesDO> codesDO = passwordlessCodesDAO
                     .getCodesWhereDeviceIdHashEquals(passwordlessDevicesDO);
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -104,8 +121,11 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getWhereLinkCodeHashEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "two", null, LINKED_CODE_HASH + "two", CREATED_AT);
+        transaction.commit();
 
         PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "Two");
 
@@ -117,11 +137,17 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getWhereLinkCodeHashEqualsException() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
 
         try {
             PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "Two");
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -136,11 +162,16 @@ public class PasswordlessCodesDAOTest {
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 0);
 
+        Transaction transaction = session.beginTransaction();
+
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
+        transaction.commit();
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 1);
 
+        transaction = session.beginTransaction();
         passwordlessCodesDAO.deleteWhereCodeIdEquals(CODE_ID);
+        transaction.commit();
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 0);
     }
@@ -149,6 +180,7 @@ public class PasswordlessCodesDAOTest {
     public void deleteWhereCodeIdEqualsException() {
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 0);
+        Transaction transaction = session.beginTransaction();
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
 
@@ -156,7 +188,11 @@ public class PasswordlessCodesDAOTest {
 
         try {
             passwordlessCodesDAO.deleteWhereCodeIdEquals(CODE_ID + "two");
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -167,12 +203,13 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getCodesWhereCreatedAtLessThan() {
+        Transaction transaction = session.beginTransaction();
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "1", null, LINKED_CODE_HASH + "1", CREATED_AT);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "2", null, LINKED_CODE_HASH + "2", CREATED_AT + 20l);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "3", null, LINKED_CODE_HASH + "3", CREATED_AT + 30l);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "4", null, LINKED_CODE_HASH + "4", CREATED_AT + 40l);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "5", null, LINKED_CODE_HASH + "5", CREATED_AT + 50l);
-
+        transaction.commit();
         assertTrue(passwordlessCodesDAO.getCodesWhereCreatedAtLessThan(CREATED_AT + 45l).size() == 4);
     }
 
@@ -191,8 +228,11 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getCodeWhereCodeIdEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "1", null, LINKED_CODE_HASH + "1", CREATED_AT);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "2", null, LINKED_CODE_HASH + "2", CREATED_AT + 20l);
+        transaction.commit();
 
         PasswordlessCodesDO codesDO = passwordlessCodesDAO.getCodeWhereCodeIdEquals(CODE_ID + "1");
         assertTrue(codesDO.getCreated_at() == CREATED_AT);
@@ -203,8 +243,11 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getCodeWhereCodeIdEqualsException() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "1", null, LINKED_CODE_HASH + "1", CREATED_AT);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "2", null, LINKED_CODE_HASH + "2", CREATED_AT + 20l);
+        transaction.commit();
 
         try {
             passwordlessCodesDAO.getCodeWhereCodeIdEquals(CODE_ID + "3");

@@ -16,17 +16,18 @@
 
 package io.supertokens.storage.sql.dataaccessobjects;
 
-import org.hibernate.SessionFactory;
+
+import org.hibernate.Session;
 
 /**
  * Holds session factory objects for DAO's to interact with the database
  */
-public class SessionFactoryDAO {
+public class SessionTransactionDAO {
 
-    protected final SessionFactory sessionFactory;
+    protected final Session sessionInstance;
 
-    public SessionFactoryDAO(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public SessionTransactionDAO(Session sessionInstance) {
+        this.sessionInstance = sessionInstance;
     }
 
 }

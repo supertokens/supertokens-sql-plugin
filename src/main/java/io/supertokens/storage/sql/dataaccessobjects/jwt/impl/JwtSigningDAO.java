@@ -16,12 +16,10 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.jwt.impl;
 
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.jwt.JwtSigningInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.jwtsigning.JWTSigningKeysDO;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import javax.persistence.LockModeType;
@@ -30,10 +28,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterfaceDAO {
+public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningInterfaceDAO {
 
-    public JwtSigningDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public JwtSigningDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
@@ -48,34 +46,30 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
 
     @Override
     public List getAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<JWTSigningKeysDO> criteria = criteriaBuilder.createQuery(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteria.from(JWTSigningKeysDO.class);
         criteria.select(root);
         Query<JWTSigningKeysDO> query = session.createQuery(criteria);
         List<JWTSigningKeysDO> results = query.getResultList();
-        session.close();
         return results;
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) throws Exception {
-
+    public int removeWhereUserIdEquals(Object id) throws Exception {
+        return 0;
     }
 
     @Override
     public void removeAll() {
 
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<JWTSigningKeysDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteriaDelete.from(JWTSigningKeysDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("key_id")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
     }
 
@@ -84,12 +78,9 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
 
         JWTSigningKeysDO jwtSigningKeysDO = new JWTSigningKeysDO(keyId, keyString, algorithm, createdAt);
 
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        Session session = (Session) sessionInstance.getSession();
 
         String id = (String) session.save(jwtSigningKeysDO);
-        transaction.commit();
-        session.close();
 
         return id;
 
@@ -97,7 +88,7 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
 
     @Override
     public List<JWTSigningKeysDO> getAllOrderByCreatedAtDesc_locked() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<JWTSigningKeysDO> criteria = criteriaBuilder.createQuery(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteria.from(JWTSigningKeysDO.class);
@@ -108,10 +99,7 @@ public class JwtSigningDAO extends SessionFactoryDAO implements JwtSigningInterf
         criteria.orderBy(orderList);
 
         Query<JWTSigningKeysDO> query = session.createQuery(criteria);
-        Transaction transaction = session.beginTransaction();
         List<JWTSigningKeysDO> results = query.setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
-        transaction.commit();
-        session.close();
         return results;
     }
 }

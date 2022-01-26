@@ -36,7 +36,7 @@ public interface PasswordlessDevicesInterfaceDAO extends DAO {
      * String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
      * + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ? FOR UPDATE";
      */
-    public PasswordlessDevicesDO getWhereDeviceIdHashEquals(String deviceIdHash);
+    public PasswordlessDevicesDO getWhereDeviceIdHashEquals_locked(String deviceIdHash);
 
     /**
      * String QUERY = "UPDATE " + Config.getConfig(start).getPasswordlessDevicesTable()

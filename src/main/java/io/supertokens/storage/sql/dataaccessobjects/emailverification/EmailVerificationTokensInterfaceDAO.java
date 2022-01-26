@@ -41,7 +41,7 @@ public interface EmailVerificationTokensInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
      * + " WHERE user_id = ? AND email = ?";
      */
-    public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
+    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
             throws UserAndEmailNotFoundException;
 
     /**

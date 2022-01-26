@@ -16,14 +16,11 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.PasswordlessDevicesInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
-import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import javax.persistence.LockModeType;
@@ -32,10 +29,10 @@ import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
 
-public class PasswordlessDevicesDAO extends SessionFactoryDAO implements PasswordlessDevicesInterfaceDAO {
+public class PasswordlessDevicesDAO extends SessionTransactionDAO implements PasswordlessDevicesInterfaceDAO {
 
-    public PasswordlessDevicesDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public PasswordlessDevicesDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
@@ -50,34 +47,30 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
     @Override
     public List getAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
         Root<PasswordlessDevicesDO> root = criteriaQuery.from(PasswordlessDevicesDO.class);
         criteriaQuery.select(root);
         Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
         List<PasswordlessDevicesDO> result = query.getResultList();
-        session.close();
         return result;
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) throws Exception {
-
+    public int removeWhereUserIdEquals(Object id) throws Exception {
+        return 0;
     }
 
     @Override
     public void removeAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessDevicesDO.class);
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("device_id_hash")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
@@ -86,17 +79,14 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO(deviceIdHash, email, phoneNumber,
                 linkCodeSalt, failedAttempts, codes);
 
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        Session session = (Session) sessionInstance.getSession();
         String id = (String) session.save(passwordlessDevicesDO);
-        transaction.commit();
-        session.close();
         return id;
     }
 
     @Override
-    public PasswordlessDevicesDO getWhereDeviceIdHashEquals(String deviceIdHash) {
-        Session session = sessionFactory.openSession();
+    public PasswordlessDevicesDO getWhereDeviceIdHashEquals_locked(String deviceIdHash) {
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
@@ -105,12 +95,9 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
         criteriaQuery.where(criteriaBuilder.equal(root.get("device_id_hash"), deviceIdHash));
 
-        Transaction transaction = session.beginTransaction();
         PasswordlessDevicesDO result = session.createQuery(criteriaQuery).setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getSingleResult();
 
-        transaction.commit();
-        session.close();
 
         return result;
     }
@@ -121,18 +108,15 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
     @Override
     public void updateFailedAttemptsWhereDeviceIdHashEquals(String deviceIdHash) {
 
-        Session session = sessionFactory.openSession();
-        PasswordlessDevicesDO devicesDO = getWhereDeviceIdHashEquals(deviceIdHash);
+        Session session = (Session) sessionInstance.getSession();
+        PasswordlessDevicesDO devicesDO = getWhereDeviceIdHashEquals_locked(deviceIdHash);
         devicesDO.setFailed_attempts(devicesDO.getFailed_attempts() + 1);
-        Transaction transaction = session.beginTransaction();
         session.update(devicesDO);
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public void deleteWhereDeviceIdHashEquals(String deviceIdHash) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
@@ -141,10 +125,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("device_id_hash"), deviceIdHash));
 
-        Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
         if (rowsUpdated == 0)
             throw new NoResultException();
@@ -153,7 +134,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
     @Override
     public void deleteWherePhoneNumberEquals(String phoneNumber) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
@@ -162,10 +143,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
 
-        Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
         if (rowsUpdated == 0)
             throw new NoResultException();
@@ -173,7 +151,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
     @Override
     public void deleteWhereEmailEquals(String email) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
@@ -182,10 +160,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("email"), email));
 
-        Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
         if (rowsUpdated == 0)
             throw new NoResultException();
@@ -193,7 +168,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
     @Override
     public List<PasswordlessDevicesDO> getDevicesWhereEmailEquals(String email) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
         Root<PasswordlessDevicesDO> root = criteriaQuery.from(PasswordlessDevicesDO.class);
@@ -201,7 +176,6 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
         List<PasswordlessDevicesDO> result = query.getResultList();
-        session.close();
 
         if (result.size() == 0)
             throw new NoResultException();
@@ -211,7 +185,7 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
 
     @Override
     public List<PasswordlessDevicesDO> getDevicesWherePhoneNumberEquals(String phoneNumber) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessDevicesDO> criteriaQuery = criteriaBuilder.createQuery(PasswordlessDevicesDO.class);
         Root<PasswordlessDevicesDO> root = criteriaQuery.from(PasswordlessDevicesDO.class);
@@ -219,7 +193,6 @@ public class PasswordlessDevicesDAO extends SessionFactoryDAO implements Passwor
         criteriaQuery.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
         Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
         List<PasswordlessDevicesDO> result = query.getResultList();
-        session.close();
 
         if (result.size() == 0)
             throw new NoResultException();

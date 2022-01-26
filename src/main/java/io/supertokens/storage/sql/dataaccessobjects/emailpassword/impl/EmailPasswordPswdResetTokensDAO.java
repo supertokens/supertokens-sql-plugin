@@ -17,14 +17,12 @@
 package io.supertokens.storage.sql.dataaccessobjects.emailpassword.impl;
 
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.emailpassword.EmailPasswordPswdResetTokensInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensPKDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
 
@@ -33,35 +31,31 @@ import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
 
-public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
+public class EmailPasswordPswdResetTokensDAO extends SessionTransactionDAO
         implements EmailPasswordPswdResetTokensInterfaceDAO {
 
-    public EmailPasswordPswdResetTokensDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public EmailPasswordPswdResetTokensDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
     public Serializable create(EmailPasswordPswdResetTokensDO entity) {
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        Session session = (Session) sessionInstance.getSession();
         Serializable id = session.save(entity);
-        transaction.commit();
-        session.close();
         return id;
     }
 
     @Override
     public EmailPasswordPswdResetTokensDO get(Object id) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = session
                 .find(EmailPasswordPswdResetTokensDO.class, id);
-        session.close();
         return emailPasswordPswdResetTokensDO;
     }
 
     @Override
     public List<EmailPasswordPswdResetTokensDO> getAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordPswdResetTokensDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailPasswordPswdResetTokensDO.class);
@@ -69,71 +63,58 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
         criteriaQuery.select(root);
         Query<EmailPasswordPswdResetTokensDO> query = session.createQuery(criteriaQuery);
         List<EmailPasswordPswdResetTokensDO> result = query.getResultList();
-        session.close();
         return result;
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) {
-        Session session = sessionFactory.openSession();
+    public int removeWhereUserIdEquals(Object id) {
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordPswdResetTokensDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordPswdResetTokensDO.class);
         Root<EmailPasswordPswdResetTokensDO> root = criteriaDelete.from(EmailPasswordPswdResetTokensDO.class);
         EmailPasswordPswdResetTokensPKDO dopk = (EmailPasswordPswdResetTokensPKDO) id;
         criteriaDelete.where(criteriaBuilder.equal(root.get("primaryKey"), dopk));
-        Transaction transaction = session.beginTransaction();
-        session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
+        return session.createQuery(criteriaDelete).executeUpdate();
     }
 
     @TestOnly
     @Override
     public void removeAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordPswdResetTokensDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordPswdResetTokensDO.class);
         Root<EmailPasswordPswdResetTokensDO> root = criteriaDelete.from(EmailPasswordPswdResetTokensDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("primaryKey")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public void deleteWhereTokenExpiryIsLessThan(long token_expiry) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordPswdResetTokensDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordPswdResetTokensDO.class);
         Root<EmailPasswordPswdResetTokensDO> root = criteriaDelete.from(EmailPasswordPswdResetTokensDO.class);
         criteriaDelete.where(criteriaBuilder.lessThan(root.get("token_expiry"), token_expiry));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public void deleteAllWhereUserIdEquals(String user_id) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordPswdResetTokensDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordPswdResetTokensDO.class);
         Root<EmailPasswordPswdResetTokensDO> root = criteriaDelete.from(EmailPasswordPswdResetTokensDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("primaryKey").get("user_id").get("user_id"), user_id));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public List<EmailPasswordPswdResetTokensDO> getAllPasswordResetTokenInfoForUser(String userId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordPswdResetTokensDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailPasswordPswdResetTokensDO.class);
@@ -143,13 +124,12 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
         criteriaQuery.where(criteriaBuilder.equal(root.get("primaryKey").get("user_id").get("user_id"), userId));
         Query<EmailPasswordPswdResetTokensDO> query = session.createQuery(criteriaQuery);
         List<EmailPasswordPswdResetTokensDO> result = query.getResultList();
-        session.close();
         return result;
     }
 
     @Override
     public List<EmailPasswordPswdResetTokensDO> lockAndgetAllPasswordResetTokenInfoForUser(String userId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordPswdResetTokensDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailPasswordPswdResetTokensDO.class);
@@ -159,16 +139,13 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
         criteriaQuery.where(criteriaBuilder.equal(root.get("primaryKey").get("user_id").get("user_id"), userId));
         Query<EmailPasswordPswdResetTokensDO> query = session.createQuery(criteriaQuery)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE);
-        Transaction transaction = session.beginTransaction();
         List<EmailPasswordPswdResetTokensDO> result = query.getResultList();
-        transaction.commit();
-        session.close();
         return result;
     }
 
     @Override
     public EmailPasswordPswdResetTokensDO getPasswordResetTokenInfo(String token) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordPswdResetTokensDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailPasswordPswdResetTokensDO.class);
@@ -178,7 +155,6 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
         criteriaQuery.where(criteriaBuilder.equal(root.get("primaryKey").get("token"), token));
         Query<EmailPasswordPswdResetTokensDO> query = session.createQuery(criteriaQuery);
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = query.getSingleResult();
-        session.close();
         return emailPasswordPswdResetTokensDO;
     }
 
@@ -186,7 +162,7 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
     public EmailPasswordPswdResetTokensPKDO insertPasswordResetTokenInfo(String userId, String token, long tokenExpiry)
             throws UnknownUserIdException {
 
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         EmailPasswordUsersDO emailPasswordUsersDO = session.find(EmailPasswordUsersDO.class, userId);
         if (emailPasswordUsersDO == null)
@@ -194,10 +170,7 @@ public class EmailPasswordPswdResetTokensDAO extends SessionFactoryDAO
 
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = new EmailPasswordPswdResetTokensDO(
                 new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, token), tokenExpiry);
-        Transaction transaction = session.beginTransaction();
         Serializable key = session.save(emailPasswordPswdResetTokensDO);
-        transaction.commit();
-        session.close();
         return (EmailPasswordPswdResetTokensPKDO) key;
     }
 

@@ -19,6 +19,9 @@ package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
+import org.hibernate.NonUniqueObjectException;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Before;
@@ -33,31 +36,40 @@ import static org.junit.Assert.*;
 
 public class PasswordlessUsersDAOTest {
 
-    static PasswordlessUsersDAO passwordlessUsersDAO;
-
-    @BeforeClass
-    public static void beforeClass() {
-        passwordlessUsersDAO = new PasswordlessUsersDAO(HibernateUtilTest.getSessionFactory());
-    }
+    PasswordlessUsersDAO passwordlessUsersDAO;
+    Session session;
 
     @Before
     public void before() {
+        session = HibernateUtilTest.getSessionFactory().openSession();
+        passwordlessUsersDAO = new PasswordlessUsersDAO(session);
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.removeAll();
+        transaction.commit();
     }
 
     @After
     public void after() {
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.removeAll();
+        transaction.commit();
+        session.close();
     }
 
     @Test
     public void updateEmailWhereUserIdEquals() throws UnknownUserIdException {
+        Transaction transaction = session.beginTransaction();
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID + "Two", EMAIL + "Two", PHONE_NUMBER + "Two", TIME_JOINED);
+        transaction.commit();
+        session.clear();
 
+        transaction = session.beginTransaction();
         passwordlessUsersDAO.updateEmailWhereUserIdEquals(USER_ID, EMAIL + ".com");
+        transaction.commit();
+        session.clear();
 
         PasswordlessUsersDO usersDO = passwordlessUsersDAO.getWhereUserIdEquals(USER_ID);
         assertTrue(usersDO.getEmail().equals(EMAIL + ".com"));
@@ -65,12 +77,18 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void updateEmailWhereUserIdEqualsException() {
-
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
+        transaction.commit();
 
         try {
+            transaction = session.beginTransaction();
             passwordlessUsersDAO.updateEmailWhereUserIdEquals(USER_ID + "Two", EMAIL + ".com");
+            transaction.commit();
         } catch (UnknownUserIdException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -81,14 +99,21 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void updateEmailWhereUserIdEqualsDuplicateException() {
+        Transaction transaction = session.beginTransaction();
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID + "two", EMAIL + ".com", PHONE_NUMBER + "22", TIME_JOINED);
+        transaction.commit();
 
         try {
+            transaction = session.beginTransaction();
             passwordlessUsersDAO.updateEmailWhereUserIdEquals(USER_ID + "Two", EMAIL);
+            transaction.commit();
         } catch (PersistenceException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
         } catch (Exception e) {
@@ -100,18 +125,26 @@ public class PasswordlessUsersDAOTest {
     @Test
     public void insertValuesIntoTable() {
         assertTrue(passwordlessUsersDAO.getAll().size() == 0);
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
+        transaction.commit();
         assertTrue(passwordlessUsersDAO.getAll().size() == 1);
     }
 
     @Test
     public void insertValuesIntoTableException() {
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
-
+        transaction.commit();
         try {
+            transaction = session.beginTransaction();
             passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL + "two", PHONE_NUMBER, TIME_JOINED);
+            transaction.commit();
         } catch (Exception e) {
-            assertTrue(e.getCause() instanceof ConstraintViolationException);
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            assertTrue(e instanceof NonUniqueObjectException);
             return;
         }
         fail();
@@ -119,7 +152,11 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void getWhereUserIdEquals() {
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
+        transaction.commit();
+        session.clear();
+
         PasswordlessUsersDO usersDO = passwordlessUsersDAO.getWhereUserIdEquals(USER_ID);
 
         assertTrue(usersDO.getUser_id().equals(USER_ID));
@@ -144,12 +181,17 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void updatePhoneNumberWhereUserIdEquals() throws UnknownUserIdException {
+        Transaction transaction = session.beginTransaction();
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID + "Two", EMAIL + "Two", PHONE_NUMBER + "Two", TIME_JOINED);
+        transaction.commit();
+        session.clear();
 
+        transaction = session.beginTransaction();
         passwordlessUsersDAO.updatePhoneNumberWhereUserIdEquals(USER_ID, PHONE_NUMBER + "22");
+        transaction.commit();
 
         PasswordlessUsersDO usersDO = passwordlessUsersDAO.getWhereUserIdEquals(USER_ID);
         assertTrue(usersDO.getPhone_number().equals(PHONE_NUMBER + "22"));
@@ -157,12 +199,17 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void updatePhoneNumberWhereUserIdEqualsException() {
-
+        Transaction transaction = session.beginTransaction();
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
-
+        transaction.commit();
         try {
+            transaction = session.beginTransaction();
             passwordlessUsersDAO.updatePhoneNumberWhereUserIdEquals(USER_ID + "Two", PHONE_NUMBER + "22");
+            transaction.commit();
         } catch (UnknownUserIdException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -173,14 +220,20 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void updatePhoneNumberWhereUserIdEqualsDuplicateException() {
+        Transaction transaction = session.beginTransaction();
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
 
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID + "two", EMAIL + ".com", PHONE_NUMBER + "22", TIME_JOINED);
-
+        transaction.commit();
         try {
+            transaction = session.beginTransaction();
             passwordlessUsersDAO.updatePhoneNumberWhereUserIdEquals(USER_ID + "Two", PHONE_NUMBER);
+            transaction.commit();
         } catch (PersistenceException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(e.getCause() instanceof ConstraintViolationException);
             return;
         } catch (Exception e) {
@@ -191,7 +244,12 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void getWhereEmailEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessUsersDAO.insertValuesIntoTable(USER_ID, EMAIL, PHONE_NUMBER, TIME_JOINED);
+        transaction.commit();
+        session.clear();
+
         PasswordlessUsersDO usersDO = passwordlessUsersDAO.getUserWhereEmailEquals(EMAIL);
 
         assertTrue(usersDO.getUser_id().equals(USER_ID));

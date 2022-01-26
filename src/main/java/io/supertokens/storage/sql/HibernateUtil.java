@@ -18,6 +18,13 @@ package io.supertokens.storage.sql;
 
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.SQLConfig;
+import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
+import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensPKDO;
+import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
+import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
+import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensPKDO;
+import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
+import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsPKDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
@@ -28,6 +35,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.spi.ServiceException;
+import org.hibernate.tool.schema.Action;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -81,7 +89,7 @@ public class HibernateUtil {
                 if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
                     settings.put(Environment.PASS, userConfig.getPassword());
                 }
-                settings.put(Environment.HBM2DDL_AUTO, "none");
+                settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
                 settings.put(Environment.SHOW_SQL, true);
 
                 settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
@@ -92,6 +100,8 @@ public class HibernateUtil {
                 settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(userConfig.getConnectionPoolSize()));
                 settings.put("hibernate.hikari.idleTimeout", "300000");
                 settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+
+
                 // settings.put("hibernate.hikari.cachePrepStmts", "true");
                 // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
                 // settings.put("hibernate.hikari.prepStmtCacheSqlLimit", "2048");
@@ -103,6 +113,14 @@ public class HibernateUtil {
 
                         registry = registryBuilder.build();
                         MetadataSources sources = new MetadataSources(registry)
+                                .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
+                                .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
+                                .addAnnotatedClass(EmailPasswordUsersDO.class)
+                                .addAnnotatedClass(EmailVerificationTokensDO.class)
+                                .addAnnotatedClass(EmailVerificationTokensPKDO.class)
+                                .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
+                                .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
+
                                 .addAnnotatedClass(PasswordlessCodesDO.class)
                                 .addAnnotatedClass(PasswordlessDevicesDO.class)
                                 .addAnnotatedClass(PasswordlessUsersDO.class);
@@ -119,7 +137,7 @@ public class HibernateUtil {
                 if (registry != null) {
                     StandardServiceRegistryBuilder.destroy(registry);
                 }
-                e.printStackTrace();
+                sessionFactory = null;
             }
         }
         return sessionFactory;

@@ -16,17 +16,12 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.session.SessionAccessTokenSigningKeysInterfaceDAO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
@@ -34,11 +29,11 @@ import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.List;
 
-public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
+public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
         implements SessionAccessTokenSigningKeysInterfaceDAO {
 
-    public SessionAccessTokenSigningKeysDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public SessionAccessTokenSigningKeysDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
@@ -54,7 +49,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
     @Override
     public List getAll() {
 
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<SessionAccessTokenSigningKeysDO> criteria = criteriaBuilder
                 .createQuery(SessionAccessTokenSigningKeysDO.class);
@@ -62,40 +57,33 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
         criteria.select(root);
         Query<SessionAccessTokenSigningKeysDO> query = session.createQuery(criteria);
         List<SessionAccessTokenSigningKeysDO> results = query.getResultList();
-        session.close();
         return results;
 
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) throws Exception {
-
+    public int removeWhereUserIdEquals(Object id) throws Exception {
+        return 0;
     }
 
     @Override
     public void removeAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(SessionAccessTokenSigningKeysDO.class);
         Root<SessionAccessTokenSigningKeysDO> root = criteriaDelete.from(SessionAccessTokenSigningKeysDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("created_at_time")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public long insertIntoTableValues(long createdAtTime, String value) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         SessionAccessTokenSigningKeysDO keysDO = new SessionAccessTokenSigningKeysDO(createdAtTime, value);
 
-        Transaction transaction = session.beginTransaction();
         long createdAt = (long) session.save(keysDO);
-        transaction.commit();
-        session.close();
 
         return createdAt;
 
@@ -103,7 +91,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
 
     @Override
     public void deleteWhereCreatedAtTimeLessThan(long createdAtTime) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder
@@ -112,10 +100,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionFactoryDAO
 
         criteriaDelete.where(criteriaBuilder.lessThan(root.get("created_at_time"), createdAtTime));
 
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
     }
 }

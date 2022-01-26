@@ -19,6 +19,8 @@ package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,38 +32,53 @@ import static org.junit.Assert.*;
 
 public class SessionAccessTokenSigningKeysDAOTest {
 
-    static SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO;
 
     @BeforeClass
     public static void beforeClass() {
-        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(HibernateUtilTest.getSessionFactory());
+
     }
 
     @Before
-    public void before() throws Exception {
+    public void before() {
+        Session session = HibernateUtilTest.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
         sessionAccessTokenSigningKeysDAO.removeAll();
+        transaction.commit();
+        session.close();
     }
 
     @After
     public void after() throws Exception {
-        sessionAccessTokenSigningKeysDAO.removeAll();
+        before();
     }
 
     @Test
     public void insertIntoTableValues() throws Exception {
-
+        Session session = HibernateUtilTest.getSessionFactory().openSession();
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
+        Transaction transaction = session.beginTransaction();
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
-
+        transaction.commit();
         assertTrue(sessionAccessTokenSigningKeysDAO.getAll().size() == 1);
+        session.close();
     }
 
     @Test
     public void deleteWhereCreatedAtTimeLessThan() throws Exception {
+        Session session = HibernateUtilTest.getSessionFactory().openSession();
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
+        Transaction transaction = session.beginTransaction();
+
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT + 10l, VALUE);
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT + 20l, VALUE);
+        transaction.commit();
+        session.clear();
 
+        transaction = session.beginTransaction();
         sessionAccessTokenSigningKeysDAO.deleteWhereCreatedAtTimeLessThan(CREATED_AT + 10l);
+        transaction.commit();
 
         assertTrue(sessionAccessTokenSigningKeysDAO.getAll().size() == 2);
     }

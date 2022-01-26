@@ -18,9 +18,10 @@ package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.persistence.NoResultException;
@@ -30,21 +31,24 @@ import static org.junit.Assert.*;
 
 public class PasswordlessDevicesDAOTest {
 
-    static PasswordlessDevicesDAO passwordlessDevicesDAO;
-
-    @BeforeClass
-    public static void beforeClass() {
-        passwordlessDevicesDAO = new PasswordlessDevicesDAO(HibernateUtilTest.getSessionFactory());
-    }
+    PasswordlessDevicesDAO passwordlessDevicesDAO;
+    Session session;
 
     @Before
     public void before() {
+        session = HibernateUtilTest.getSessionFactory().openSession();
+        passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
+        Transaction transaction = session.beginTransaction();
         passwordlessDevicesDAO.removeAll();
+        transaction.commit();
     }
 
     @After
     public void after() {
+        Transaction transaction = session.beginTransaction();
         passwordlessDevicesDAO.removeAll();
+        transaction.commit();
+        session.close();
     }
 
     @Test
@@ -52,8 +56,11 @@ public class PasswordlessDevicesDAOTest {
 
         assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
 
+        Transaction transaction = session.beginTransaction();
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
+        session.clear();
 
         PasswordlessDevicesDO passwordlessDevicesDO = (PasswordlessDevicesDO) passwordlessDevicesDAO.getAll().get(0);
 
@@ -67,13 +74,19 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getWhereDeviceIdHashEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "Two", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
+        session.clear();
 
+        transaction = session.beginTransaction();
         PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
-                .getWhereDeviceIdHashEquals(DEVICE_ID_HASH + "Two");
+                .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH + "Two");
+        transaction.commit();
 
         assertTrue(passwordlessDevicesDO != null);
         assertTrue(passwordlessDevicesDO.getDevice_id_hash().equals(DEVICE_ID_HASH + "Two"));
@@ -85,15 +98,24 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getWhereDeviceIdHashEqualsException() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "Two", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
+        session.clear();
 
         try {
+            transaction = session.beginTransaction();
             PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
-                    .getWhereDeviceIdHashEquals(DEVICE_ID_HASH + "Three");
+                    .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH + "Three");
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -104,32 +126,54 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void updateFailedAttemptsWhereDeviceIdHashEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
+        session.clear();
 
+        transaction = session.beginTransaction();
         passwordlessDevicesDAO.updateFailedAttemptsWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        transaction.commit();
+        session.clear();
 
-        PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        transaction = session.beginTransaction();
+        PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
+        transaction.commit();
         assertTrue(devicesDO.getFailed_attempts() == FAILED_ATTEMPTS + 1);
     }
 
     @Test
     public void deleteWhereDeviceIdHashEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
 
         assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
+
+        transaction = session.beginTransaction();
         passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        transaction.commit();
+        session.clear();
+
         assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
 
     }
 
     @Test
     public void deleteWhereDeviceIdHashEqualsException() {
+        Transaction transaction = session.beginTransaction();
 
         try {
             passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -141,19 +185,31 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void deleteWherePhoneNumberEquals() {
+        Transaction transaction = session.beginTransaction();
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
-
+        transaction.commit();
         assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
+
+        transaction = session.beginTransaction();
         passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
+        transaction.commit();
+        session.clear();
+
         assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
     }
 
     @Test
     public void deleteWherePhoneNumberEqualsException() {
+        Transaction transaction = session.beginTransaction();
+
         try {
             passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
+            transaction.commit();
         } catch (NoResultException e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -165,19 +221,33 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void deleteWhereEmailEquals() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
-
+        transaction.commit();
         assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
+
+        transaction = session.beginTransaction();
         passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+        transaction.commit();
+        session.clear();
+
         assertTrue(passwordlessDevicesDAO.getAll().size() == 0);
     }
 
     @Test
     public void deleteWhereEmailEqualsException() {
+        Transaction transaction = session.beginTransaction();
+
         try {
             passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+            transaction.commit();
         } catch (NoResultException e) {
+
+            if (transaction != null) {
+                transaction.rollback();
+            }
             assertTrue(true);
             return;
         } catch (Exception e) {
@@ -189,6 +259,8 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getDevicesWhereEmailEquails() {
+        Transaction transaction = session.beginTransaction();
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "1", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "2", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
@@ -199,12 +271,14 @@ public class PasswordlessDevicesDAOTest {
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "5", EMAIL + ".com", PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
 
         assertTrue(passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL).size() == 4);
     }
 
     @Test
     public void getDevicesWhereEmailEquailsException() {
+
         try {
             passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL);
         } catch (NoResultException e) {
@@ -218,6 +292,9 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getDevicesWherePhoneNumberEquals() {
+        Transaction transaction = session.beginTransaction();
+
+
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "1", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "2", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
@@ -228,6 +305,7 @@ public class PasswordlessDevicesDAOTest {
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "5", EMAIL, PHONE_NUMBER + "1", LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
+        transaction.commit();
 
         assertTrue(passwordlessDevicesDAO.getDevicesWherePhoneNumberEquals(PHONE_NUMBER).size() == 4);
     }

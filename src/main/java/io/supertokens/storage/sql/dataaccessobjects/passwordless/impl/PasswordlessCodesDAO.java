@@ -16,14 +16,11 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.PasswordlessCodesInterfaceDAO;
-import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import javax.persistence.NoResultException;
@@ -34,10 +31,10 @@ import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.List;
 
-public class PasswordlessCodesDAO extends SessionFactoryDAO implements PasswordlessCodesInterfaceDAO {
+public class PasswordlessCodesDAO extends SessionTransactionDAO implements PasswordlessCodesInterfaceDAO {
 
-    public PasswordlessCodesDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public PasswordlessCodesDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
@@ -52,34 +49,30 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
 
     @Override
     public List getAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
         criteria.select(root);
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         List<PasswordlessCodesDO> results = query.getResultList();
-        session.close();
         return results;
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) throws Exception {
-
+    public int removeWhereUserIdEquals(Object id) throws Exception {
+        return 0;
     }
 
     @Override
     public void removeAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessCodesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteriaDelete.from(PasswordlessCodesDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("code_id")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
@@ -87,17 +80,14 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
             long createdAt) {
         PasswordlessCodesDO codesDO = new PasswordlessCodesDO(codeId, deviceId, linkCodeHash, createdAt);
 
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        Session session = (Session) sessionInstance.getSession();
         String id = (String) session.save(codesDO);
-        transaction.commit();
-        session.close();
         return id;
     }
 
     @Override
     public List<PasswordlessCodesDO> getCodesWhereDeviceIdHashEquals(PasswordlessDevicesDO devicesDO) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -105,7 +95,6 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
         criteria.where(criteriaBuilder.equal(root.get("device"), devicesDO));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         List<PasswordlessCodesDO> results = query.getResultList();
-        session.close();
 
         if (results.size() == 0)
             throw new NoResultException();
@@ -115,7 +104,7 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
 
     @Override
     public PasswordlessCodesDO getWhereLinkCodeHashEquals(String linkCodeHash) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -123,23 +112,19 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
         criteria.where(criteriaBuilder.equal(root.get("link_code_hash"), linkCodeHash));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         PasswordlessCodesDO result = query.getSingleResult();
-        session.close();
 
         return result;
     }
 
     @Override
     public void deleteWhereCodeIdEquals(String codeId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessCodesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteriaDelete.from(PasswordlessCodesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("code_id"), codeId));
-        Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
 
         if (rowsUpdated == 0)
             throw new NoResultException();
@@ -147,7 +132,7 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
 
     @Override
     public List<PasswordlessCodesDO> getCodesWhereCreatedAtLessThan(long createdAt) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -155,7 +140,6 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
         criteria.where(criteriaBuilder.lessThan(root.get("created_at"), createdAt));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         List<PasswordlessCodesDO> result = query.getResultList();
-        session.close();
 
         if (result.size() == 0)
             throw new NoResultException();
@@ -165,7 +149,7 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
 
     @Override
     public PasswordlessCodesDO getCodeWhereCodeIdEquals(String codeId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -173,7 +157,6 @@ public class PasswordlessCodesDAO extends SessionFactoryDAO implements Passwordl
         criteria.where(criteriaBuilder.equal(root.get("code_id"), codeId));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         PasswordlessCodesDO result = query.getSingleResult();
-        session.close();
 
         return result;
     }

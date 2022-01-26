@@ -16,17 +16,13 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl;
 
-import io.supertokens.storage.sql.dataaccessobjects.SessionFactoryDAO;
+import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.thirdparty.ThirdPartyUsersInterfaceDAO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO;
 import io.supertokens.storage.sql.enums.OrderEnum;
 import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import javax.persistence.LockModeType;
@@ -36,10 +32,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyUsersInterfaceDAO {
+public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPartyUsersInterfaceDAO {
 
-    public ThirdPartyUsersDAO(SessionFactory sessionFactory) {
-        super(sessionFactory);
+    public ThirdPartyUsersDAO(Session sessionInstance) {
+        super(sessionInstance);
     }
 
     @Override
@@ -54,40 +50,36 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
 
     @Override
     public List getAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
         Root<ThirdPartyUsersDO> root = criteriaQuery.from(ThirdPartyUsersDO.class);
         criteriaQuery.select(root);
         Query<ThirdPartyUsersDO> query = session.createQuery(criteriaQuery);
         List<ThirdPartyUsersDO> result = query.getResultList();
-        session.close();
         return result;
     }
 
     @Override
-    public void removeWhereUserIdEquals(Object id) throws Exception {
-
+    public int removeWhereUserIdEquals(Object id) throws Exception {
+        return 0;
     }
 
     @Override
     public void removeAll() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<ThirdPartyUsersDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(ThirdPartyUsersDO.class);
         Root<ThirdPartyUsersDO> root = criteriaDelete.from(ThirdPartyUsersDO.class);
         criteriaDelete.where(criteriaBuilder.isNotNull(root.get("primary_key")));
-        Transaction transaction = session.beginTransaction();
         session.createQuery(criteriaDelete).executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     @Override
     public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
             String thirdPartyUserId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
@@ -100,17 +92,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         ThirdPartyUsersDO thirdPartyUsersDO = null;
 
-        Transaction transaction = session.beginTransaction();
-        try {
-            thirdPartyUsersDO = session.createQuery(criteriaQuery).getSingleResult();
-        } catch (NoResultException e) {
-            if (transaction != null)
-                transaction.rollback();
-
-            throw new NoResultException();
-        }
-        transaction.commit();
-        session.close();
+        thirdPartyUsersDO = session.createQuery(criteriaQuery).getSingleResult();
 
         return thirdPartyUsersDO;
     }
@@ -121,11 +103,8 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         ThirdPartyUsersPKDO partyUsersPKDO = new ThirdPartyUsersPKDO(thirdPartyId, thirdPartyUserId);
         ThirdPartyUsersDO thirdPartyUsersDO = new ThirdPartyUsersDO(partyUsersPKDO, userId, email, timeJoined);
 
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
+        Session session = (Session) sessionInstance.getSession();
         ThirdPartyUsersPKDO pkdo = (ThirdPartyUsersPKDO) session.save(thirdPartyUsersDO);
-        transaction.commit();
-        session.close();
 
         return pkdo;
     }
@@ -134,7 +113,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
     public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
             String thirdPartyUserId, String email) {
 
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaUpdate<ThirdPartyUsersDO> criteriaUpdate = criteriaBuilder
@@ -149,10 +128,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
 
         criteriaUpdate.where(criteriaBuilder.and(predicateOne, predicateTwo));
 
-        Transaction transaction = session.beginTransaction();
         int rowsUpdated = session.createQuery(criteriaUpdate).executeUpdate();
-        transaction.commit();
-        session.close();
 
         if (rowsUpdated == 0)
             throw new NoResultException();
@@ -162,7 +138,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
     @Override
     public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(String thirdPartyId,
             String thirdPartyUserId) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
@@ -175,25 +151,15 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         ThirdPartyUsersDO thirdPartyUsersDO = null;
 
-        Transaction transaction = session.beginTransaction();
-        try {
             thirdPartyUsersDO = session.createQuery(criteriaQuery).setLockMode(LockModeType.PESSIMISTIC_WRITE)
                     .getSingleResult();
-        } catch (NoResultException e) {
-            if (transaction != null)
-                transaction.rollback();
-
-            throw new NoResultException();
-        }
-        transaction.commit();
-        session.close();
 
         return thirdPartyUsersDO;
     }
 
     @Override
     public List<ThirdPartyUsersDO> getWhereEmailEquals(String email) {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
@@ -202,17 +168,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         List<ThirdPartyUsersDO> thirdPartyUsersDOs = null;
 
-        Transaction transaction = session.beginTransaction();
-        try {
-            thirdPartyUsersDOs = session.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException e) {
-            if (transaction != null)
-                transaction.rollback();
-
-            throw new NoResultException();
-        }
-        transaction.commit();
-        session.close();
+        thirdPartyUsersDOs = session.createQuery(criteriaQuery).getResultList();
 
         if (thirdPartyUsersDOs.size() == 0)
             throw new NoResultException();
@@ -224,7 +180,7 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
     public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder,
             String userIdOrder, Integer limit) throws InvalidOrderTypeException {
 
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<ThirdPartyUsersDO> criteriaQuery = criteriaBuilder.createQuery(ThirdPartyUsersDO.class);
@@ -249,11 +205,8 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
 
         criteriaQuery.orderBy(ordersList);
 
-        Transaction transaction = session.beginTransaction();
         List<ThirdPartyUsersDO> resultList = session.createQuery(criteriaQuery).setFirstResult(0).setMaxResults(limit)
                 .getResultList();
-        transaction.commit();
-        session.close();
 
         if (resultList.size() == 0)
             throw new NoResultException();
@@ -264,12 +217,11 @@ public class ThirdPartyUsersDAO extends SessionFactoryDAO implements ThirdPartyU
 
     @Override
     public Long getCount() {
-        Session session = sessionFactory.openSession();
+        Session session = (Session) sessionInstance.getSession();
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(ThirdPartyUsersDO.class)));
         Long rows = session.createQuery(criteriaQuery).getSingleResult();
-        session.close();
         return rows;
     }
 }

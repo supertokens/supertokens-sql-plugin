@@ -33,7 +33,7 @@ public interface EmailPasswordUsersInterfaceDAO extends DAO<EmailPasswordUsersDO
      * String QUERY = "UPDATE " + Config.getConfig(start).getEmailPasswordUsersTable()
      * + " SET email = ? WHERE user_id = ?";
      */
-    public void updateEmailWhereUserId(String user_id, String email) throws UnknownUserIdException;
+    public int updateEmailWhereUserId(String user_id, String email) throws UnknownUserIdException;
 
     /**
      * String QUERY = "INSERT INTO " + Config.getConfig(start).getEmailPasswordUsersTable()

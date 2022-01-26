@@ -27,7 +27,7 @@ public interface DAO<T> {
 
     List<T> getAll();
 
-    void removeWhereUserIdEquals(Object id) throws Exception;
+    int removeWhereUserIdEquals(Object id) throws Exception;
 
     void removeAll();
 
