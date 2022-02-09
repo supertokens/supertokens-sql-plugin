@@ -32,17 +32,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.persistence.PersistenceException;
 import java.sql.SQLException;
 import java.util.*;
 
 public class GeneralQueries {
 
-    private static void executeUpdateQuery(Start start, String query) {
+    private static void executeUpdateQuery(Start start, String query) throws StorageQueryException {
 
         try (Session session = HibernateUtil.getSessionFactory(start).openSession()) {
             Transaction transaction = session.beginTransaction();
             session.createNativeQuery(query).executeUpdate();
             transaction.commit();
+        } catch (PersistenceException | InterruptedException e) {
+            throw new StorageQueryException(e);
         }
 
     }
@@ -91,7 +94,7 @@ public class GeneralQueries {
                 + "value TEXT," + "created_at_time BIGINT ," + "PRIMARY KEY(name)" + " );";
     }
 
-    public static void createTablesIfNotExists(Start start) throws SQLException {
+    public static void createTablesIfNotExists(Start start) throws StorageQueryException {
         if (!doesTableExists(start, Config.getConfig(start).getKeyValueTable())) {
             ProcessState.getInstance(start).addState(ProcessState.PROCESS_STATE.CREATING_NEW_TABLE, null);
             // create table
@@ -206,7 +209,7 @@ public class GeneralQueries {
     }
 
     public static void setKeyValue_Transaction(Start start, Session sessionInstance, String key, KeyValueInfo info)
-            throws SQLException {
+            throws InterruptedException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getKeyValueTable()
                 + "(name, value, created_at_time) VALUES(?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE value = ?, created_at_time = ?";
@@ -226,11 +229,11 @@ public class GeneralQueries {
     }
 
     public static void setKeyValue(Start start, Session sessionInstance, String key, KeyValueInfo info)
-            throws SQLException {
+            throws InterruptedException {
         setKeyValue_Transaction(start, sessionInstance, key, info);
     }
 
-    public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {
+    public static KeyValueInfo getKeyValue(Start start, String key) throws InterruptedException {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = :name";
 
@@ -252,7 +255,7 @@ public class GeneralQueries {
     }
 
     public static KeyValueInfo getKeyValue_Transaction(Start start, Session sessionInstance, String key)
-            throws SQLException, StorageQueryException {
+            throws InterruptedException {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = ? FOR UPDATE";
 
@@ -273,7 +276,7 @@ public class GeneralQueries {
     }
 
     public static void deleteKeyValue_Transaction(Start start, Session sessionInstance, String key)
-            throws SQLException, StorageQueryException {
+            throws InterruptedException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
         Session session = HibernateUtil.getSessionFactory(start).openSession();
@@ -289,7 +292,7 @@ public class GeneralQueries {
     }
 
     @TestOnly
-    public static void deleteAllTables(Start start) throws SQLException {
+    public static void deleteAllTables(Start start) throws StorageQueryException {
 //        {
 //            String DROP_QUERY = "DROP INDEX IF EXISTS emailpassword_password_reset_token_expiry_index";
 //            executeUpdateQuery(start, DROP_QUERY);
@@ -325,7 +328,8 @@ public class GeneralQueries {
 //        executeUpdateQuery(start, CREATE_QUERY);
     }
 
-    public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds) throws SQLException {
+    public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)
+            throws SQLException, InterruptedException {
         StringBuilder QUERY = new StringBuilder(
                 "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getUsersTable());
         if (includeRecipeIds != null && includeRecipeIds.length > 0) {

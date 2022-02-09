@@ -33,6 +33,7 @@ import io.supertokens.pluginInterface.emailpassword.sqlStorage.EmailPasswordSQLS
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.emailverification.exception.DuplicateEmailVerificationTokenException;
 import io.supertokens.pluginInterface.emailverification.sqlStorage.EmailVerificationSQLStorage;
+import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.jwt.JWTSigningKeyInfo;
@@ -148,15 +149,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         }
     }
 
-    // TODO: initiate via liquibase restore later, currently being handled by hibernate
     @Override
     public void initStorage() {
-//        ConnectionPool.initPool(this);
-//        try {
-//            GeneralQueries.createTablesIfNotExists(this);
-//        } catch (SQLException e) {
-//            throw new QuitProgramFromPluginException(e);
-//        }
+        try {
+            // TODO: check if in memory db is required and load accordingly
+            HibernateUtil.getSessionFactory(this);
+            // TODO: initiate via liquibase restore later, currently being handled by hibernate
+            // GeneralQueries.createTablesIfNotExists(this);
+        } catch (InterruptedException e) {
+            throw new QuitProgramFromPluginException(e);
+        }
     }
 
     @Override
@@ -197,7 +199,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             try {
                 return startTransactionHelper(logic);
                 // TODO: fix this exception handling for hibernate related transactions
-            } catch (PersistenceException | StorageTransactionLogicException e) {
+            } catch (PersistenceException | StorageTransactionLogicException | InterruptedException e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e.getCause() instanceof SQLTransactionRollbackException
                         || e.getMessage().toLowerCase().contains("deadlock")) && tries < 3) {
@@ -214,7 +216,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     private <T> T startTransactionHelper(TransactionLogicHibernate<T> logic)
-            throws PersistenceException, StorageQueryException, StorageTransactionLogicException {
+            throws PersistenceException, StorageQueryException, StorageTransactionLogicException, InterruptedException {
 
         Session session = HibernateUtil.getSessionFactory(this).openSession();
         Transaction transaction = null;
@@ -277,7 +279,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, ACCESS_TOKEN_SIGNING_KEY_NAME);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new StorageQueryException(e);
         }
     }
@@ -286,7 +288,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public void removeLegacyAccessTokenSigningKey_Transaction(Session sessionInstance) throws StorageQueryException {
         try {
             GeneralQueries.deleteKeyValue_Transaction(this, sessionInstance, ACCESS_TOKEN_SIGNING_KEY_NAME);
-        } catch (SQLException e) {
+        } catch (PersistenceException | InterruptedException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -305,7 +307,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException {
         try {
             SessionQueries.addAccessTokenSigningKey_Transaction(this, sessionInstance, info.createdAtTime, info.value);
-        } catch (SQLException e) {
+        } catch (PersistenceException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -322,7 +324,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public KeyValueInfo getRefreshTokenSigningKey_Transaction(Session sessionInstance) throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, REFRESH_TOKEN_KEY_NAME);
-        } catch (SQLException e) {
+        } catch (PersistenceException | InterruptedException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -332,7 +334,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException {
         try {
             GeneralQueries.setKeyValue_Transaction(this, sessionInstance, REFRESH_TOKEN_KEY_NAME, info);
-        } catch (SQLException e) {
+        } catch (PersistenceException | InterruptedException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -350,7 +352,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void close() {
-        ConnectionPool.close(this);
+        HibernateUtil.shutdown();
     }
 
     @Override
@@ -466,7 +468,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException {
         try {
             GeneralQueries.setKeyValue_Transaction(this, sessionInstance, key, info);
-        } catch (SQLException e) {
+        } catch (PersistenceException | InterruptedException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -475,7 +477,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public KeyValueInfo getKeyValue_Transaction(Session sessionInstance, String key) throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, key);
-        } catch (SQLException e) {
+        } catch (PersistenceException | InterruptedException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -583,7 +585,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             EmailPasswordQueries.addPasswordResetToken(this, session, passwordResetTokenInfo.userId,
                     passwordResetTokenInfo.token, passwordResetTokenInfo.tokenExpiry);
             transaction.commit();
-        } catch (SQLException e) {
+        } catch (SQLException | InterruptedException e) {
 
             if (transaction != null) {
                 transaction.rollback();
@@ -772,7 +774,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                     emailVerificationInfo.token, emailVerificationInfo.tokenExpiry, emailVerificationInfo.email);
             transaction.commit();
 
-        } catch (SQLException e) {
+        } catch (SQLException | InterruptedException e) {
 
             if (transaction != null) {
                 transaction.rollback();
@@ -886,6 +888,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
+
+        } catch (InterruptedException e) {
+
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new StorageQueryException(e);
+
         } finally {
 
             if (session != null) {
@@ -1088,7 +1098,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             transaction = session.beginTransaction();
             PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, linkCodeSalt, code);
             transaction.commit();
-        } catch (PersistenceException | StorageTransactionLogicException e) {
+        } catch (PersistenceException | StorageTransactionLogicException | InterruptedException e) {
 
             if (transaction != null) {
                 transaction.rollback();
@@ -1221,6 +1231,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             }
             throw new StorageQueryException(e.actualException);
 
+        } catch (InterruptedException e) {
+
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new StorageQueryException(e);
+
         } finally {
 
             if (session != null) {
@@ -1300,7 +1317,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             transaction = session.beginTransaction();
             PasswordlessQueries.updateUserEmail_Transaction(this, sessionInstance, userId, email);
             transaction.commit();
-        } catch (PersistenceException e) {
+        } catch (PersistenceException | InterruptedException e) {
 
             if (transaction != null) {
                 transaction.rollback();

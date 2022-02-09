@@ -24,8 +24,6 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.session.SessionInfo;
 
-import io.supertokens.storage.sql.ConnectionPool;
-import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.session.impl.SessionAccessTokenSigningKeysDAO;
@@ -39,8 +37,6 @@ import org.hibernate.query.NativeQuery;
 
 import javax.annotation.Nullable;
 import javax.persistence.NoResultException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -194,7 +190,7 @@ public class SessionQueries {
     }
 
     public static void addAccessTokenSigningKey_Transaction(Start start, Session sessionInstance, long createdAtTime,
-            String value) throws SQLException {
+            String value) {
         SessionAccessTokenSigningKeysDAO signingKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionInstance);
 
         signingKeysDAO.insertIntoTableValues(createdAtTime, value);

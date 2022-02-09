@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql;
 
+import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.SQLConfig;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
@@ -35,6 +36,7 @@ import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSignin
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO;
+import io.supertokens.storage.sql.output.Logging;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -44,15 +46,21 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.service.spi.ServiceException;
 import org.hibernate.tool.schema.Action;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class HibernateUtil {
 
     private static StandardServiceRegistry registry;
     private static SessionFactory sessionFactory;
 
-    public static SessionFactory getSessionFactory(Start start) {
+    private static String errorMessage = "Error connecting to SQL instance. Please make sure that SQL is running and that "
+            + "you have" + " specified the correct values for ('host' and 'port') or for 'connection_uri'";
+
+    public static SessionFactory getSessionFactory(Start start) throws InterruptedException {
         return getSessionFactory(start, false);
     }
 
@@ -146,12 +154,47 @@ public class HibernateUtil {
         return settings;
     }
 
-    public static SessionFactory getSessionFactory(Start start, boolean inMemory) {
+    /**
+     * Verifying if the start object is configured correctly
+     * 
+     * @param start
+     */
+    private static void verifyStartEnvironment(Start start) {
+        if (!start.enabled) {
+            throw new RuntimeException("Connection refused");
+        }
+
+        if (Thread.currentThread() != start.mainThread) {
+            throw new QuitProgramFromPluginException("Should not come here");
+        }
+    }
+
+    /**
+     * set time to wait for the connection to be estabilished
+     * 
+     * @param start
+     * @return
+     */
+    private static int getTimeToWaitToInit(Start start) {
+        int actualValue = 3600 * 1000;
+        if (Start.isTesting) {
+            Integer testValue = ConnectionPoolTestContent.getInstance(start)
+                    .getValue(ConnectionPoolTestContent.TIME_TO_WAIT_TO_INIT);
+            return Objects.requireNonNullElse(testValue, actualValue);
+        }
+        return actualValue;
+    }
+
+    public static SessionFactory getSessionFactory(Start start, boolean inMemory) throws InterruptedException {
+
+        verifyStartEnvironment(start);
+
         if (sessionFactory == null || sessionFactory.isClosed()) {
 
-            if (!start.enabled) {
-                throw new RuntimeException("Connection refused"); // emulates exception thrown by Hikari
-            }
+            Logging.info(start, "Setting up SQL connection pool.");
+
+            long maxTryTime = System.currentTimeMillis() + getTimeToWaitToInit(start);
+            boolean longMessagePrinted = false;
 
             try {
                 StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
@@ -201,13 +244,65 @@ public class HibernateUtil {
                 }
 
             } catch (Exception e) {
-                if (registry != null) {
-                    StandardServiceRegistryBuilder.destroy(registry);
+
+                if (e.getMessage().contains("Connection refused")) {
+                    retryRefusedConnection(start, maxTryTime, longMessagePrinted);
+                } else {
+                    throw e;
                 }
-                sessionFactory = null;
+
+            } finally {
+                start.removeShutdownHook();
             }
         }
         return sessionFactory;
+    }
+
+    /**
+     * retry logic when connection to db has been refused
+     * 
+     * @param start
+     * @param maxTryTime
+     * @param longMessagePrinted
+     */
+    public static void retryRefusedConnection(Start start, long maxTryTime, boolean longMessagePrinted) {
+        start.handleKillSignalForWhenItHappens();
+
+        if (registry != null) {
+            StandardServiceRegistryBuilder.destroy(registry);
+        }
+        sessionFactory = null;
+
+        if (System.currentTimeMillis() > maxTryTime) {
+            throw new QuitProgramFromPluginException(errorMessage);
+        }
+
+        if (!longMessagePrinted) {
+            longMessagePrinted = true;
+            Logging.info(start, errorMessage);
+        }
+
+        double minsRemaining = (maxTryTime - System.currentTimeMillis()) / (1000.0 * 60);
+        NumberFormat formatter = new DecimalFormat("#0.0");
+        Logging.info(start, "Trying again in a few seconds for " + formatter.format(minsRemaining) + " mins...");
+        try {
+            if (Thread.interrupted()) {
+                throw new InterruptedException();
+            }
+            Thread.sleep(getRetryIntervalIfInitFails(start));
+        } catch (InterruptedException ex) {
+            throw new QuitProgramFromPluginException(errorMessage);
+        }
+    }
+
+    private static int getRetryIntervalIfInitFails(Start start) {
+        int actualValue = 10 * 1000;
+        if (Start.isTesting) {
+            Integer testValue = ConnectionPoolTestContent.getInstance(start)
+                    .getValue(ConnectionPoolTestContent.RETRY_INTERVAL_IF_INIT_FAILS);
+            return Objects.requireNonNullElse(testValue, actualValue);
+        }
+        return actualValue;
     }
 
     public static void shutdown() {

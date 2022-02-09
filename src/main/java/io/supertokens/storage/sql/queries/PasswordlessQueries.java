@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -35,16 +34,12 @@ import io.supertokens.storage.sql.dataaccessobjects.passwordless.impl.UsersDAO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
-import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
 
 import javax.annotation.Nonnull;
 import javax.persistence.PersistenceException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -320,7 +315,7 @@ public class PasswordlessQueries {
     }
 
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
-            throws StorageQueryException, SQLException {
+            throws StorageQueryException, SQLException, InterruptedException {
 
         Session session = HibernateUtil.getSessionFactory(start).openSession();
         Transaction transaction = session.beginTransaction();
@@ -365,11 +360,7 @@ public class PasswordlessQueries {
     }
 
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
-            throws StorageQueryException, SQLException {
-        // TODO: double check if the original method created a new connection object
-//        try (Connection con = ConnectionPool.getConnection(start)) {
-//            // We can call the transaction version here because it doesn't lock anything.
-//        }
+            throws StorageQueryException, SQLException, InterruptedException {
 
         Session session = HibernateUtil.getSessionFactory(start).openSession();
         Transaction transaction = session.beginTransaction();

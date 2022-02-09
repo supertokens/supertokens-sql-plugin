@@ -20,10 +20,14 @@ import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
-// TODO: add comments
+/**
+ * This naming strategy class is internally invoked by Hibernate to allow changing names
+ * physically on the database
+ */
 public class CustomNamingStrategy implements PhysicalNamingStrategy {
 
-    private final static String PREFIX = "SUPERTOKENS_";
+    // TODO: get this strategy reviewed
+    private final static String PREFIX = System.getenv("MYSQL_TABLE_NAMES_PREFIX");
 
     @Override
     public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment jdbcEnvironment) {

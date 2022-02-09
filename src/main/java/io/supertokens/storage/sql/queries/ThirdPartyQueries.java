@@ -22,13 +22,10 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 
 import io.supertokens.pluginInterface.thirdparty.UserInfo;
-import io.supertokens.storage.sql.ConnectionPool;
-import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.impl.UsersDAO;
 import io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl.ThirdPartyUsersDAO;
-import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.enums.OrderEnum;
 import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
@@ -37,9 +34,6 @@ import org.hibernate.query.NativeQuery;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.PersistenceException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;

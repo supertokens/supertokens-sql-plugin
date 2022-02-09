@@ -53,10 +53,11 @@ public class HibernateUtilTest {
             try {
                 Map<String, Object> settings = new HashMap<>();
 
+                //TODO: to be changed later to an in memory version
                 settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
-                settings.put(Environment.URL, "connectionUrl");
-                settings.put(Environment.USER, userConfig.getUser());
-                settings.put(Environment.PASS, userConfig.getPassword());
+                settings.put(Environment.URL, "jdbc:mysql://localhost:3306/supertokens");
+                settings.put(Environment.USER, "root");
+                settings.put(Environment.PASS, "root");
 
                 settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
                 settings.put(Environment.SHOW_SQL, true);
@@ -66,7 +67,7 @@ public class HibernateUtilTest {
 
                 settings.put("hibernate.hikari.connectionTimeout", "20000");
                 settings.put("hibernate.hikari.minimumIdle", "10");
-                settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(userConfig.getConnectionPoolSize()));
+                settings.put("hibernate.hikari.maximumPoolSize", "5");
                 settings.put("hibernate.hikari.idleTimeout", "300000");
                 settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
 
