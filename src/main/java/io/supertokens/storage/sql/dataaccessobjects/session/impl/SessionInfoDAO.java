@@ -18,6 +18,7 @@ package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.session.SessionInfoInterfaceDAO;
+import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
@@ -49,7 +50,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
     @Override
     public List getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<SessionInfoDO> criteria = criteriaBuilder.createQuery(SessionInfoDO.class);
         Root<SessionInfoDO> root = criteria.from(SessionInfoDO.class);
@@ -66,7 +67,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<SessionInfoDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(SessionInfoDO.class);
         Root<SessionInfoDO> root = criteriaDelete.from(SessionInfoDO.class);
@@ -74,7 +75,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         session.createQuery(criteriaDelete).executeUpdate();
     }
 
-    //TODO: throws a new kind of exception not handled in this repo, NonUniqueObjectException
+    // TODO: throws a new kind of exception not handled in this repo, NonUniqueObjectException
     @Override
     public Serializable insertIntoTableValues(String sessionHandle, String userId, String refreshTokenHashTwo,
             String sessionData, long expiresAt, long createdAtTime, String jwtUserPayload) {
@@ -82,14 +83,14 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         SessionInfoDO sessionInfoDO = new SessionInfoDO(sessionHandle, userId, refreshTokenHashTwo, sessionData,
                 expiresAt, createdAtTime, jwtUserPayload);
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         String id = (String) session.save(sessionInfoDO);
         return id;
     }
 
     @Override
     public SessionInfoDO getWhereSessionHandleEquals_locked(String sessionHandle) throws NoResultException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(SessionInfoDO.class);
@@ -104,7 +105,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
     @Override
     public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
             String sessionHandle) throws SessionHandleNotFoundException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaUpdate<SessionInfoDO> criteriaUpdate = criteriaBuilder.createCriteriaUpdate(SessionInfoDO.class);
@@ -124,7 +125,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
     @Override
     public void deleteWhereUserIdEquals(String userId) throws UserIdNotFoundException {
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<SessionInfoDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(SessionInfoDO.class);
@@ -141,7 +142,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
     @Override
     public String[] getSessionHandlesWhereUserIdEquals(String userId) throws UserIdNotFoundException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<SessionInfoDO> criteriaQuery = criteriaBuilder.createQuery(SessionInfoDO.class);
         Root<SessionInfoDO> root = criteriaQuery.from(SessionInfoDO.class);
@@ -165,7 +166,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
     @Override
     public void deleteWhereExpiresLessThan(long expires) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<SessionInfoDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(SessionInfoDO.class);
@@ -179,7 +180,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
     @Override
     public SessionInfoDO getWhereSessionHandleEquals(String sessionHandle) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery criteriaQuery = criteriaBuilder.createQuery(SessionInfoDO.class);
@@ -189,5 +190,15 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         Query<SessionInfoDO> query = session.createQuery(criteriaQuery);
         SessionInfoDO sessionInfoDO = query.getSingleResult();
         return sessionInfoDO;
+    }
+
+    @Override
+    public long getCount() {
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(SessionInfoDO.class)));
+        Long rows = session.createQuery(criteriaQuery).getSingleResult();
+        return rows;
     }
 }

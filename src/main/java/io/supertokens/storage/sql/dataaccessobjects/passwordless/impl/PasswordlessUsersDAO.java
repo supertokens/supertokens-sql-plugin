@@ -45,7 +45,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public List getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessUsersDO> criteria = criteriaBuilder.createQuery(PasswordlessUsersDO.class);
         Root<PasswordlessUsersDO> root = criteria.from(PasswordlessUsersDO.class);
@@ -62,7 +62,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessUsersDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessUsersDO.class);
@@ -74,7 +74,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
     @Override
     public void updateEmailWhereUserIdEquals(String userId, String email) throws UnknownUserIdException {
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaUpdate<PasswordlessUsersDO> criteriaUpdate = criteriaBuilder
@@ -95,7 +95,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
     public String insertValuesIntoTable(String userId, String emailId, String phoneNumber, long timeJoined) {
         PasswordlessUsersDO passwordlessUsersDO = new PasswordlessUsersDO(userId, emailId, phoneNumber, timeJoined);
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         String id = (String) session.save(passwordlessUsersDO);
 
         return id;
@@ -103,7 +103,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public PasswordlessUsersDO getWhereUserIdEquals(String userId) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessUsersDO> criteria = criteriaBuilder.createQuery(PasswordlessUsersDO.class);
         Root<PasswordlessUsersDO> root = criteria.from(PasswordlessUsersDO.class);
@@ -116,7 +116,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public void updatePhoneNumberWhereUserIdEquals(String userId, String phoneNumber) throws UnknownUserIdException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaUpdate<PasswordlessUsersDO> criteriaUpdate = criteriaBuilder
@@ -136,7 +136,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public PasswordlessUsersDO getUserWhereEmailEquals(String email) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessUsersDO> criteria = criteriaBuilder.createQuery(PasswordlessUsersDO.class);
         Root<PasswordlessUsersDO> root = criteria.from(PasswordlessUsersDO.class);
@@ -149,7 +149,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public PasswordlessUsersDO getUserWherePhoneNumberEquals(String phoneNumber) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessUsersDO> criteria = criteriaBuilder.createQuery(PasswordlessUsersDO.class);
         Root<PasswordlessUsersDO> root = criteria.from(PasswordlessUsersDO.class);
@@ -158,5 +158,16 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
         Query<PasswordlessUsersDO> query = session.createQuery(criteria);
         PasswordlessUsersDO result = query.getSingleResult();
         return result;
+    }
+
+    @Override
+    public int deleteWhereUserIdEquals(String userId) {
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaDelete<PasswordlessUsersDO> criteriaDelete = criteriaBuilder
+                .createCriteriaDelete(PasswordlessUsersDO.class);
+        Root<PasswordlessUsersDO> root = criteriaDelete.from(PasswordlessUsersDO.class);
+        criteriaDelete.where(criteriaBuilder.equal(root.get("user_id"), userId));
+        return session.createQuery(criteriaDelete).executeUpdate();
     }
 }

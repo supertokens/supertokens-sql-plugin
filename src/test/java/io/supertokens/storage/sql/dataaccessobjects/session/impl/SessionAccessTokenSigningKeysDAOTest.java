@@ -32,7 +32,6 @@ import static org.junit.Assert.*;
 
 public class SessionAccessTokenSigningKeysDAOTest {
 
-
     @BeforeClass
     public static void beforeClass() {
 
@@ -42,7 +41,8 @@ public class SessionAccessTokenSigningKeysDAOTest {
     public void before() {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
+                session);
         sessionAccessTokenSigningKeysDAO.removeAll();
         transaction.commit();
         session.close();
@@ -56,7 +56,8 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @Test
     public void insertIntoTableValues() throws Exception {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
+                session);
         Transaction transaction = session.beginTransaction();
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
         transaction.commit();
@@ -67,7 +68,8 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @Test
     public void deleteWhereCreatedAtTimeLessThan() throws Exception {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(session);
+        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
+                session);
         Transaction transaction = session.beginTransaction();
 
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);

@@ -55,8 +55,8 @@ public interface EmailVerificationTokensInterfaceDAO extends DAO {
      * + Config.getConfig(start).getEmailVerificationTokensTable()
      * + " WHERE user_id = ? AND email = ? FOR UPDATE";
      */
-    public List<EmailVerificationTokensDO> getLockedEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(String userId,
-            String email);
+    public List<EmailVerificationTokensDO> getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(
+            String userId, String email);
 
     /**
      * String QUERY = "SELECT user_id, token, token_expiry, email FROM "

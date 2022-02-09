@@ -47,7 +47,7 @@ public interface EmailPasswordPswdResetTokensInterfaceDAO extends DAO<EmailPassw
      * String QUERY = "SELECT user_id, token, token_expiry FROM "
      * + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ? FOR UPDATE";
      */
-    public List<EmailPasswordPswdResetTokensDO> lockAndgetAllPasswordResetTokenInfoForUser(String userId);
+    public List<EmailPasswordPswdResetTokensDO> getAllPasswordResetTokenInfoForUser_locked(String userId);
 
     /**
      * String QUERY = "SELECT user_id, token, token_expiry FROM "

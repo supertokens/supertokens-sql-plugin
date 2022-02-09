@@ -40,8 +40,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
     public void beforeTest() {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO =
-                new EmailverificationVerifiedEmailsDAO(session);
+        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                session);
         emailverificationVerifiedEmailsDAO.removeAll();
         transaction.commit();
         session.close();
@@ -57,8 +57,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
         Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO =
-                new EmailverificationVerifiedEmailsDAO(session);
+        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                session);
 
         EmailVerificationVerifiedEmailsPKDO pkdo = (EmailVerificationVerifiedEmailsPKDO) emailverificationVerifiedEmailsDAO
                 .insertIntoTable(USER_ID, EMAIL);
@@ -75,8 +75,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
         Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO =
-                new EmailverificationVerifiedEmailsDAO(session);
+        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                session);
 
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
 
@@ -100,8 +100,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals() throws Exception {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO =
-                new EmailverificationVerifiedEmailsDAO(session);
+        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                session);
 
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL + "two");
@@ -112,6 +112,11 @@ public class EmailverificationVerifiedEmailsDAOTest {
         transaction.commit();
         assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 2);
         session.close();
+    }
+
+    @Test
+    public void deleteWhereUserIdEquals() {
+        fail();
     }
 //
 //    @Test

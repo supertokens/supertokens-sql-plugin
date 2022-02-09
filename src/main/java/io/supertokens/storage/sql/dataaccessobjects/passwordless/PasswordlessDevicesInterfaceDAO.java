@@ -29,14 +29,16 @@ public interface PasswordlessDevicesInterfaceDAO extends DAO {
      * + "(device_id_hash, email, phone_number, link_code_salt, failed_attempts)"
      * + " VALUES(:device_id_hash, :email, :phone_number, :link_code_salt, 0)";
      */
-    public String insertIntoTableValues(String deviceIdHash, String email, String phoneNumber, String linkCodeSalt,
-            int failedAttempts, List<PasswordlessCodesDO> codes);
+    public PasswordlessDevicesDO insertIntoTableValues(String deviceIdHash, String email, String phoneNumber,
+            String linkCodeSalt, int failedAttempts, List<PasswordlessCodesDO> codes);
 
     /**
      * String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
      * + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ? FOR UPDATE";
      */
     public PasswordlessDevicesDO getWhereDeviceIdHashEquals_locked(String deviceIdHash);
+
+    public PasswordlessDevicesDO getWhereDeviceIdHashEquals(String deviceIdHash);
 
     /**
      * String QUERY = "UPDATE " + Config.getConfig(start).getPasswordlessDevicesTable()

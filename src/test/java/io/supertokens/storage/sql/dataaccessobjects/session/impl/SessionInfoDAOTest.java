@@ -47,8 +47,6 @@ import static org.junit.Assert.*;
 
 public class SessionInfoDAOTest {
 
-
-
     @Before
     public void before() throws Exception {
         Session session = HibernateUtilTest.getSessionFactory().openSession();
@@ -194,7 +192,6 @@ public class SessionInfoDAOTest {
         transaction = session.beginTransaction();
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE);
         transaction.commit();
-
 
         assertTrue(sessionInfoDO.getExpires_at() == EXPIRES_AT + 30l);
         assertTrue(sessionInfoDO.getRefresh_token_hash_2().equals(REFRESH_TOKEN_HASH_TWO + "UPDATED"));

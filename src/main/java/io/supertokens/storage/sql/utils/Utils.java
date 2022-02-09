@@ -1,5 +1,5 @@
 /*
- *    Copyright (c) 2022, VRAI Labs and/or its affiliates. All rights reserved.
+ *    Copyright (c) 2020, VRAI Labs and/or its affiliates. All rights reserved.
  *
  *    This software is licensed under the Apache License, Version 2.0 (the
  *    "License") as published by the Apache Software Foundation.
@@ -12,21 +12,20 @@
  *    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  *    License for the specific language governing permissions and limitations
  *    under the License.
+ *
  */
 
-package io.supertokens.storage.sql.dataaccessobjects;
+package io.supertokens.storage.sql.utils;
 
-import org.hibernate.Session;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
-/**
- * Holds session factory objects for DAO's to interact with the database
- */
-public class SessionTransactionDAO {
-
-    protected final Session sessionInstance;
-
-    public SessionTransactionDAO(Session sessionInstance) {
-        this.sessionInstance = sessionInstance;
+public class Utils {
+    public static String exceptionStacktraceToString(Exception e) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        e.printStackTrace(ps);
+        ps.close();
+        return baos.toString();
     }
-
 }

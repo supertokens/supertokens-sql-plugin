@@ -49,7 +49,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
     @Override
     public List getAll() {
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<SessionAccessTokenSigningKeysDO> criteria = criteriaBuilder
                 .createQuery(SessionAccessTokenSigningKeysDO.class);
@@ -68,7 +68,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(SessionAccessTokenSigningKeysDO.class);
@@ -79,7 +79,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
 
     @Override
     public long insertIntoTableValues(long createdAtTime, String value) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         SessionAccessTokenSigningKeysDO keysDO = new SessionAccessTokenSigningKeysDO(createdAtTime, value);
 
@@ -91,7 +91,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
 
     @Override
     public void deleteWhereCreatedAtTimeLessThan(long createdAtTime) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
         CriteriaDelete<SessionAccessTokenSigningKeysDO> criteriaDelete = criteriaBuilder

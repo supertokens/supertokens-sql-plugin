@@ -25,6 +25,7 @@ import org.hibernate.Session;
 import org.hibernate.query.Query;
 
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceException;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
@@ -48,7 +49,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
 
     @Override
     public List getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationVerifiedEmailsDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailVerificationVerifiedEmailsDO.class);
@@ -61,13 +62,19 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object id) throws Exception {
-        return 0;
+    public int removeWhereUserIdEquals(Object id) throws PersistenceException {
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
+                .createCriteriaDelete(EmailVerificationVerifiedEmailsDO.class);
+        Root root = criteriaDelete.from(EmailVerificationVerifiedEmailsDO.class);
+        criteriaDelete.where(criteriaBuilder.equal(root.get("primary_key").get("user_id"), id.toString()));
+        return session.createQuery(criteriaDelete).executeUpdate();
     }
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailVerificationVerifiedEmailsDO.class);
@@ -82,7 +89,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         EmailVerificationVerifiedEmailsDO emailVerificationTokensDO = new EmailVerificationVerifiedEmailsDO(
                 new EmailVerificationVerifiedEmailsPKDO(userId, email));
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         EmailVerificationVerifiedEmailsPKDO emailsPKDO = (EmailVerificationVerifiedEmailsPKDO) session
                 .save(emailVerificationTokensDO);
         return emailsPKDO;
@@ -91,7 +98,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
     @Override
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
             throws UserAndEmailNotFoundException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailVerificationVerifiedEmailsDO.class);
@@ -105,7 +112,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
     @Override
     public EmailVerificationVerifiedEmailsDO getWhereUserIdEqualsAndEmailEquals(String userId, String email)
             throws NoResultException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailVerificationVerifiedEmailsDO> criteriaQuery = criteriaBuilder
                 .createQuery(EmailVerificationVerifiedEmailsDO.class);
@@ -121,7 +128,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
 
     @Override
     public void deleteWhereUserIdEquals(String userId) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailVerificationVerifiedEmailsDO.class);

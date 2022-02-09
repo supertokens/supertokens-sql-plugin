@@ -71,4 +71,10 @@ public interface ThirdPartyUsersInterfaceDAO extends DAO {
      * String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
      */
     public Long getCount();
+
+    /**
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getThirdPartyUsersTable()
+     * + " WHERE user_id = ? ";
+     */
+    public int deleteWhereUserIdEquals(String userId);
 }

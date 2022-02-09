@@ -58,10 +58,10 @@ public class DeadlockTest {
 
         Storage storage = StorageLayer.getStorage(process.getProcess());
         SQLStorage sqlStorage = (SQLStorage) storage;
-        sqlStorage.startTransaction(con -> {
-            sqlStorage.setKeyValue_Transaction(con, "Key", new KeyValueInfo("Value"));
-            sqlStorage.setKeyValue_Transaction(con, "Key1", new KeyValueInfo("Value1"));
-            sqlStorage.commitTransaction(con);
+        sqlStorage.startTransactionHibernate(sessionTransaction -> {
+            sqlStorage.setKeyValue_Transaction(sessionTransaction, "Key", new KeyValueInfo("Value"));
+            sqlStorage.setKeyValue_Transaction(sessionTransaction, "Key1", new KeyValueInfo("Value1"));
+            sqlStorage.commitTransaction(sessionTransaction);
             return null;
         });
 
@@ -74,7 +74,7 @@ public class DeadlockTest {
 
         Runnable r1 = () -> {
             try {
-                sqlStorage.startTransaction(con -> {
+                sqlStorage.startTransactionHibernate(con -> {
 
                     sqlStorage.getKeyValue_Transaction(con, "Key");
 
@@ -102,7 +102,7 @@ public class DeadlockTest {
 
         Runnable r2 = () -> {
             try {
-                sqlStorage.startTransaction(con -> {
+                sqlStorage.startTransactionHibernate(con -> {
 
                     sqlStorage.getKeyValue_Transaction(con, "Key1");
 

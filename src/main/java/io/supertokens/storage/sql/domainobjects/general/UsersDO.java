@@ -16,9 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.general;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigInteger;
@@ -26,7 +24,9 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Data
 @Table(name = "all_auth_recipe_users", indexes = { @Index(columnList = "time_joined DESC, user_id DESC") })
 public class UsersDO {
 //
@@ -44,5 +44,5 @@ public class UsersDO {
     private String recipe_id;
 
     @Column(nullable = false)
-    private BigInteger time_joined;
+    private long time_joined;
 }

@@ -294,7 +294,6 @@ public class PasswordlessDevicesDAOTest {
     public void getDevicesWherePhoneNumberEquals() {
         Transaction transaction = session.beginTransaction();
 
-
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "1", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH + "2", EMAIL, PHONE_NUMBER, LINK_CODE_SALT,

@@ -69,7 +69,6 @@ public class ThirdPartyUsersDAOTest {
         ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
                 .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID);
 
-
         assertTrue(thirdPartyUsersDO != null);
         assertTrue(thirdPartyUsersDO.getEmail().equals(EMAIL));
         assertTrue(thirdPartyUsersDO.getUser_id().equals(USER_ID + "Two"));
@@ -353,6 +352,21 @@ public class ThirdPartyUsersDAOTest {
     public void getCountZero() {
 
         assertTrue(thirdPartyUsersDAO.getCount() == 0l);
+
+    }
+
+    @Test
+    public void deleteWhereUserIdEquals() {
+        Transaction transaction = session.beginTransaction();
+
+        thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
+                TIME_JOINED);
+        transaction.commit();
+
+        assertTrue(thirdPartyUsersDAO.getCount() == 1);
+
+        thirdPartyUsersDAO.deleteWhereUserIdEquals(THIRD_PARTY_ID + "One");
+        assertTrue(thirdPartyUsersDAO.getCount() == 0);
 
     }
 }

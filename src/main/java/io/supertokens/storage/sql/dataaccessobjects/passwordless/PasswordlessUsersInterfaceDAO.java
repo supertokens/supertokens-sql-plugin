@@ -55,4 +55,10 @@ public interface PasswordlessUsersInterfaceDAO extends DAO {
      * + Config.getConfig(start).getPasswordlessUsersTable() + " WHERE phone_number = ?";
      */
     public PasswordlessUsersDO getUserWherePhoneNumberEquals(String phoneNumber);
+
+    /**
+     * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessUsersTable()
+     * + " WHERE user_id = ?";
+     */
+    public int deleteWhereUserIdEquals(String userId);
 }

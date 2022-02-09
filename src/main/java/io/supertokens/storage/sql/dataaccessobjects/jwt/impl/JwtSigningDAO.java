@@ -46,7 +46,7 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
 
     @Override
     public List getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<JWTSigningKeysDO> criteria = criteriaBuilder.createQuery(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteria.from(JWTSigningKeysDO.class);
@@ -64,7 +64,7 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
     @Override
     public void removeAll() {
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<JWTSigningKeysDO> criteriaDelete = criteriaBuilder.createCriteriaDelete(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteriaDelete.from(JWTSigningKeysDO.class);
@@ -78,7 +78,7 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
 
         JWTSigningKeysDO jwtSigningKeysDO = new JWTSigningKeysDO(keyId, keyString, algorithm, createdAt);
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
 
         String id = (String) session.save(jwtSigningKeysDO);
 
@@ -88,7 +88,7 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
 
     @Override
     public List<JWTSigningKeysDO> getAllOrderByCreatedAtDesc_locked() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<JWTSigningKeysDO> criteria = criteriaBuilder.createQuery(JWTSigningKeysDO.class);
         Root<JWTSigningKeysDO> root = criteria.from(JWTSigningKeysDO.class);

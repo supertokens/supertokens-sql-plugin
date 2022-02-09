@@ -21,6 +21,7 @@ import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface EmailPasswordUsersInterfaceDAO extends DAO<EmailPasswordUsersDO> {
     /**
@@ -45,11 +46,37 @@ public interface EmailPasswordUsersInterfaceDAO extends DAO<EmailPasswordUsersDO
      * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
      * + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE user_id = ? FOR UPDATE";
      */
-    public EmailPasswordUsersDO getWhereUserIdEquals(String userId);
+    public EmailPasswordUsersDO getWhereUserIdEquals_locked(String userId);
 
     /**
      * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
      * + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
      */
     public EmailPasswordUsersDO getWhereEmailEquals(String email);
+
+    /**
+     * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
+     * + Config.getConfig(start).getEmailPasswordUsersTable() + " ORDER BY time_joined " +
+     * timeJoinedOrder
+     * + ", user_id DESC LIMIT ?";
+     */
+    public List<EmailPasswordUsersDO> getLimitedOrderByTimeJoinedAndUserId(String timeJoinedOrder, String userIdOrder,
+            int limit);
+
+    /**
+     * String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
+     * + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE time_joined " +
+     * timeJoinedOrderSymbol
+     * + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
+     * + ", user_id DESC LIMIT ?";
+     */
+    public List<EmailPasswordUsersDO> getLimitedUsersInfo(String timeJoinedOrder, Long timeJoined, String userIdOrder,
+            String userId, int limit);
+
+    /**
+     * String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getEmailPasswordUsersTable();
+     *
+     * @return
+     */
+    public Long getCount();
 }

@@ -56,4 +56,5 @@ public class TestConstants {
     public static final String CODE_ID = "CODE_ID";
     public static final String LINKED_CODE_HASH = "LINKED_CODE_HASH";
 
+    public static final String RECIPE_ID = "RECIPE_ID";
 }

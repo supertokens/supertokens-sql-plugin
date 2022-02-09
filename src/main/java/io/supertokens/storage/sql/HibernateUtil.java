@@ -25,9 +25,16 @@ import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificat
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensPKDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsPKDO;
+import io.supertokens.storage.sql.domainobjects.general.KeyValueDO;
+import io.supertokens.storage.sql.domainobjects.general.UsersDO;
+import io.supertokens.storage.sql.domainobjects.jwtsigning.JWTSigningKeysDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
+import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
+import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
+import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -46,6 +53,100 @@ public class HibernateUtil {
     private static SessionFactory sessionFactory;
 
     public static SessionFactory getSessionFactory(Start start) {
+        return getSessionFactory(start, false);
+    }
+
+    /**
+     * Load non in-memory settings
+     * 
+     * @param start
+     * @return
+     */
+    public static HashMap<String, Object> getSettings(Start start) {
+        HashMap<String, Object> settings = new HashMap<>();
+        // build connection url
+        SQLConfig userConfig = Config.getConfig(start);
+        String scheme = userConfig.getConnectionScheme();
+        String hostName = userConfig.getHostName();
+
+        String port = userConfig.getPort() + "";
+        if (!port.equals("-1")) {
+            port = ":" + port;
+        } else {
+            port = "";
+        }
+
+        String databaseName = userConfig.getDatabaseName();
+
+        String attributes = userConfig.getConnectionAttributes();
+        if (!attributes.equals("")) {
+            attributes = "?" + attributes;
+        }
+
+        String connectionUrl = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
+
+        settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
+        settings.put(Environment.URL, connectionUrl);
+
+        if (userConfig.getUser() != null) {
+            settings.put(Environment.USER, userConfig.getUser());
+
+        }
+
+        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
+            settings.put(Environment.PASS, userConfig.getPassword());
+        }
+        settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+        settings.put(Environment.SHOW_SQL, true);
+
+        settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
+        // HikariCP settings
+
+        settings.put("hibernate.hikari.connectionTimeout", "20000");
+        settings.put("hibernate.hikari.minimumIdle", "10");
+        settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(userConfig.getConnectionPoolSize()));
+        settings.put("hibernate.hikari.idleTimeout", "300000");
+        settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+
+        // settings.put("hibernate.hikari.cachePrepStmts", "true");
+        // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
+        // settings.put("hibernate.hikari.prepStmtCacheSqlLimit", "2048");
+        // settings.put("hibernate.hikari.poolName", "SuperTokens");
+
+        return settings;
+    }
+
+    /**
+     * Load in memory settings
+     * 
+     * @param start
+     * @return
+     */
+
+    public static HashMap<String, Object> getInMemorySettings(Start start) {
+        HashMap<String, Object> settings = new HashMap<>();
+
+        settings.put(Environment.DRIVER, "org.hsqldb.jdbcDriver");
+        settings.put(Environment.URL, "jdbc:hsqldb:mem:supertokens");
+        settings.put(Environment.USER, "sa");
+        settings.put(Environment.PASS, "");
+
+        settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+        settings.put(Environment.SHOW_SQL, true);
+
+        settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
+        // HikariCP settings
+
+        settings.put("hibernate.hikari.connectionTimeout", "20000");
+        settings.put("hibernate.hikari.minimumIdle", "10");
+        settings.put("hibernate.hikari.maximumPoolSize", "5");
+        settings.put("hibernate.hikari.idleTimeout", "300000");
+        settings.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
+
+        return settings;
+    }
+
+    public static SessionFactory getSessionFactory(Start start, boolean inMemory) {
         if (sessionFactory == null || sessionFactory.isClosed()) {
 
             if (!start.enabled) {
@@ -53,59 +154,14 @@ public class HibernateUtil {
             }
 
             try {
-
-                // build connection url
-                SQLConfig userConfig = Config.getConfig(start);
-                String scheme = userConfig.getConnectionScheme();
-                String hostName = userConfig.getHostName();
-
-                String port = userConfig.getPort() + "";
-                if (!port.equals("-1")) {
-                    port = ":" + port;
-                } else {
-                    port = "";
-                }
-
-                String databaseName = userConfig.getDatabaseName();
-
-                String attributes = userConfig.getConnectionAttributes();
-                if (!attributes.equals("")) {
-                    attributes = "?" + attributes;
-                }
-
-                String connectionUrl = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
-
                 StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
 
-                Map<String, Object> settings = new HashMap<>();
-                settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
-                settings.put(Environment.URL, connectionUrl);
-
-                if (userConfig.getUser() != null) {
-                    settings.put(Environment.USER, userConfig.getUser());
-
+                HashMap<String, Object> settings = null;
+                if (inMemory) {
+                    settings = getInMemorySettings(start);
+                } else {
+                    settings = getSettings(start);
                 }
-
-                if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
-                    settings.put(Environment.PASS, userConfig.getPassword());
-                }
-                settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
-                settings.put(Environment.SHOW_SQL, true);
-
-                settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
-                // HikariCP settings
-
-                settings.put("hibernate.hikari.connectionTimeout", "20000");
-                settings.put("hibernate.hikari.minimumIdle", "10");
-                settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(userConfig.getConnectionPoolSize()));
-                settings.put("hibernate.hikari.idleTimeout", "300000");
-                settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
-
-
-                // settings.put("hibernate.hikari.cachePrepStmts", "true");
-                // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
-                // settings.put("hibernate.hikari.prepStmtCacheSqlLimit", "2048");
-                // settings.put("hibernate.hikari.poolName", "SuperTokens");
 
                 while (true) {
                     try {
@@ -123,7 +179,18 @@ public class HibernateUtil {
 
                                 .addAnnotatedClass(PasswordlessCodesDO.class)
                                 .addAnnotatedClass(PasswordlessDevicesDO.class)
-                                .addAnnotatedClass(PasswordlessUsersDO.class);
+                                .addAnnotatedClass(PasswordlessUsersDO.class)
+
+                                .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
+
+                                .addAnnotatedClass(JWTSigningKeysDO.class)
+
+                                .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
+                                .addAnnotatedClass(SessionInfoDO.class)
+
+                                .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class)
+
+                        ;
 
                         Metadata metadata = sources.getMetadataBuilder().build();
                         sessionFactory = metadata.getSessionFactoryBuilder().build();

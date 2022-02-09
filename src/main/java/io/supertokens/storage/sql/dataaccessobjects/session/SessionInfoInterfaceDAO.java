@@ -72,4 +72,9 @@ public interface SessionInfoInterfaceDAO extends DAO {
      */
     public SessionInfoDO getWhereSessionHandleEquals(String sessionHandle);
 
+    /**
+     * String QUERY = "SELECT count(*) as num FROM " + Config.getConfig(start).getSessionInfoTable();
+     */
+    public long getCount();
+
 }

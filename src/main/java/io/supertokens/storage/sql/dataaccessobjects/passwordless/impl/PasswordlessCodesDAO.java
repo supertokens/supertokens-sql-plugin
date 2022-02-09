@@ -49,7 +49,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public List getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -66,7 +66,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessCodesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessCodesDO.class);
@@ -80,14 +80,14 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
             long createdAt) {
         PasswordlessCodesDO codesDO = new PasswordlessCodesDO(codeId, deviceId, linkCodeHash, createdAt);
 
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         String id = (String) session.save(codesDO);
         return id;
     }
 
     @Override
     public List<PasswordlessCodesDO> getCodesWhereDeviceIdHashEquals(PasswordlessDevicesDO devicesDO) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -104,7 +104,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public PasswordlessCodesDO getWhereLinkCodeHashEquals(String linkCodeHash) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -118,7 +118,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public void deleteWhereCodeIdEquals(String codeId) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessCodesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessCodesDO.class);
@@ -132,7 +132,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public List<PasswordlessCodesDO> getCodesWhereCreatedAtLessThan(long createdAt) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);
@@ -149,7 +149,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
 
     @Override
     public PasswordlessCodesDO getCodeWhereCodeIdEquals(String codeId) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<PasswordlessCodesDO> criteria = criteriaBuilder.createQuery(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteria.from(PasswordlessCodesDO.class);

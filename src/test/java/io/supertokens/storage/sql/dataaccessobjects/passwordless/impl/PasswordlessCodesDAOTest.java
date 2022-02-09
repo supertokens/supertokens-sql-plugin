@@ -39,7 +39,6 @@ public class PasswordlessCodesDAOTest {
     PasswordlessDevicesDAO passwordlessDevicesDAO;
     Session session;
 
-
     @Before
     public void before() {
         session = HibernateUtilTest.getSessionFactory().openSession();
@@ -82,7 +81,8 @@ public class PasswordlessCodesDAOTest {
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
 
-        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
+        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
+                .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, passwordlessDevicesDO, LINKED_CODE_HASH, CREATED_AT);
         transaction.commit();
@@ -99,7 +99,8 @@ public class PasswordlessCodesDAOTest {
         passwordlessDevicesDAO.insertIntoTableValues(DEVICE_ID_HASH, EMAIL, PHONE_NUMBER, LINK_CODE_SALT,
                 FAILED_ATTEMPTS, null);
 
-        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
+        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
+                .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
 

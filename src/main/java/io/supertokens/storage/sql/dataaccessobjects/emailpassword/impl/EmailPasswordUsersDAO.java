@@ -20,6 +20,8 @@ import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdExce
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.emailpassword.EmailPasswordUsersInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
+import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.enums.OrderEnum;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 
@@ -27,6 +29,7 @@ import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,20 +49,20 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
      */
     @Override
     public String create(EmailPasswordUsersDO entity) throws Exception {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         return (String) session.save(entity);
     }
 
     @Override
     public EmailPasswordUsersDO get(Object id) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         EmailPasswordUsersDO emailPasswordUsersDO = session.find(EmailPasswordUsersDO.class, id.toString());
         return emailPasswordUsersDO;
     }
 
     @Override
     public List<EmailPasswordUsersDO> getAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordUsersDO> criteria = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
         Root<EmailPasswordUsersDO> root = criteria.from(EmailPasswordUsersDO.class);
@@ -71,7 +74,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
 
     @Override
     public int removeWhereUserIdEquals(Object entity) throws PersistenceException, UnknownUserIdException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordUsersDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordUsersDO.class);
@@ -79,12 +82,11 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         criteriaDelete.where(criteriaBuilder.equal(root.get("user_id"), entity.toString()));
 
         return session.createQuery(criteriaDelete).executeUpdate();
-
     }
 
     @Override
     public void removeAll() {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordUsersDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(EmailPasswordUsersDO.class);
@@ -95,7 +97,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
 
     @Override
     public void updatePasswordHashWhereUserId(String user_id, String password_hash) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaUpdate<EmailPasswordUsersDO> criteriaUpdate = criteriaBuilder
                 .createCriteriaUpdate(EmailPasswordUsersDO.class);
@@ -107,7 +109,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
 
     @Override
     public int updateEmailWhereUserId(String user_id, String email) throws UnknownUserIdException {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaUpdate<EmailPasswordUsersDO> criteriaUpdate = criteriaBuilder
                 .createCriteriaUpdate(EmailPasswordUsersDO.class);
@@ -120,14 +122,14 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
     @Override
     public String insert(String userId, String email, String passwordHash, long timeJoined) {
         EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO(userId, email, passwordHash, timeJoined);
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         String userIdSaved = (String) session.save(emailPasswordUsersDO);
         return userIdSaved;
     }
 
     @Override
-    public EmailPasswordUsersDO getWhereUserIdEquals(String userId) throws NoResultException {
-        Session session = (Session) sessionInstance.getSession();
+    public EmailPasswordUsersDO getWhereUserIdEquals_locked(String userId) throws NoResultException {
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
 
@@ -142,7 +144,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
 
     @Override
     public EmailPasswordUsersDO getWhereEmailEquals(String email) {
-        Session session = (Session) sessionInstance.getSession();
+        Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<EmailPasswordUsersDO> criteriaQuery = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
 
@@ -152,6 +154,94 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         Query<EmailPasswordUsersDO> query = session.createQuery(criteriaQuery);
         EmailPasswordUsersDO result = query.getSingleResult();
         return result;
+    }
+
+    @Override
+    public List<EmailPasswordUsersDO> getLimitedOrderByTimeJoinedAndUserId(String timeJoinedOrder, String userIdOrder,
+            int limit) {
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<EmailPasswordUsersDO> criteria = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
+        Root<EmailPasswordUsersDO> root = criteria.from(EmailPasswordUsersDO.class);
+        criteria.select(root);
+
+        List<Order> orderList = new ArrayList();
+
+        if (timeJoinedOrder.equalsIgnoreCase(OrderEnum.DESC.name())) {
+            orderList.add(criteriaBuilder.desc(root.get("time_joined")));
+        } else if (timeJoinedOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
+            orderList.add(criteriaBuilder.asc(root.get("time_joined")));
+        }
+
+        if (userIdOrder.equalsIgnoreCase(OrderEnum.DESC.name())) {
+            orderList.add(criteriaBuilder.desc(root.get("user_id")));
+        } else if (userIdOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
+            orderList.add(criteriaBuilder.asc(root.get("user_id")));
+        }
+
+        criteria.orderBy(orderList);
+
+        Query<EmailPasswordUsersDO> query = session.createQuery(criteria).setMaxResults(limit);
+        List<EmailPasswordUsersDO> results = query.getResultList();
+        return results;
+    }
+
+    @Override
+    public List<EmailPasswordUsersDO> getLimitedUsersInfo(String timeJoinedOrder, Long timeJoined, String userIdOrder,
+            String userId, int limit) {
+        String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
+
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<EmailPasswordUsersDO> criteria = criteriaBuilder.createQuery(EmailPasswordUsersDO.class);
+        Root<EmailPasswordUsersDO> root = criteria.from(EmailPasswordUsersDO.class);
+        criteria.select(root);
+
+        Predicate predicateOne = null;
+        if (timeJoinedOrderSymbol.equalsIgnoreCase("<")) {
+            predicateOne = criteriaBuilder.lessThan(root.get("time_joined"), timeJoined);
+        } else if (timeJoinedOrderSymbol.equalsIgnoreCase(">")) {
+            predicateOne = criteriaBuilder.greaterThan(root.get("time_joined"), timeJoined);
+        } else {
+            throw new PersistenceException("Invalid timeJoined order");
+        }
+
+        Predicate predicateTwo = criteriaBuilder.and(criteriaBuilder.equal(root.get("time_joined"), timeJoined),
+                criteriaBuilder.equal(root.get("user_id"), userId));
+
+        Predicate predicateThree = criteriaBuilder.or(predicateOne, predicateTwo);
+
+        criteria.where(predicateThree);
+
+        List<Order> orderList = new ArrayList();
+
+        if (timeJoinedOrder.equalsIgnoreCase(OrderEnum.DESC.name())) {
+            orderList.add(criteriaBuilder.desc(root.get("time_joined")));
+        } else if (timeJoinedOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
+            orderList.add(criteriaBuilder.asc(root.get("time_joined")));
+        }
+
+        if (userIdOrder.equalsIgnoreCase(OrderEnum.DESC.name())) {
+            orderList.add(criteriaBuilder.desc(root.get("user_id")));
+        } else if (userIdOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
+            orderList.add(criteriaBuilder.asc(root.get("user_id")));
+        }
+
+        criteria.orderBy(orderList);
+
+        Query<EmailPasswordUsersDO> query = session.createQuery(criteria).setMaxResults(limit);
+        List<EmailPasswordUsersDO> results = query.getResultList();
+        return results;
+    }
+
+    @Override
+    public Long getCount() {
+        Session session = (Session) sessionInstance;
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(EmailPasswordUsersDO.class)));
+        Long rows = session.createQuery(criteriaQuery).getSingleResult();
+        return rows;
     }
 
 }
