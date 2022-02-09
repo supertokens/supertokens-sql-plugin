@@ -35,7 +35,7 @@ public class PasswordlessDevicesDAOTest {
     Session session;
 
     @Before
-    public void before() {
+    public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
         Transaction transaction = session.beginTransaction();

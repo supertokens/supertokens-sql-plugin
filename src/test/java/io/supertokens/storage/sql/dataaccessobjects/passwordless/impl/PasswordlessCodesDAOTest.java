@@ -40,7 +40,7 @@ public class PasswordlessCodesDAOTest {
     Session session;
 
     @Before
-    public void before() {
+    public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         passwordlessCodesDAO = new PasswordlessCodesDAO(session);
         passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);

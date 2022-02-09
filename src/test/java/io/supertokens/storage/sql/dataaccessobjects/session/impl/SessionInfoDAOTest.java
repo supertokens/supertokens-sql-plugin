@@ -47,9 +47,19 @@ import static org.junit.Assert.*;
 
 public class SessionInfoDAOTest {
 
+    Session session;
+
     @Before
     public void before() throws Exception {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+        session = HibernateUtilTest.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        sessionInfoDAO.removeAll();
+        transaction.commit();
+    }
+
+    @After
+    public void after() throws Exception {
         Transaction transaction = session.beginTransaction();
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
         sessionInfoDAO.removeAll();
@@ -57,14 +67,9 @@ public class SessionInfoDAOTest {
         session.close();
     }
 
-    @After
-    public void after() throws Exception {
-        before();
-    }
-
     @Test
     public void insertIntoTableValues() throws Exception {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+
         Transaction transaction = session.beginTransaction();
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
@@ -75,13 +80,11 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDAO.getAll().size() == 1);
         assertTrue(id.equals(SESSION_HANDLE));
 
-        session.close();
     }
 
     @Test
     public void insertIntoTableValuesException() throws Exception {
 
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -102,18 +105,14 @@ public class SessionInfoDAOTest {
             assertTrue(e instanceof NonUniqueObjectException);
             return;
 
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
 
     }
 
     @Test
-    public void getWhereSessionHandle_lockedEquals() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getWhereSessionHandle_lockedEquals() throws InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -134,15 +133,11 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getCreated_at_time() == CREATED_AT);
         assertTrue(sessionInfoDO.getJwt_user_payload().equals(JWT_USER_PAYLOAD));
 
-        if (session != null) {
-            session.close();
-        }
-
     }
 
     @Test
-    public void getWhereSessionHandleEquals_lockedException() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getWhereSessionHandleEquals_lockedException() throws InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -162,18 +157,15 @@ public class SessionInfoDAOTest {
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
 
     }
 
     @Test
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals() throws SessionHandleNotFoundException {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals()
+            throws SessionHandleNotFoundException, InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -196,13 +188,12 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getExpires_at() == EXPIRES_AT + 30l);
         assertTrue(sessionInfoDO.getRefresh_token_hash_2().equals(REFRESH_TOKEN_HASH_TWO + "UPDATED"));
 
-        session.close();
     }
 
     @Test
     public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException()
-            throws SessionHandleNotFoundException {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+            throws SessionHandleNotFoundException, InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -223,17 +214,13 @@ public class SessionInfoDAOTest {
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
     }
 
     @Test
     public void deleteWhereUserIdEquals() throws Exception {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -250,12 +237,11 @@ public class SessionInfoDAOTest {
         transaction.commit();
         assertTrue(sessionInfoDAO.getAll().size() == 0);
 
-        session.close();
     }
 
     @Test
     public void deleteWhereUserIdEqualsException() throws Exception {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -279,17 +265,13 @@ public class SessionInfoDAOTest {
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
     }
 
     @Test
-    public void getSessionHandlesWhereUserIdEquals() throws UserIdNotFoundException {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getSessionHandlesWhereUserIdEquals() throws UserIdNotFoundException, InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -304,14 +286,14 @@ public class SessionInfoDAOTest {
         transaction.commit();
 
         String[] sessionHandles = sessionInfoDAO.getSessionHandlesWhereUserIdEquals(USER_ID);
-        session.close();
+
         assertTrue(sessionHandles.length == 3);
 
     }
 
     @Test
-    public void getSessionHandlesWhereUserIdEqualsException() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getSessionHandlesWhereUserIdEqualsException() throws InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -326,17 +308,13 @@ public class SessionInfoDAOTest {
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
     }
 
     @Test
-    public void getWhereSessionHandleEquals() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getWhereSessionHandleEquals() throws InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -352,12 +330,12 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDO.getExpires_at() == EXPIRES_AT);
         assertTrue(sessionInfoDO.getCreated_at_time() == CREATED_AT);
         assertTrue(sessionInfoDO.getJwt_user_payload().equals(JWT_USER_PAYLOAD));
-        session.close();
+
     }
 
     @Test
-    public void getWhereSessionHandleEqualsException() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void getWhereSessionHandleEqualsException() throws InterruptedException {
+
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
@@ -372,10 +350,6 @@ public class SessionInfoDAOTest {
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
         fail();
 

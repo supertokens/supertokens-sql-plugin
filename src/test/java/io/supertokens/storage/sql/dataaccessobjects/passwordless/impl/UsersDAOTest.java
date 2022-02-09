@@ -33,7 +33,7 @@ public class UsersDAOTest {
     Session session;
 
     @Before
-    public void before() {
+    public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         usersDAO = new UsersDAO(session);
         Transaction transaction = session.beginTransaction();
@@ -65,7 +65,6 @@ public class UsersDAOTest {
         Transaction transaction = session.beginTransaction();
         UsersDO usersDO = usersDAO.insertIntoTableValues(USER_ID, RECIPE_ID, TIME_JOINED);
         usersDAO.insertIntoTableValues(USER_ID + "two", RECIPE_ID, TIME_JOINED);
-        usersDAO.insertIntoTableValues(USER_ID, RECIPE_ID, TIME_JOINED);
         transaction.commit();
         assertTrue(usersDAO.getAll().size() == 2);
         transaction = session.beginTransaction();

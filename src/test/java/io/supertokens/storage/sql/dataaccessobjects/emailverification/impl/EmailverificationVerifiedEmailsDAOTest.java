@@ -20,6 +20,7 @@ import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificat
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsPKDO;
 import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
+import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
@@ -36,9 +37,20 @@ import static org.junit.Assert.*;
 
 public class EmailverificationVerifiedEmailsDAOTest {
 
+    Session session;
+
     @Before
-    public void beforeTest() {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
+    public void beforeTest() throws InterruptedException {
+        session = HibernateUtilTest.getSessionFactory().openSession();
+        Transaction transaction = session.beginTransaction();
+        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
+                session);
+        emailverificationVerifiedEmailsDAO.removeAll();
+        transaction.commit();
+    }
+
+    @After
+    public void afterTest() throws InterruptedException {
         Transaction transaction = session.beginTransaction();
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
                 session);
@@ -47,15 +59,9 @@ public class EmailverificationVerifiedEmailsDAOTest {
         session.close();
     }
 
-    @After
-    public void afterTest() {
-        beforeTest();
-    }
-
     @Test
     public void insertIntoTable() {
 
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
                 session);
@@ -63,7 +69,6 @@ public class EmailverificationVerifiedEmailsDAOTest {
         EmailVerificationVerifiedEmailsPKDO pkdo = (EmailVerificationVerifiedEmailsPKDO) emailverificationVerifiedEmailsDAO
                 .insertIntoTable(USER_ID, EMAIL);
         transaction.commit();
-        session.close();
 
         assertTrue(pkdo.getEmail().equals(EMAIL));
         assertTrue(pkdo.getUser_id().equals(USER_ID));
@@ -73,7 +78,6 @@ public class EmailverificationVerifiedEmailsDAOTest {
     @Test
     public void insertIntoTableException() {
 
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
                 session);
@@ -87,10 +91,8 @@ public class EmailverificationVerifiedEmailsDAOTest {
             if (transaction != null) {
                 transaction.rollback();
             }
-            assertTrue(e.getCause() instanceof ConstraintViolationException);
+            assertTrue(e instanceof NonUniqueObjectException);
             return;
-        } finally {
-            session.close();
         }
         fail();
 
@@ -111,7 +113,7 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
         transaction.commit();
         assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 2);
-        session.close();
+
     }
 
     @Test

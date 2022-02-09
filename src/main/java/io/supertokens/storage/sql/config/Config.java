@@ -36,7 +36,7 @@ public class Config extends ResourceDistributor.SingletonResource {
     private Config(Start start, String configFilePath) {
         this.start = start;
         try {
-            config = loadMySQLConfig(configFilePath);
+            config = loadSQLConfig(configFilePath);
         } catch (IOException e) {
             throw new QuitProgramFromPluginException(e);
         }
@@ -50,7 +50,7 @@ public class Config extends ResourceDistributor.SingletonResource {
         if (getInstance(start) != null) {
             return;
         }
-        Logging.info(start, "Loading MySQL config.");
+        Logging.info(start, "Loading SQL config.");
         start.getResourceDistributor().setResource(RESOURCE_KEY, new Config(start, configFilePath));
     }
 
@@ -61,7 +61,7 @@ public class Config extends ResourceDistributor.SingletonResource {
         return getInstance(start).config;
     }
 
-    private SQLConfig loadMySQLConfig(String configFilePath) throws IOException {
+    private SQLConfig loadSQLConfig(String configFilePath) throws IOException {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         SQLConfig config = mapper.readValue(new File(configFilePath), SQLConfig.class);
         config.validateAndInitialise();

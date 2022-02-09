@@ -43,7 +43,7 @@ public class EmailPasswordUsersDAOTest {
     Session session;
 
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
         emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(session);
@@ -379,8 +379,9 @@ public class EmailPasswordUsersDAOTest {
                 .getLimitedOrderByTimeJoinedAndUserId(OrderEnum.DESC.name(), OrderEnum.DESC.name(), 3);
 
         assertEquals(list.size(), 3);
-        assertEquals(list.size(), 3);
-        fail();
+        assertEquals(list.get(0).getTime_joined(), TIME_JOINED + 30l);
+        assertEquals(list.get(1).getTime_joined(), TIME_JOINED + 20l);
+        assertEquals(list.get(2).getTime_joined(), TIME_JOINED + 10l);
     }
 
     @Test

@@ -127,11 +127,10 @@ public class HibernateUtil {
     /**
      * Load in memory settings
      * 
-     * @param start
      * @return
      */
 
-    public static HashMap<String, Object> getInMemorySettings(Start start) {
+    public static HashMap<String, Object> getInMemorySettings() {
         HashMap<String, Object> settings = new HashMap<>();
 
         settings.put(Environment.DRIVER, "org.hsqldb.jdbcDriver");
@@ -201,7 +200,7 @@ public class HibernateUtil {
 
                 HashMap<String, Object> settings = null;
                 if (inMemory) {
-                    settings = getInMemorySettings(start);
+                    settings = getInMemorySettings();
                 } else {
                     settings = getSettings(start);
                 }

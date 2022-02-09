@@ -16,6 +16,9 @@
 
 package io.supertokens.storage.sql.test;
 
+import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import io.supertokens.storage.sql.ConnectionPoolTestContent;
+import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensPKDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
@@ -33,6 +36,7 @@ import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSignin
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO;
+import io.supertokens.storage.sql.output.Logging;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -41,72 +45,94 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.hibernate.tool.schema.Action;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class HibernateUtilTest {
     private static StandardServiceRegistry registry;
     private static SessionFactory sessionFactory;
 
-    public static SessionFactory getSessionFactory() {
+    public static SessionFactory getSessionFactory() throws InterruptedException {
         if (sessionFactory == null) {
-            try {
-                Map<String, Object> settings = new HashMap<>();
+            int trial_attempts = 5;
+            long waitTime = 5000;
+            while (true) {
+                try {
+                    Map<String, Object> settings = new HashMap<>();
 
-                //TODO: to be changed later to an in memory version
-                settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
-                settings.put(Environment.URL, "jdbc:mysql://localhost:3306/supertokens");
-                settings.put(Environment.USER, "root");
-                settings.put(Environment.PASS, "root");
+                    // TODO: to be changed later to an in memory version
+                    settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
+                    settings.put(Environment.URL, "jdbc:mysql://localhost:3306/supertokens");
+                    settings.put(Environment.USER, "root");
+                    settings.put(Environment.PASS, "root");
+                    settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
 
-                settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
-                settings.put(Environment.SHOW_SQL, true);
+                    settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+                    settings.put(Environment.SHOW_SQL, true);
 
-                settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
-                // HikariCP settings
+                    settings.put("hibernate.physical_naming_strategy",
+                            "io.supertokens.storage.sql.CustomNamingStrategy");
+                    // HikariCP settings
 
-                settings.put("hibernate.hikari.connectionTimeout", "20000");
-                settings.put("hibernate.hikari.minimumIdle", "10");
-                settings.put("hibernate.hikari.maximumPoolSize", "5");
-                settings.put("hibernate.hikari.idleTimeout", "300000");
-                settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+                    settings.put("hibernate.hikari.connectionTimeout", "20000");
+                    settings.put("hibernate.hikari.minimumIdle", "10");
+                    settings.put("hibernate.hikari.maximumPoolSize", "5");
+                    settings.put("hibernate.hikari.idleTimeout", "300000");
 
-                // Create registry
-                registry = new StandardServiceRegistryBuilder().configure().build();
+                    // Create registry
+                    StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+                    registryBuilder.applySettings(settings);
 
-                // Create MetadataSources
-                MetadataSources sources = new MetadataSources(registry)
-                        .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
-                        .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
-                        .addAnnotatedClass(EmailPasswordUsersDO.class)
-                        .addAnnotatedClass(EmailVerificationTokensDO.class)
-                        .addAnnotatedClass(EmailVerificationTokensPKDO.class)
-                        .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
-                        .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
+                    registry = registryBuilder.build();
 
-                        .addAnnotatedClass(PasswordlessCodesDO.class).addAnnotatedClass(PasswordlessDevicesDO.class)
-                        .addAnnotatedClass(PasswordlessUsersDO.class)
+                    // Create MetadataSources
+                    MetadataSources sources = new MetadataSources(registry)
+                            .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
+                            .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
+                            .addAnnotatedClass(EmailPasswordUsersDO.class)
+                            .addAnnotatedClass(EmailVerificationTokensDO.class)
+                            .addAnnotatedClass(EmailVerificationTokensPKDO.class)
+                            .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
+                            .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
 
-                        .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
+                            .addAnnotatedClass(PasswordlessCodesDO.class).addAnnotatedClass(PasswordlessDevicesDO.class)
+                            .addAnnotatedClass(PasswordlessUsersDO.class)
 
-                        .addAnnotatedClass(JWTSigningKeysDO.class)
+                            .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
 
-                        .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class).addAnnotatedClass(SessionInfoDO.class)
+                            .addAnnotatedClass(JWTSigningKeysDO.class)
 
-                        .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class)
+                            .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
+                            .addAnnotatedClass(SessionInfoDO.class)
 
-                ;
+                            .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class);
 
-                // Create Metadata
-                Metadata metadata = sources.getMetadataBuilder().build();
+                    // Create Metadata
+                    Metadata metadata = sources.getMetadataBuilder().build();
 
-                // Create SessionFactory
-                sessionFactory = metadata.getSessionFactoryBuilder().build();
+                    // Create SessionFactory
+                    sessionFactory = metadata.getSessionFactoryBuilder().build();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                if (registry != null) {
-                    StandardServiceRegistryBuilder.destroy(registry);
+                    break;
+                } catch (Exception e) {
+                    if (registry != null) {
+                        StandardServiceRegistryBuilder.destroy(registry);
+                    }
+
+                    if (e.getMessage().contains("Connection refused")) {
+                        if (trial_attempts == 0) {
+                            throw e;
+                        }
+
+                        System.out.println("Connection refused, retrying....");
+                        trial_attempts--;
+                        Thread.sleep(waitTime);
+                    } else {
+                        throw e;
+                    }
                 }
             }
         }

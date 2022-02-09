@@ -41,7 +41,7 @@ public class EmailVerificationTokensDAOTest {
     Session session;
 
     @Before
-    public void beforeTest() {
+    public void beforeTest() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
         Transaction transaction = session.beginTransaction();

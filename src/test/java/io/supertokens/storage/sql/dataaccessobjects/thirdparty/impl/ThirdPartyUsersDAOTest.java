@@ -42,7 +42,7 @@ public class ThirdPartyUsersDAOTest {
     Session session;
 
     @Before
-    public void before() {
+    public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
         thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
         Transaction transaction = session.beginTransaction();
@@ -365,7 +365,9 @@ public class ThirdPartyUsersDAOTest {
 
         assertTrue(thirdPartyUsersDAO.getCount() == 1);
 
-        thirdPartyUsersDAO.deleteWhereUserIdEquals(THIRD_PARTY_ID + "One");
+        transaction = session.beginTransaction();
+        thirdPartyUsersDAO.deleteWhereUserIdEquals(USER_ID + "One");
+        transaction.commit();
         assertTrue(thirdPartyUsersDAO.getCount() == 0);
 
     }
