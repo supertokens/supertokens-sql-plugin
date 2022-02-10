@@ -29,7 +29,6 @@ import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "passwordless_users")
@@ -41,6 +40,11 @@ public class PasswordlessUsersDO {
      * UNIQUE,"
      * + "time_joined BIGINT UNSIGNED NOT NULL," + "PRIMARY KEY (user_id));";
      */
+
+    @Deprecated
+    public PasswordlessUsersDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 36)

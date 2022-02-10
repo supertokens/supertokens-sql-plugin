@@ -30,8 +30,12 @@ import java.io.Serializable;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class ThirdPartyUsersPKDO implements Serializable {
+
+    @Deprecated
+    public ThirdPartyUsersPKDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Column(length = 28, unique = false)
     private String third_party_id;

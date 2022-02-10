@@ -23,7 +23,6 @@ import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Data
@@ -36,6 +35,12 @@ public class UsersDO {
 
 //            return "CREATE INDEX all_auth_recipe_users_pagination_index ON " + Config.getConfig(start).getUsersTable()
 //                + "(time_joined DESC, user_id " + "DESC);";
+
+    @Deprecated
+    public UsersDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
+
     @Id
     @Column(length = 36)
     private String user_id;

@@ -21,6 +21,11 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * This is the interface declares base methods that need to be implemented by an DAO class
+ * 
+ * @param <T>
+ */
 public interface DAO<T> {
 
     Serializable create(T entity) throws Exception;

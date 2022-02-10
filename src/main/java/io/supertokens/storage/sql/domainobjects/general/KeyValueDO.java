@@ -26,13 +26,17 @@ import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "key_value")
 public class KeyValueDO {
 
 //    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getKeyValueTable() + " (" + "name VARCHAR(128),"
 //            + "value TEXT," + "created_at_time BIGINT ," + "PRIMARY KEY(name)" + " );";
+
+    @Deprecated
+    public KeyValueDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 128)

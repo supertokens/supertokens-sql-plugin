@@ -30,8 +30,12 @@ import java.io.Serializable;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class EmailPasswordPswdResetTokensPKDO implements Serializable {
+
+    @Deprecated
+    public EmailPasswordPswdResetTokensPKDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)

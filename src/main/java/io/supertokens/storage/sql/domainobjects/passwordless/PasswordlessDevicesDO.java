@@ -28,9 +28,13 @@ import java.util.List;
 @Setter
 @Entity
 @AllArgsConstructor
-@NoArgsConstructor
 @Table(name = "passwordless_devices", indexes = { @Index(columnList = "email"), @Index(columnList = "phone_number") })
 public class PasswordlessDevicesDO {
+
+    @Deprecated
+    public PasswordlessDevicesDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 44)

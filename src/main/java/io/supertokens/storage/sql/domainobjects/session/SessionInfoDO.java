@@ -29,7 +29,6 @@ import javax.persistence.Table;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "session_info")
@@ -40,6 +39,11 @@ public class SessionInfoDO {
 //            + "refresh_token_hash_2 VARCHAR(128) NOT NULL," + "session_data TEXT,"
 //            + "expires_at BIGINT  NOT NULL," + "created_at_time BIGINT  NOT NULL,"
 //            + "jwt_user_payload TEXT," + "PRIMARY KEY(session_handle)" + " );";
+
+    @Deprecated
+    public SessionInfoDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 255, nullable = false)

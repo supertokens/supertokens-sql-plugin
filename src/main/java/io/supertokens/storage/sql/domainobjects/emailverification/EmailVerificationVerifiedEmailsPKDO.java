@@ -29,8 +29,12 @@ import java.io.Serializable;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class EmailVerificationVerifiedEmailsPKDO implements Serializable {
+
+    @Deprecated
+    public EmailVerificationVerifiedEmailsPKDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Column(length = 128, unique = false)
     private String user_id;

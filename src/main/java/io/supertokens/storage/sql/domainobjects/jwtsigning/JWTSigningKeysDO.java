@@ -29,7 +29,6 @@ import javax.persistence.Table;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "jwt_signing_keys")
@@ -38,6 +37,11 @@ public class JWTSigningKeysDO {
 //        return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getJWTSigningKeysTable() + " ("
 //            + "key_id VARCHAR(255) NOT NULL," + "key_string TEXT NOT NULL," + "algorithm VARCHAR(10) NOT NULL,"
 //            + "created_at BIGINT ," + "PRIMARY KEY(key_id));";
+
+    @Deprecated
+    public JWTSigningKeysDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 255)

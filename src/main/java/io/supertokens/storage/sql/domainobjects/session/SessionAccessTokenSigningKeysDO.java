@@ -30,7 +30,6 @@ import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "session_access_token_signing_keys")
@@ -38,6 +37,11 @@ public class SessionAccessTokenSigningKeysDO {
 
 //    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getAccessTokenSigningKeysTable() + " ("
 //            + "created_at_time BIGINT  NOT NULL," + "value TEXT," + "PRIMARY KEY(created_at_time)" + " );";
+
+    @Deprecated
+    public SessionAccessTokenSigningKeysDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     private long created_at_time;

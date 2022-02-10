@@ -25,7 +25,6 @@ import javax.persistence.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "emailverification_tokens", indexes = { @Index(columnList = "token_expiry") })
@@ -38,6 +37,11 @@ public class EmailVerificationTokensDO {
 
 //    return "CREATE INDEX emailverification_tokens_index ON "
 //            + Config.getConfig(start).getEmailVerificationTokensTable() + "(token_expiry);";
+
+    @Deprecated
+    public EmailVerificationTokensDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @EmbeddedId
     EmailVerificationTokensPKDO primary_key;

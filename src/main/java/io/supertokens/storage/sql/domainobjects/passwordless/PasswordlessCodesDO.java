@@ -31,9 +31,13 @@ import java.math.BigInteger;
 @Setter
 @Entity
 @AllArgsConstructor
-@NoArgsConstructor
 @Table(indexes = { @Index(columnList = "created_at") })
 public class PasswordlessCodesDO {
+
+    @Deprecated
+    public PasswordlessCodesDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 36)

@@ -28,7 +28,6 @@ import javax.persistence.Table;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "emailpassword_users")
@@ -38,6 +37,11 @@ public class EmailPasswordUsersDO {
 //            + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) NOT NULL UNIQUE,"
 //            + "password_hash VARCHAR(128) NOT NULL," + "time_joined BIGINT  NOT NULL,"
 //            + "PRIMARY KEY (user_id));";
+
+    @Deprecated
+    public EmailPasswordUsersDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @Id
     @Column(length = 36)

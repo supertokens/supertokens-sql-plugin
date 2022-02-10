@@ -26,7 +26,6 @@ import java.math.BigInteger;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "thirdparty_users")
@@ -36,6 +35,11 @@ public class ThirdPartyUsersDO {
 //            + "third_party_id VARCHAR(28) NOT NULL," + "third_party_user_id VARCHAR(128) NOT NULL,"
 //            + "user_id CHAR(36) NOT NULL UNIQUE," + "email VARCHAR(256) NOT NULL,"
 //            + "time_joined BIGINT  NOT NULL," + "PRIMARY KEY (third_party_id, third_party_user_id));";
+
+    @Deprecated
+    public ThirdPartyUsersDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @EmbeddedId
     ThirdPartyUsersPKDO primary_key;

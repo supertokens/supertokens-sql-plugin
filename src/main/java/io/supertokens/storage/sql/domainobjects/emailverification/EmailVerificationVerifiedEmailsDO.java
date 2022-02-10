@@ -25,7 +25,6 @@ import javax.persistence.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "emailverification_verified_emails")
@@ -33,6 +32,11 @@ public class EmailVerificationVerifiedEmailsDO {
 
 //    return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTable() + " ("
 //            + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL," + "PRIMARY KEY (user_id, email));";
+
+    @Deprecated
+    public EmailVerificationVerifiedEmailsDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @EmbeddedId
     EmailVerificationVerifiedEmailsPKDO primary_key;

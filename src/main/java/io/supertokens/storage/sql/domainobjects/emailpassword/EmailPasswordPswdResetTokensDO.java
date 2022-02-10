@@ -22,7 +22,6 @@ import javax.persistence.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Entity
@@ -38,6 +37,11 @@ public class EmailPasswordPswdResetTokensDO {
 //    return "CREATE INDEX emailpassword_password_reset_token_expiry_index ON "
 //            + Config.getConfig(start).getPasswordResetTokensTable() + "(token_expiry);";
 //
+
+    @Deprecated
+    public EmailPasswordPswdResetTokensDO() {
+        // do nothing, required by hibernate as part of entity class
+    }
 
     @EmbeddedId
     private EmailPasswordPswdResetTokensPKDO primaryKey;
