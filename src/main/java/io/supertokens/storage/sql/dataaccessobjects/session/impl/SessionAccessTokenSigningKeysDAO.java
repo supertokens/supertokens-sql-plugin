@@ -21,6 +21,7 @@ import io.supertokens.storage.sql.dataaccessobjects.session.SessionAccessTokenSi
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
@@ -66,6 +67,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

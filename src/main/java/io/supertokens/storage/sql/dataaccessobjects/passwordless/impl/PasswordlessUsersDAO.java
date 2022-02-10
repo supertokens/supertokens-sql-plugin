@@ -22,6 +22,7 @@ import io.supertokens.storage.sql.dataaccessobjects.passwordless.PasswordlessUse
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.criteria.*;
 import java.io.Serializable;
@@ -60,6 +61,7 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

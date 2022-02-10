@@ -23,6 +23,7 @@ import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificat
 import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
@@ -72,6 +73,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         return session.createQuery(criteriaDelete).executeUpdate();
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

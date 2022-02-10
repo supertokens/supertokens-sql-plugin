@@ -21,6 +21,7 @@ import io.supertokens.storage.sql.dataaccessobjects.jwt.JwtSigningInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.jwtsigning.JWTSigningKeysDO;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
 import javax.persistence.criteria.*;
@@ -61,6 +62,7 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
 

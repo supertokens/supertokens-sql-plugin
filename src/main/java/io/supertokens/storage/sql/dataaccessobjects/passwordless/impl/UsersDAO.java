@@ -24,6 +24,7 @@ import io.supertokens.storage.sql.domainobjects.general.UsersDO;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
@@ -65,6 +66,7 @@ public class UsersDAO extends SessionTransactionDAO implements UsersInterfaceDAO
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

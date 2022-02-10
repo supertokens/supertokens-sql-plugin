@@ -16,6 +16,8 @@
 
 package io.supertokens.storage.sql.dataaccessobjects;
 
+import org.jetbrains.annotations.TestOnly;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -29,6 +31,7 @@ public interface DAO<T> {
 
     int deleteWherePrimaryKeyEquals(Object id) throws Exception;
 
+    @TestOnly
     void removeAll();
 
 }

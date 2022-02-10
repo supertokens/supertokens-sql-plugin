@@ -24,6 +24,7 @@ import io.supertokens.storage.sql.enums.OrderEnum;
 import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
@@ -65,6 +66,7 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

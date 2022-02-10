@@ -22,6 +22,7 @@ import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
@@ -62,6 +63,7 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
         return 0;
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;

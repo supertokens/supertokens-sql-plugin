@@ -24,6 +24,7 @@ import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.enums.OrderEnum;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
@@ -84,6 +85,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         return session.createQuery(criteriaDelete).executeUpdate();
     }
 
+    @TestOnly
     @Override
     public void removeAll() {
         Session session = (Session) sessionInstance;
