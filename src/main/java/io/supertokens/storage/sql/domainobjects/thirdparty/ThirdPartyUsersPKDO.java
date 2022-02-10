@@ -37,10 +37,10 @@ public class ThirdPartyUsersPKDO implements Serializable {
         // do nothing, required by hibernate as part of entity class
     }
 
-    @Column(length = 28, unique = false)
+    @Column(length = 28)
     private String third_party_id;
 
-    @Column(length = 128, unique = false)
+    @Column(length = 128)
     private String third_party_user_id;
 
 }

@@ -39,9 +39,9 @@ public class EmailPasswordPswdResetTokensPKDO implements Serializable {
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id", nullable = false, unique = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private EmailPasswordUsersDO user_id;
 
-    @Column(length = 128, nullable = false, unique = false)
+    @Column(length = 128, nullable = false)
     private String token;
 }

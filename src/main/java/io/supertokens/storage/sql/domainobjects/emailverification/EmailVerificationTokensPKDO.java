@@ -36,12 +36,12 @@ public class EmailVerificationTokensPKDO implements Serializable {
         // do nothing, required by hibernate as part of entity class
     }
 
-    @Column(length = 128, unique = false)
+    @Column(length = 128)
     private String user_id;
 
-    @Column(length = 256, unique = false)
+    @Column(length = 256)
     private String email;
 
-    @Column(length = 128, unique = false)
+    @Column(length = 128)
     private String token;
 }

@@ -188,6 +188,7 @@ public class HibernateSessionPool {
 
         verifyStartEnvironment(start);
 
+        // Sanity check on the session factor object
         if (sessionFactory == null || sessionFactory.isClosed()) {
 
             Logging.info(start, "Setting up SQL connection pool.");
