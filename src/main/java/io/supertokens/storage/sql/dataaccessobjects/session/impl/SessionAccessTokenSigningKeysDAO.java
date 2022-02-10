@@ -42,7 +42,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
     }
 
     @Override
-    public Object get(Object id) throws Exception {
+    public Object getWherePrimaryKeyEquals(Object id) throws Exception {
         return null;
     }
 
@@ -62,7 +62,7 @@ public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object id) throws Exception {
+    public int deleteWherePrimaryKeyEquals(Object id) throws Exception {
         return 0;
     }
 

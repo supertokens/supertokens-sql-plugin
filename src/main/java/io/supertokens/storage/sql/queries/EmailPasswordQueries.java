@@ -168,7 +168,7 @@ public class EmailPasswordQueries {
             UsersDAO usersDAO = new UsersDAO(session);
             usersDAO.deleteWhereUserIdEqualsAndRecipeIdEquals(userId, RECIPE_ID.EMAIL_PASSWORD.toString());
             EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
-            emailPasswordUsersDAO.removeWhereUserIdEquals(userId);
+            emailPasswordUsersDAO.deleteWherePrimaryKeyEquals(userId);
             return null;
         });
     }

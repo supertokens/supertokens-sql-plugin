@@ -149,7 +149,7 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
     }
 
     @Override
-    public Object get(Object id) throws Exception {
+    public Object getWherePrimaryKeyEquals(Object id) throws Exception {
         return null;
     }
 
@@ -167,7 +167,7 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object id) throws PersistenceException {
+    public int deleteWherePrimaryKeyEquals(Object id) throws PersistenceException {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationTokensDO> criteriaDelete = criteriaBuilder

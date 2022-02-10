@@ -41,7 +41,7 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
     }
 
     @Override
-    public Object get(Object id) throws Exception {
+    public Object getWherePrimaryKeyEquals(Object id) throws Exception {
         return null;
     }
 
@@ -58,7 +58,7 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object id) throws Exception {
+    public int deleteWherePrimaryKeyEquals(Object id) throws Exception {
         return 0;
     }
 

@@ -134,9 +134,9 @@ public class EmailPasswordPswdResetTokensDAOTest {
         createSuccess();
         Transaction transaction = session.beginTransaction();
 
-        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.get(USER_ID);
+        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID);
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = emailPasswordPswdResetTokensDAO
-                .get(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
+                .getWherePrimaryKeyEquals(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
         transaction.commit();
 
         assertTrue(emailPasswordPswdResetTokensDO != null);
@@ -158,9 +158,9 @@ public class EmailPasswordPswdResetTokensDAOTest {
     public void remove() throws Exception {
         createSuccess();
         Transaction transaction = session.beginTransaction();
-        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.get(USER_ID);
+        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID);
         emailPasswordPswdResetTokensDAO
-                .removeWhereUserIdEquals(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
+                .deleteWherePrimaryKeyEquals(new EmailPasswordPswdResetTokensPKDO(emailPasswordUsersDO, TOKEN));
         transaction.commit();
         List<EmailPasswordPswdResetTokensDO> results = emailPasswordPswdResetTokensDAO.getAll();
         assertTrue(results.size() == 0);
@@ -171,7 +171,7 @@ public class EmailPasswordPswdResetTokensDAOTest {
     public void removeAll() throws Exception {
         createSuccess();
         Transaction transaction = session.beginTransaction();
-        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.get(USER_ID);
+        EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID);
 
         emailPasswordPswdResetTokensDAO.removeAll();
         transaction.commit();

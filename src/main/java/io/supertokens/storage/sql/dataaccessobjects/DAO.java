@@ -23,11 +23,11 @@ public interface DAO<T> {
 
     Serializable create(T entity) throws Exception;
 
-    T get(Object id) throws Exception;
+    T getWherePrimaryKeyEquals(Object id) throws Exception;
 
     List<T> getAll();
 
-    int removeWhereUserIdEquals(Object id) throws Exception;
+    int deleteWherePrimaryKeyEquals(Object id) throws Exception;
 
     void removeAll();
 

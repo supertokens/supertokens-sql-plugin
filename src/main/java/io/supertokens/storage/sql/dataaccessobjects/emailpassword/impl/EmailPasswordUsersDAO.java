@@ -54,7 +54,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
     }
 
     @Override
-    public EmailPasswordUsersDO get(Object id) {
+    public EmailPasswordUsersDO getWherePrimaryKeyEquals(Object id) {
         Session session = (Session) sessionInstance;
         EmailPasswordUsersDO emailPasswordUsersDO = session.find(EmailPasswordUsersDO.class, id.toString());
         return emailPasswordUsersDO;
@@ -73,7 +73,7 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object entity) throws PersistenceException, UnknownUserIdException {
+    public int deleteWherePrimaryKeyEquals(Object entity) throws PersistenceException, UnknownUserIdException {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordUsersDO> criteriaDelete = criteriaBuilder

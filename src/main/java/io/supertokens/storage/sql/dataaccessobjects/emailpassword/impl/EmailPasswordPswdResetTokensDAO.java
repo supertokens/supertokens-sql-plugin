@@ -46,7 +46,7 @@ public class EmailPasswordPswdResetTokensDAO extends SessionTransactionDAO
     }
 
     @Override
-    public EmailPasswordPswdResetTokensDO get(Object id) {
+    public EmailPasswordPswdResetTokensDO getWherePrimaryKeyEquals(Object id) {
         Session session = (Session) sessionInstance;
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = session
                 .find(EmailPasswordPswdResetTokensDO.class, id);
@@ -67,7 +67,7 @@ public class EmailPasswordPswdResetTokensDAO extends SessionTransactionDAO
     }
 
     @Override
-    public int removeWhereUserIdEquals(Object id) {
+    public int deleteWherePrimaryKeyEquals(Object id) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailPasswordPswdResetTokensDO> criteriaDelete = criteriaBuilder

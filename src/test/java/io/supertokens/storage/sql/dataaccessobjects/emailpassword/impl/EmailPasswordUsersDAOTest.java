@@ -103,7 +103,7 @@ public class EmailPasswordUsersDAOTest {
     public void get() throws Exception {
         this.createOnce();
 
-        EmailPasswordUsersDO emailPasswordUsersDO1 = emailPasswordUsersDAO.get(USER_ID);
+        EmailPasswordUsersDO emailPasswordUsersDO1 = emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID);
         assertNotNull(emailPasswordUsersDO1);
         assertEquals(emailPasswordUsersDO1.getUser_id(), USER_ID);
         assertEquals(emailPasswordUsersDO1.getTime_joined(), CREATED_AT);
@@ -123,7 +123,7 @@ public class EmailPasswordUsersDAOTest {
     public void remove() throws Exception {
         this.createOnce();
         Transaction transaction = session.beginTransaction();
-        emailPasswordUsersDAO.removeWhereUserIdEquals(USER_ID);
+        emailPasswordUsersDAO.deleteWherePrimaryKeyEquals(USER_ID);
         transaction.commit();
 
         List<EmailPasswordUsersDO> results = emailPasswordUsersDAO.getAll();
@@ -135,7 +135,7 @@ public class EmailPasswordUsersDAOTest {
         this.createOnce();
         Transaction transaction = session.beginTransaction();
         try {
-            int rows = emailPasswordUsersDAO.removeWhereUserIdEquals(USER_ID + "unknown");
+            int rows = emailPasswordUsersDAO.deleteWherePrimaryKeyEquals(USER_ID + "unknown");
             if (rows == 0) {
                 throw new UnknownUserIdException();
             }
@@ -184,7 +184,7 @@ public class EmailPasswordUsersDAOTest {
         assertTrue(emailPasswordPswdResetTokensDAO.getAll().size() == 1);
         assertTrue(emailPasswordUsersDAO.getAll().size() == 1);
 
-        emailPasswordUsersDAO.removeWhereUserIdEquals(emailPasswordUsersDO.getUser_id());
+        emailPasswordUsersDAO.deleteWherePrimaryKeyEquals(emailPasswordUsersDO.getUser_id());
         transaction.commit();
 
         assertTrue(emailPasswordPswdResetTokensDAO.getAll().size() == 0);
@@ -199,7 +199,8 @@ public class EmailPasswordUsersDAOTest {
         emailPasswordUsersDAO.updatePasswordHashWhereUserId(USER_ID, UPDATED_PASS_HASH);
         transaction.commit();
         session.clear();
-        assertTrue(emailPasswordUsersDAO.get(USER_ID).getPassword_hash().equals(UPDATED_PASS_HASH));
+        assertTrue(
+                emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID).getPassword_hash().equals(UPDATED_PASS_HASH));
     }
 
     @Test
@@ -210,7 +211,7 @@ public class EmailPasswordUsersDAOTest {
         emailPasswordUsersDAO.updateEmailWhereUserId(USER_ID, UPDATED_EMAIL);
         transaction.commit();
         session.clear();
-        assertTrue(emailPasswordUsersDAO.get(USER_ID).getEmail().equals(UPDATED_EMAIL));
+        assertTrue(emailPasswordUsersDAO.getWherePrimaryKeyEquals(USER_ID).getEmail().equals(UPDATED_EMAIL));
     }
 
     @Test

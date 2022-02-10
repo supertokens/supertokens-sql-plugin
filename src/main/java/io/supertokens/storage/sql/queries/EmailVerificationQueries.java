@@ -19,7 +19,6 @@ package io.supertokens.storage.sql.queries;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
-import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -31,8 +30,6 @@ import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import org.hibernate.Session;
 
 import javax.persistence.NoResultException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -169,12 +166,12 @@ public class EmailVerificationQueries {
             {
                 EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
                         session);
-                emailverificationVerifiedEmailsDAO.removeWhereUserIdEquals(userId);
+                emailverificationVerifiedEmailsDAO.deleteWherePrimaryKeyEquals(userId);
             }
 
             {
                 EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
-                emailVerificationTokensDAO.removeWhereUserIdEquals(userId);
+                emailVerificationTokensDAO.deleteWherePrimaryKeyEquals(userId);
 
             }
             return null;
