@@ -45,14 +45,10 @@ import io.supertokens.pluginInterface.passwordless.exception.*;
 import io.supertokens.pluginInterface.passwordless.sqlStorage.PasswordlessSQLStorage;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
-import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.storage.sql.config.Config;
-import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
-import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.Session;
@@ -153,7 +149,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public void initStorage() {
         try {
             // TODO: check if in memory db is required and load accordingly
-            HibernateUtil.getSessionFactory(this);
+            HibernateSessionPool.getSessionFactory(this);
             // TODO: initiate via liquibase restore later, currently being handled by hibernate
             // GeneralQueries.createTablesIfNotExists(this);
         } catch (InterruptedException e) {
@@ -169,7 +165,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
 
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             T t = logic.mainLogic(session);
             transaction.commit();
@@ -218,7 +214,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     private <T> T startTransactionHelper(TransactionLogicHibernate<T> logic)
             throws PersistenceException, StorageQueryException, StorageTransactionLogicException, InterruptedException {
 
-        Session session = HibernateUtil.getSessionFactory(this).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(this).openSession();
         Transaction transaction = null;
         final Integer[] defaultTransactionIsolation = { null };
 
@@ -352,7 +348,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void close() {
-        HibernateUtil.shutdown();
+        HibernateSessionPool.shutdown();
     }
 
     @Override
@@ -503,7 +499,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             return;
         }
         shutdownHook = new Thread(() -> {
-            HibernateUtil.shutdown();
+            HibernateSessionPool.shutdown();
             mainThread.interrupt();
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -580,7 +576,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Transaction transaction = null;
 
         try {
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             EmailPasswordQueries.addPasswordResetToken(this, session, passwordResetTokenInfo.userId,
                     passwordResetTokenInfo.token, passwordResetTokenInfo.tokenExpiry);
@@ -768,7 +764,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
 
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             EmailVerificationQueries.addEmailVerificationToken(this, session, emailVerificationInfo.userId,
                     emailVerificationInfo.token, emailVerificationInfo.tokenExpiry, emailVerificationInfo.email);
@@ -865,7 +861,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Session session = null;
         Transaction transaction = null;
         try {
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             ThirdPartyQueries.signUp(this, userInfo);
             transaction.commit();
@@ -1094,7 +1090,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Session session = null;
         Transaction transaction = null;
         try {
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, linkCodeSalt, code);
             transaction.commit();
@@ -1198,7 +1194,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
 
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
 
             PasswordlessQueries.createCode(this, session, code);
@@ -1313,7 +1309,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Session session = null;
         Transaction transaction = null;
         try {
-            session = HibernateUtil.getSessionFactory(this).openSession();
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
             PasswordlessQueries.updateUserEmail_Transaction(this, sessionInstance, userId, email);
             transaction.commit();

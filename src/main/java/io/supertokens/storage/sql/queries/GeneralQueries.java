@@ -21,7 +21,7 @@ import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 
-import io.supertokens.storage.sql.HibernateUtil;
+import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.ProcessState;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -40,7 +40,7 @@ public class GeneralQueries {
 
     private static void executeUpdateQuery(Start start, String query) throws StorageQueryException {
 
-        try (Session session = HibernateUtil.getSessionFactory(start).openSession()) {
+        try (Session session = HibernateSessionPool.getSessionFactory(start).openSession()) {
             Transaction transaction = session.beginTransaction();
             session.createNativeQuery(query).executeUpdate();
             transaction.commit();
@@ -54,7 +54,7 @@ public class GeneralQueries {
         Session session = null;
         Transaction transaction = null;
         try {
-            session = HibernateUtil.getSessionFactory(start).openSession();
+            session = HibernateSessionPool.getSessionFactory(start).openSession();
             transaction = session.getTransaction();
             transaction.begin();
 
@@ -214,7 +214,7 @@ public class GeneralQueries {
                 + "(name, value, created_at_time) VALUES(?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE value = ?, created_at_time = ?";
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
         nativeQuery.setParameter(2, info.value);
@@ -237,7 +237,7 @@ public class GeneralQueries {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = :name";
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter("name", key);
 
@@ -259,7 +259,7 @@ public class GeneralQueries {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = ? FOR UPDATE";
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
@@ -279,7 +279,7 @@ public class GeneralQueries {
             throws InterruptedException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
@@ -345,7 +345,7 @@ public class GeneralQueries {
             QUERY.append(")");
         }
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
 
         Transaction transaction = session.getTransaction();

@@ -52,7 +52,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class HibernateUtil {
+public class HibernateSessionPool {
 
     private static StandardServiceRegistry registry;
     private static SessionFactory sessionFactory;

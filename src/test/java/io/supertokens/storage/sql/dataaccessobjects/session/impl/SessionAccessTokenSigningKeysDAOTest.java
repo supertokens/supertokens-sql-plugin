@@ -16,15 +16,11 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
-import io.supertokens.storage.sql.HibernateUtil;
-import io.supertokens.storage.sql.dataaccessobjects.jwt.impl.JwtSigningDAO;
-import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.supertokens.storage.sql.TestConstants.CREATED_AT;

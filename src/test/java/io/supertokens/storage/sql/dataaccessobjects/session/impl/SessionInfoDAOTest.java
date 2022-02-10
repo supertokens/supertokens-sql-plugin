@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
-import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
@@ -24,23 +23,11 @@ import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.exception.ConstraintViolationException;
-import org.hibernate.jdbc.ReturningWork;
-import org.hibernate.jdbc.Work;
-import org.hibernate.query.Query;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
 
 import static io.supertokens.storage.sql.TestConstants.*;
 import static org.junit.Assert.*;

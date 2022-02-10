@@ -16,7 +16,7 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.storage.sql.HibernateUtil;
+import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.pluginInterface.RECIPE_ID;
@@ -317,7 +317,7 @@ public class PasswordlessQueries {
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         Transaction transaction = session.beginTransaction();
         try {
             return PasswordlessQueries.getCodesOfDevice_Transaction(start, session, deviceIdHash);
@@ -362,7 +362,7 @@ public class PasswordlessQueries {
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = HibernateUtil.getSessionFactory(start).openSession();
+        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
         Transaction transaction = session.beginTransaction();
 
         try {

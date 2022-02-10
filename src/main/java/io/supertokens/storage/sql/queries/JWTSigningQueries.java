@@ -21,7 +21,6 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.jwt.JWTAsymmetricSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSymmetricSigningKeyInfo;
-import io.supertokens.storage.sql.HibernateUtil;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.jwt.impl.JwtSigningDAO;
