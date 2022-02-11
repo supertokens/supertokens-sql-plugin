@@ -24,6 +24,7 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.session.SessionInfo;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.session.impl.SessionAccessTokenSigningKeysDAO;
@@ -56,19 +57,19 @@ public class SessionQueries {
                 + "created_at_time BIGINT  NOT NULL," + "value TEXT," + "PRIMARY KEY(created_at_time)" + " );";
     }
 
-    public static void createNewSession(Start start, Session session, String sessionHandle, String userId,
+    public static void createNewSession(Start start, SessionObject sessionObject, String sessionHandle, String userId,
             String refreshTokenHash2, JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT,
             long createdAtTime) throws SQLException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
         sessionInfoDAO.insertIntoTableValues(sessionHandle, userId, refreshTokenHash2, userDataInDatabase.toString(),
                 expiry, createdAtTime, userDataInJWT.toString());
     }
 
-    public static SessionInfo getSessionInfo_Transaction(Start start, Session sessionInstance, String sessionHandle)
+    public static SessionInfo getSessionInfo_Transaction(Start start, SessionObject sessionObject, String sessionHandle)
             throws NoResultException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionInstance);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(sessionHandle);
 
@@ -80,21 +81,22 @@ public class SessionQueries {
                 sessionInfoDO.getCreated_at_time());
     }
 
-    public static void updateSessionInfo_Transaction(Start start, Session sessionInstance, String sessionHandle,
+    public static void updateSessionInfo_Transaction(Start start, SessionObject sessionObject, String sessionHandle,
             String refreshTokenHash2, long expiry) throws SQLException, SessionHandleNotFoundException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionInstance);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
         sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(refreshTokenHash2, expiry,
                 sessionHandle);
     }
 
-    public static int getNumberOfSessions(Start start, Session session) throws SQLException {
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+    public static int getNumberOfSessions(Start start, SessionObject sessionObject) throws SQLException {
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
         // TODO: shouldn't this return long? number rows might not be in int range
         return Math.toIntExact(sessionInfoDAO.getCount());
     }
 
-    public static int deleteSession(Start start, Session session, String[] sessionHandles) throws SQLException {
+    public static int deleteSession(Start start, SessionObject sessionObject, String[] sessionHandles)
+            throws SQLException {
         if (sessionHandles.length == 0) {
             return 0;
         }
@@ -107,7 +109,7 @@ public class SessionQueries {
                 QUERY.append("?, ");
             }
         }
-
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
         for (int i = 0; i < sessionHandles.length; i++) {
             nativeQuery.setParameter(i + 1, sessionHandles[i]);
@@ -116,32 +118,32 @@ public class SessionQueries {
 
     }
 
-    public static void deleteSessionsOfUser(Start start, Session session, String userId)
+    public static void deleteSessionsOfUser(Start start, SessionObject sessionObject, String userId)
             throws SQLException, UserIdNotFoundException {
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         sessionInfoDAO.deleteWhereUserIdEquals(userId);
     }
 
-    public static String[] getAllSessionHandlesForUser(Start start, Session session, String userId)
+    public static String[] getAllSessionHandlesForUser(Start start, SessionObject sessionObject, String userId)
             throws SQLException, UserIdNotFoundException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         return sessionInfoDAO.getSessionHandlesWhereUserIdEquals(userId);
 
     }
 
-    public static void deleteAllExpiredSessions(Start start, Session session) throws SQLException {
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+    public static void deleteAllExpiredSessions(Start start, SessionObject sessionObject) throws SQLException {
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         sessionInfoDAO.deleteWhereExpiresLessThan(System.currentTimeMillis());
     }
 
-    public static SessionInfo getSession(Start start, Session session, String sessionHandle)
+    public static SessionInfo getSession(Start start, SessionObject sessionObject, String sessionHandle)
             throws SQLException, StorageQueryException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(sessionHandle);
 
@@ -153,7 +155,7 @@ public class SessionQueries {
                 sessionInfoDO.getCreated_at_time());
     }
 
-    public static int updateSession(Start start, Session session, String sessionHandle,
+    public static int updateSession(Start start, SessionObject sessionObject, String sessionHandle,
             @Nullable JsonObject sessionData, @Nullable JsonObject jwtPayload) throws SQLException {
 
         if (sessionData == null && jwtPayload == null) {
@@ -172,7 +174,7 @@ public class SessionQueries {
         QUERY += " WHERE session_handle = ?";
 
         int currIndex = 1;
-
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
 
         if (sessionData != null) {
@@ -189,16 +191,16 @@ public class SessionQueries {
 
     }
 
-    public static void addAccessTokenSigningKey_Transaction(Start start, Session sessionInstance, long createdAtTime,
-            String value) {
-        SessionAccessTokenSigningKeysDAO signingKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionInstance);
+    public static void addAccessTokenSigningKey_Transaction(Start start, SessionObject sessionObject,
+            long createdAtTime, String value) {
+        SessionAccessTokenSigningKeysDAO signingKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
 
         signingKeysDAO.insertIntoTableValues(createdAtTime, value);
     }
 
-    public static KeyValueInfo[] getAccessTokenSigningKeys_Transaction(Start start, Session sessionInstance) {
+    public static KeyValueInfo[] getAccessTokenSigningKeys_Transaction(Start start, SessionObject sessionObject) {
 
-        SessionAccessTokenSigningKeysDAO keysDAO = new SessionAccessTokenSigningKeysDAO(sessionInstance);
+        SessionAccessTokenSigningKeysDAO keysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
 
         List<SessionAccessTokenSigningKeysDO> results = keysDAO.getAll();
 
@@ -217,8 +219,9 @@ public class SessionQueries {
         return keyValueInfos;
     }
 
-    public static void removeAccessTokenSigningKeysBefore(Start start, Session session, long time) throws SQLException {
-        SessionAccessTokenSigningKeysDAO keysDAO = new SessionAccessTokenSigningKeysDAO(session);
+    public static void removeAccessTokenSigningKeysBefore(Start start, SessionObject sessionObject, long time)
+            throws SQLException {
+        SessionAccessTokenSigningKeysDAO keysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
 
         keysDAO.deleteWhereCreatedAtTimeLessThan(time);
     }

@@ -21,6 +21,7 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.jwt.JWTAsymmetricSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSymmetricSigningKeyInfo;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.jwt.impl.JwtSigningDAO;
@@ -46,10 +47,10 @@ public class JWTSigningQueries {
                 + "created_at BIGINT ," + "PRIMARY KEY(key_id));";
     }
 
-    public static List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(Start start, Session sessionInstance)
+    public static List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(Start start, SessionObject sessionObject)
             throws SQLException, StorageQueryException {
 
-        JwtSigningDAO jwtSigningDAO = new JwtSigningDAO(sessionInstance);
+        JwtSigningDAO jwtSigningDAO = new JwtSigningDAO(sessionObject);
 
         List<JWTSigningKeysDO> results = jwtSigningDAO.getAllOrderByCreatedAtDesc_locked();
         List<JWTSigningKeyInfo> finalResults = new ArrayList<>();
@@ -93,10 +94,10 @@ public class JWTSigningQueries {
         }
     }
 
-    public static void setJWTSigningKeyInfo_Transaction(Start start, Session sessionInstance, JWTSigningKeyInfo info)
-            throws SQLException {
+    public static void setJWTSigningKeyInfo_Transaction(Start start, SessionObject sessionObject,
+            JWTSigningKeyInfo info) throws SQLException {
 
-        JwtSigningDAO jwtSigningDAO = new JwtSigningDAO(sessionInstance);
+        JwtSigningDAO jwtSigningDAO = new JwtSigningDAO(sessionObject);
         jwtSigningDAO.insert(info.keyId, info.keyString, info.algorithm, info.createdAtTime);
     }
 }

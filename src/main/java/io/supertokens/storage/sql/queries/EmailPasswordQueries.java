@@ -22,6 +22,7 @@ import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.emailpassword.impl.EmailPasswordPswdResetTokensDAO;
@@ -62,40 +63,40 @@ public class EmailPasswordQueries {
                 + Config.getConfig(start).getPasswordResetTokensTable() + "(token_expiry);";
     }
 
-    public static void deleteExpiredPasswordResetTokens(Start start, Session sessionInstance) throws SQLException {
+    public static void deleteExpiredPasswordResetTokens(Start start, SessionObject sessionObject) throws SQLException {
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
 
         emailPasswordPswdResetTokensDAO.deleteWhereTokenExpiryIsLessThan(System.currentTimeMillis());
     }
 
-    public static void updateUsersPassword_Transaction(Start start, Session sessionInstance, String userId,
+    public static void updateUsersPassword_Transaction(Start start, SessionObject sessionObject, String userId,
             String newPassword) throws SQLException {
 
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionInstance);
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         emailPasswordUsersDAO.updatePasswordHashWhereUserId(userId, newPassword);
 
     }
 
-    public static void updateUsersEmail_Transaction(Start start, Session sessionInstance, String userId,
+    public static void updateUsersEmail_Transaction(Start start, SessionObject sessionObject, String userId,
             String newEmail) throws SQLException, UnknownUserIdException {
 
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionInstance);
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         emailPasswordUsersDAO.updateEmailWhereUserId(userId, newEmail);
     }
 
-    public static void deleteAllPasswordResetTokensForUser_Transaction(Start start, Session sessionInstance,
+    public static void deleteAllPasswordResetTokensForUser_Transaction(Start start, SessionObject sessionObject,
             String userId) throws SQLException {
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
         emailPasswordPswdResetTokensDAO.deleteAllWhereUserIdEquals(userId);
     }
 
-    public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, Session sessionInstance,
+    public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, SessionObject sessionObject,
             String userId) throws SQLException, StorageQueryException {
 
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
         List<EmailPasswordPswdResetTokensDO> results = emailPasswordPswdResetTokensDAO
                 .getAllPasswordResetTokenInfoForUser(userId);
 
@@ -109,10 +110,10 @@ public class EmailPasswordQueries {
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Start start,
-            Session sessionInstance, String userId) throws SQLException, StorageQueryException {
+            SessionObject sessionObject, String userId) throws SQLException, StorageQueryException {
 
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
         List<EmailPasswordPswdResetTokensDO> results = emailPasswordPswdResetTokensDAO
                 .getAllPasswordResetTokenInfoForUser_locked(userId);
 
@@ -125,11 +126,11 @@ public class EmailPasswordQueries {
         return finalResult;
     }
 
-    public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, Session sessionInstance, String token)
-            throws SQLException, StorageQueryException {
+    public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, SessionObject sessionObject,
+            String token) throws SQLException, StorageQueryException {
 
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = emailPasswordPswdResetTokensDAO
                 .getPasswordResetTokenInfo(token);
 
@@ -138,10 +139,10 @@ public class EmailPasswordQueries {
                 emailPasswordPswdResetTokensDO.getToken_expiry());
     }
 
-    public static void addPasswordResetToken(Start start, Session sessionInstance, String userId, String tokenHash,
+    public static void addPasswordResetToken(Start start, SessionObject sessionObject, String userId, String tokenHash,
             long expiry) throws SQLException, UnknownUserIdException {
         EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(
-                sessionInstance);
+                sessionObject);
         emailPasswordPswdResetTokensDAO.insertPasswordResetTokenInfo(userId, tokenHash, expiry);
     }
 
@@ -173,18 +174,18 @@ public class EmailPasswordQueries {
         });
     }
 
-    public static UserInfo getUserInfoUsingId(Start start, Session session, String id)
+    public static UserInfo getUserInfoUsingId(Start start, SessionObject sessionObject, String id)
             throws SQLException, StorageQueryException {
         List<String> input = new ArrayList<>();
         input.add(id);
-        List<UserInfo> result = getUsersInfoUsingIdList(start, session, input);
+        List<UserInfo> result = getUsersInfoUsingIdList(start, sessionObject, input);
         if (result.size() == 1) {
             return result.get(0);
         }
         return null;
     }
 
-    public static List<UserInfo> getUsersInfoUsingIdList(Start start, Session session, List<String> ids)
+    public static List<UserInfo> getUsersInfoUsingIdList(Start start, SessionObject sessionObject, List<String> ids)
             throws SQLException, StorageQueryException {
         List<UserInfo> finalResult = new ArrayList<>();
         if (ids.size() > 0) {
@@ -201,6 +202,7 @@ public class EmailPasswordQueries {
             }
             QUERY.append(")");
 
+            Session session = (Session) sessionObject.getSession();
             NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
 
             for (int i = 0; i < ids.size(); i++) {
@@ -220,10 +222,10 @@ public class EmailPasswordQueries {
 
     }
 
-    public static UserInfo getUserInfoUsingId_Transaction(Start start, Session sessionInstance, String id)
+    public static UserInfo getUserInfoUsingId_Transaction(Start start, SessionObject sessionObject, String id)
             throws SQLException, StorageQueryException {
 
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionInstance);
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         try {
             EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWhereUserIdEquals_locked(id);
             return new UserInfo(emailPasswordUsersDO.getUser_id(), emailPasswordUsersDO.getEmail(),
@@ -233,10 +235,10 @@ public class EmailPasswordQueries {
         }
     }
 
-    public static UserInfo getUserInfoUsingEmail(Start start, Session sessionInstance, String email)
+    public static UserInfo getUserInfoUsingEmail(Start start, SessionObject sessionObject, String email)
             throws SQLException, StorageQueryException {
 
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionInstance);
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         try {
             EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWhereEmailEquals(email);
 
@@ -249,9 +251,9 @@ public class EmailPasswordQueries {
     }
 
     @Deprecated
-    public static UserInfo[] getUsersInfo(Start start, Session session, Integer limit, String timeJoinedOrder)
-            throws SQLException, StorageQueryException {
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
+    public static UserInfo[] getUsersInfo(Start start, SessionObject sessionObject, Integer limit,
+            String timeJoinedOrder) throws SQLException, StorageQueryException {
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         List<EmailPasswordUsersDO> list = emailPasswordUsersDAO.getLimitedOrderByTimeJoinedAndUserId(timeJoinedOrder,
                 OrderEnum.DESC.name(), limit);
         int size = list.size();
@@ -264,10 +266,10 @@ public class EmailPasswordQueries {
     }
 
     @Deprecated
-    public static UserInfo[] getUsersInfo(Start start, Session session, String userId, Long timeJoined, Integer limit,
-            String timeJoinedOrder) throws SQLException, StorageQueryException {
+    public static UserInfo[] getUsersInfo(Start start, SessionObject sessionObject, String userId, Long timeJoined,
+            Integer limit, String timeJoinedOrder) throws SQLException, StorageQueryException {
 
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         List<EmailPasswordUsersDO> list = emailPasswordUsersDAO.getLimitedUsersInfo(timeJoinedOrder, timeJoined,
                 OrderEnum.DESC.name(), userId, limit);
         int size = list.size();
@@ -281,8 +283,8 @@ public class EmailPasswordQueries {
     }
 
     @Deprecated
-    public static long getUsersCount(Start start, Session session) throws SQLException {
-        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
+    public static long getUsersCount(Start start, SessionObject sessionObject) throws SQLException {
+        EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         return emailPasswordUsersDAO.getCount();
     }
 

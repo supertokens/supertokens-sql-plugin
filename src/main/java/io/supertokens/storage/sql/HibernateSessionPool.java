@@ -45,6 +45,8 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.spi.ServiceException;
 import org.hibernate.tool.schema.Action;
+import org.mariadb.jdbc.Driver;
+import org.hibernate.dialect.MariaDBDialect;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -52,7 +54,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class HibernateSessionPool {
+public class HibernateSessionPool extends ResourceDistributor.SingletonResource {
+
+    private static final String RESOURCE_KEY = "io.supertokens.storage.sql.HibernateSessionPool";
 
     private static StandardServiceRegistry registry;
     private static SessionFactory sessionFactory;
@@ -195,57 +199,57 @@ public class HibernateSessionPool {
 
             long maxTryTime = System.currentTimeMillis() + getTimeToWaitToInit(start);
             boolean longMessagePrinted = false;
-
             try {
-                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
-
-                HashMap<String, Object> settings = null;
-                if (inMemory) {
-                    settings = getInMemorySettings();
-                } else {
-                    settings = getSettings(start);
-                }
-
                 while (true) {
-                    registryBuilder.applySettings(settings);
+                    try {
+                        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
 
-                    registry = registryBuilder.build();
-                    MetadataSources sources = new MetadataSources(registry)
-                            .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
-                            .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
-                            .addAnnotatedClass(EmailPasswordUsersDO.class)
-                            .addAnnotatedClass(EmailVerificationTokensDO.class)
-                            .addAnnotatedClass(EmailVerificationTokensPKDO.class)
-                            .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
-                            .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
+                        HashMap<String, Object> settings = null;
+                        if (inMemory) {
+                            settings = getInMemorySettings();
+                        } else {
+                            settings = getSettings(start);
+                        }
 
-                            .addAnnotatedClass(PasswordlessCodesDO.class).addAnnotatedClass(PasswordlessDevicesDO.class)
-                            .addAnnotatedClass(PasswordlessUsersDO.class)
+                        registryBuilder.applySettings(settings);
 
-                            .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
+                        registry = registryBuilder.build();
+                        MetadataSources sources = new MetadataSources(registry)
+                                .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
+                                .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
+                                .addAnnotatedClass(EmailPasswordUsersDO.class)
+                                .addAnnotatedClass(EmailVerificationTokensDO.class)
+                                .addAnnotatedClass(EmailVerificationTokensPKDO.class)
+                                .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
+                                .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
 
-                            .addAnnotatedClass(JWTSigningKeysDO.class)
+                                .addAnnotatedClass(PasswordlessCodesDO.class)
+                                .addAnnotatedClass(PasswordlessDevicesDO.class)
+                                .addAnnotatedClass(PasswordlessUsersDO.class)
 
-                            .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
-                            .addAnnotatedClass(SessionInfoDO.class)
+                                .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
 
-                            .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class)
+                                .addAnnotatedClass(JWTSigningKeysDO.class)
 
-                    ;
+                                .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
+                                .addAnnotatedClass(SessionInfoDO.class)
 
-                    Metadata metadata = sources.getMetadataBuilder().build();
-                    sessionFactory = metadata.getSessionFactoryBuilder().build();
-                    break;
+                                .addAnnotatedClass(ThirdPartyUsersDO.class)
+                                .addAnnotatedClass(ThirdPartyUsersPKDO.class);
+
+                        Metadata metadata = sources.getMetadataBuilder().build();
+                        sessionFactory = metadata.getSessionFactoryBuilder().build();
+
+                    } catch (Exception e) {
+
+                        if (e.getMessage().contains("Connection refused")) {
+                            retryRefusedConnection(start, maxTryTime, longMessagePrinted);
+                        } else {
+                            throw e;
+                        }
+
+                    }
                 }
-
-            } catch (Exception e) {
-
-                if (e.getMessage().contains("Connection refused")) {
-                    retryRefusedConnection(start, maxTryTime, longMessagePrinted);
-                } else {
-                    throw e;
-                }
-
             } finally {
                 start.removeShutdownHook();
             }

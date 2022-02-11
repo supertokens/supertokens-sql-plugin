@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.PasswordlessCodesInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
@@ -34,7 +35,7 @@ import java.util.List;
 
 public class PasswordlessCodesDAO extends SessionTransactionDAO implements PasswordlessCodesInterfaceDAO {
 
-    public PasswordlessCodesDAO(Session sessionInstance) {
+    public PasswordlessCodesDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

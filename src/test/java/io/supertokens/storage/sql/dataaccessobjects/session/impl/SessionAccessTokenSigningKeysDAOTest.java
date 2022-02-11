@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -30,13 +31,15 @@ import static org.junit.Assert.*;
 public class SessionAccessTokenSigningKeysDAOTest {
 
     Session session;
+    SessionObject sessionObject;
+    SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO;
 
     @Before
     public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
+        sessionObject = new SessionObject(session);
         Transaction transaction = session.beginTransaction();
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
-                session);
+        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
         sessionAccessTokenSigningKeysDAO.removeAll();
         transaction.commit();
     }
@@ -44,8 +47,6 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @After
     public void after() throws Exception {
         Transaction transaction = session.beginTransaction();
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
-                session);
         sessionAccessTokenSigningKeysDAO.removeAll();
         transaction.commit();
         session.close();
@@ -54,8 +55,7 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @Test
     public void insertIntoTableValues() throws Exception {
 
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
-                session);
+        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);
         transaction.commit();
@@ -66,8 +66,7 @@ public class SessionAccessTokenSigningKeysDAOTest {
     @Test
     public void deleteWhereCreatedAtTimeLessThan() throws Exception {
 
-        SessionAccessTokenSigningKeysDAO sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(
-                session);
+        sessionAccessTokenSigningKeysDAO = new SessionAccessTokenSigningKeysDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
 
         sessionAccessTokenSigningKeysDAO.insertIntoTableValues(CREATED_AT, VALUE);

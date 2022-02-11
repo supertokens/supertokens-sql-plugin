@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.emailverification.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensPKDO;
 import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
@@ -39,11 +40,13 @@ public class EmailVerificationTokensDAOTest {
 
     EmailVerificationTokensDAO emailVerificationTokensDAO;
     Session session;
+    SessionObject sessionObject;
 
     @Before
     public void beforeTest() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
-        emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
+        sessionObject = new SessionObject(session);
+        emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         emailVerificationTokensDAO.removeAll();
         transaction.commit();

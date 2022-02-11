@@ -20,6 +20,7 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.dataaccessobjects.emailverification.impl.EmailVerificationTokensDAO;
@@ -53,17 +54,18 @@ public class EmailVerificationQueries {
                 + Config.getConfig(start).getEmailVerificationTokensTable() + "(token_expiry);";
     }
 
-    public static void deleteExpiredEmailVerificationTokens(Start start, Session session) throws SQLException {
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
+    public static void deleteExpiredEmailVerificationTokens(Start start, SessionObject sessionObject)
+            throws SQLException {
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
 
         emailVerificationTokensDAO.deleteFromTableWhereTokenExpiryIsLessThan(System.currentTimeMillis());
     }
 
-    public static void updateUsersIsEmailVerified_Transaction(Start start, Session sessionInstance, String userId,
+    public static void updateUsersIsEmailVerified_Transaction(Start start, SessionObject sessionObject, String userId,
             String email, boolean isEmailVerified) throws SQLException {
 
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
-                sessionInstance);
+                sessionObject);
 
         if (isEmailVerified) {
             emailverificationVerifiedEmailsDAO.insertIntoTable(userId, email);
@@ -76,10 +78,10 @@ public class EmailVerificationQueries {
         }
     }
 
-    public static void deleteAllEmailVerificationTokensForUser_Transaction(Start start, Session sessionInstance,
+    public static void deleteAllEmailVerificationTokensForUser_Transaction(Start start, SessionObject sessionObject,
             String userId, String email) throws SQLException {
 
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionInstance);
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
         try {
             emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
         } catch (UserAndEmailNotFoundException u) {
@@ -87,10 +89,10 @@ public class EmailVerificationQueries {
         }
     }
 
-    public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, Session session, String token)
-            throws NoResultException {
+    public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, SessionObject sessionObject,
+            String token) throws NoResultException {
 
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
 
         EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
                 .getEmailVerificationTokenWhereTokenEquals(token);
@@ -100,36 +102,17 @@ public class EmailVerificationQueries {
                 emailVerificationTokensDO.getPrimary_key().getEmail());
     }
 
-    public static void addEmailVerificationToken(Start start, Session session, String userId, String tokenHash,
-            long expiry, String email) throws SQLException {
+    public static void addEmailVerificationToken(Start start, SessionObject sessionObject, String userId,
+            String tokenHash, long expiry, String email) throws SQLException {
 
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
         emailVerificationTokensDAO.insertIntoTable(userId, email, tokenHash, expiry);
     }
 
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(Start start,
-            Session sessionInstance, String userId, String email) throws SQLException, StorageQueryException {
+            SessionObject sessionObject, String userId, String email) throws SQLException, StorageQueryException {
 
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionInstance);
-
-        List<EmailVerificationTokensDO> list = emailVerificationTokensDAO
-                .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(userId, email);
-
-        EmailVerificationTokenInfo[] finalResult = new EmailVerificationTokenInfo[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            EmailVerificationTokensDO tokensDO = list.get(i);
-            finalResult[i] = new EmailVerificationTokenInfo(tokensDO.getPrimary_key().getUser_id(),
-                    tokensDO.getPrimary_key().getToken(), tokensDO.getToken_expiry(),
-                    tokensDO.getPrimary_key().getEmail());
-        }
-        return finalResult;
-
-    }
-
-    public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(Start start, Session session,
-            String userId, String email) throws NoResultException {
-
-        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(session);
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
 
         List<EmailVerificationTokensDO> list = emailVerificationTokensDAO
                 .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(userId, email);
@@ -145,11 +128,30 @@ public class EmailVerificationQueries {
 
     }
 
-    public static boolean isEmailVerified(Start start, Session session, String userId, String email)
+    public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(Start start,
+            SessionObject sessionObject, String userId, String email) throws NoResultException {
+
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
+
+        List<EmailVerificationTokensDO> list = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(userId, email);
+
+        EmailVerificationTokenInfo[] finalResult = new EmailVerificationTokenInfo[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            EmailVerificationTokensDO tokensDO = list.get(i);
+            finalResult[i] = new EmailVerificationTokenInfo(tokensDO.getPrimary_key().getUser_id(),
+                    tokensDO.getPrimary_key().getToken(), tokensDO.getToken_expiry(),
+                    tokensDO.getPrimary_key().getEmail());
+        }
+        return finalResult;
+
+    }
+
+    public static boolean isEmailVerified(Start start, SessionObject sessionObject, String userId, String email)
             throws NoResultException {
 
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
-                session);
+                sessionObject);
 
         EmailVerificationVerifiedEmailsDO emailsDO = emailverificationVerifiedEmailsDAO
                 .getWhereUserIdEqualsAndEmailEquals(userId, email);
@@ -178,18 +180,18 @@ public class EmailVerificationQueries {
         });
     }
 
-    public static void unverifyEmail(Start start, Session session, String userId, String email)
+    public static void unverifyEmail(Start start, SessionObject sessionObject, String userId, String email)
             throws SQLException, UserAndEmailNotFoundException {
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
-                session);
+                sessionObject);
 
         emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
     }
 
-    public static void revokeAllTokens(Start start, Session session, String userId, String email)
+    public static void revokeAllTokens(Start start, SessionObject sessionObject, String userId, String email)
             throws UserAndEmailNotFoundException {
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
-                session);
+                sessionObject);
         emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
     }
 

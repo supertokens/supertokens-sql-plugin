@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import org.hibernate.Session;
 
 /**
@@ -25,8 +26,8 @@ public class SessionTransactionDAO {
 
     protected final Session sessionInstance;
 
-    public SessionTransactionDAO(Session sessionInstance) {
-        this.sessionInstance = sessionInstance;
+    public SessionTransactionDAO(SessionObject sessionInstance) {
+        this.sessionInstance = (Session) sessionInstance.getSession();
     }
 
 }

@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.queries;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -99,62 +100,62 @@ public class PasswordlessQueries {
         });
     }
 
-    public static PasswordlessDevice getDevice_Transaction(Start start, Session sessionInstance, String deviceIdHash)
-            throws StorageQueryException, SQLException {
+    public static PasswordlessDevice getDevice_Transaction(Start start, SessionObject sessionObject,
+            String deviceIdHash) throws StorageQueryException, SQLException {
 
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         PasswordlessDevicesDO passwordlessDevicesDO = devicesDAO.getWhereDeviceIdHashEquals_locked(deviceIdHash);
         return PasswordlessDeviceRowMapper.getInstance().mapOrThrow(passwordlessDevicesDO);
 
     }
 
-    public static void incrementDeviceFailedAttemptCount_Transaction(Start start, Session sessionInstance,
+    public static void incrementDeviceFailedAttemptCount_Transaction(Start start, SessionObject sessionObject,
             String deviceIdHash) throws SQLException {
 
-        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         passwordlessDevicesDAO.updateFailedAttemptsWhereDeviceIdHashEquals(deviceIdHash);
     }
 
-    public static void deleteDevice_Transaction(Start start, Session sessionInstance, String deviceIdHash)
+    public static void deleteDevice_Transaction(Start start, SessionObject sessionObject, String deviceIdHash)
             throws SQLException {
-        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(deviceIdHash);
     }
 
-    public static void deleteDevicesByPhoneNumber_Transaction(Start start, Session sessionInstance,
+    public static void deleteDevicesByPhoneNumber_Transaction(Start start, SessionObject sessionObject,
             @Nonnull String phoneNumber) throws SQLException {
 
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
         devicesDAO.deleteWherePhoneNumberEquals(phoneNumber);
     }
 
-    public static void deleteDevicesByEmail_Transaction(Start start, Session sessionInstance, @Nonnull String email)
+    public static void deleteDevicesByEmail_Transaction(Start start, SessionObject sessionObject, @Nonnull String email)
             throws SQLException, StorageQueryException {
 
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         devicesDAO.deleteWhereEmailEquals(email);
     }
 
     // TODO: optimize later
-    private static void createCode_Transaction(Start start, Session session, PasswordlessCode code)
+    private static void createCode_Transaction(Start start, SessionObject sessionObject, PasswordlessCode code)
             throws SQLException {
 
-        PasswordlessCodesDAO passwordlessCodesDAO = new PasswordlessCodesDAO(session);
-        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
+        PasswordlessCodesDAO passwordlessCodesDAO = new PasswordlessCodesDAO(sessionObject);
+        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(code.deviceIdHash);
 
         passwordlessCodesDAO.insertIntoTableValues(code.id, devicesDO, code.linkCodeHash, code.createdAt);
     }
 
-    public static void createCode(Start start, Session session, PasswordlessCode code)
+    public static void createCode(Start start, SessionObject sessionObject, PasswordlessCode code)
             throws StorageTransactionLogicException, StorageQueryException {
         start.startTransactionHibernate(con -> {
 
             try {
-                PasswordlessQueries.createCode_Transaction(start, session, code);
+                PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
             } catch (SQLException e) {
                 throw new StorageTransactionLogicException(e);
             }
@@ -163,13 +164,13 @@ public class PasswordlessQueries {
     }
 
     // TODO: optimize later
-    public static PasswordlessCode[] getCodesOfDevice_Transaction(Start start, Session sessionInstance,
+    public static PasswordlessCode[] getCodesOfDevice_Transaction(Start start, SessionObject sessionObject,
             String deviceIdHash) throws StorageQueryException, SQLException {
         // We do not lock here, since the device is already locked earlier in the transaction.
 
-        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionInstance);
+        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionObject);
 
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionInstance);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         PasswordlessDevicesDO devicesDO = devicesDAO.getWhereDeviceIdHashEquals_locked(deviceIdHash);
 
@@ -188,19 +189,20 @@ public class PasswordlessQueries {
 
     }
 
-    public static PasswordlessCode getCodeByLinkCodeHash_Transaction(Start start, Session sessionInstance,
+    public static PasswordlessCode getCodeByLinkCodeHash_Transaction(Start start, SessionObject sessionObject,
             String linkCodeHash) throws StorageQueryException, SQLException {
         // We do not lock here, since the device is already locked earlier in the transaction.
 
-        PasswordlessCodesDAO passwordlessCodesDO = new PasswordlessCodesDAO(sessionInstance);
+        PasswordlessCodesDAO passwordlessCodesDO = new PasswordlessCodesDAO(sessionObject);
 
         PasswordlessCodesDO codesDO = passwordlessCodesDO.getWhereLinkCodeHashEquals(linkCodeHash);
         return PasswordlessCodeRowMapper.getInstance().mapOrThrow(codesDO);
 
     }
 
-    public static void deleteCode_Transaction(Start start, Session sessionInstance, String codeId) throws SQLException {
-        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionInstance);
+    public static void deleteCode_Transaction(Start start, SessionObject sessionObject, String codeId)
+            throws SQLException {
+        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionObject);
 
         codesDAO.deleteWhereCodeIdEquals(codeId);
     }
@@ -258,33 +260,33 @@ public class PasswordlessQueries {
         });
     }
 
-    public static void updateUserEmail_Transaction(Start start, Session sessionInstance, String userId, String email)
-            throws UnknownUserIdException {
+    public static void updateUserEmail_Transaction(Start start, SessionObject sessionObject, String userId,
+            String email) throws UnknownUserIdException {
 
-        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionInstance);
+        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionObject);
 
         usersDAO.updateEmailWhereUserIdEquals(userId, email);
     }
 
-    public static void updateUserPhoneNumber_Transaction(Start start, Session sessionInstance, String userId,
+    public static void updateUserPhoneNumber_Transaction(Start start, SessionObject sessionObject, String userId,
             String phoneNumber) throws SQLException, UnknownUserIdException {
-        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionInstance);
+        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionObject);
 
         usersDAO.updatePhoneNumberWhereUserIdEquals(userId, phoneNumber);
     }
 
-    public static PasswordlessDevice getDevice(Start start, Session session, String deviceIdHash)
+    public static PasswordlessDevice getDevice(Start start, SessionObject sessionObject, String deviceIdHash)
             throws StorageQueryException, SQLException {
 
-        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
+        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(deviceIdHash);
         return PasswordlessDeviceRowMapper.getInstance().mapOrThrow(devicesDO);
     }
 
-    public static PasswordlessDevice[] getDevicesByEmail(Start start, Session session, @Nonnull String email)
-            throws StorageQueryException, SQLException {
+    public static PasswordlessDevice[] getDevicesByEmail(Start start, SessionObject sessionObject,
+            @Nonnull String email) throws StorageQueryException, SQLException {
 
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(session);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         List<PasswordlessDevicesDO> results = devicesDAO.getDevicesWhereEmailEquals(email);
         Iterator<PasswordlessDevicesDO> iterator = results.iterator();
@@ -298,9 +300,9 @@ public class PasswordlessQueries {
         return finalResult;
     }
 
-    public static PasswordlessDevice[] getDevicesByPhoneNumber(Start start, Session session,
+    public static PasswordlessDevice[] getDevicesByPhoneNumber(Start start, SessionObject sessionObject,
             @Nonnull String phoneNumber) throws StorageQueryException, SQLException {
-        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(session);
+        PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
         List<PasswordlessDevicesDO> results = devicesDAO.getDevicesWherePhoneNumberEquals(phoneNumber);
         Iterator<PasswordlessDevicesDO> iterator = results.iterator();
@@ -314,13 +316,13 @@ public class PasswordlessQueries {
         return finalResult;
     }
 
-    public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
+    public static PasswordlessCode[] getCodesOfDevice(Start start, SessionObject sessionObject, String deviceIdHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         Transaction transaction = session.beginTransaction();
         try {
-            return PasswordlessQueries.getCodesOfDevice_Transaction(start, session, deviceIdHash);
+            return PasswordlessQueries.getCodesOfDevice_Transaction(start, sessionObject, deviceIdHash);
         } catch (PersistenceException e) {
             if (transaction != null) {
                 transaction.rollback();
@@ -333,10 +335,10 @@ public class PasswordlessQueries {
         }
     }
 
-    public static PasswordlessCode[] getCodesBefore(Start start, Session session, long time)
+    public static PasswordlessCode[] getCodesBefore(Start start, SessionObject sessionObject, long time)
             throws StorageQueryException, SQLException {
 
-        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(session);
+        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionObject);
 
         List<PasswordlessCodesDO> codesDOList = codesDAO.getCodesWhereCreatedAtLessThan(time);
         PasswordlessCode[] finalResult = new PasswordlessCode[codesDOList.size()];
@@ -350,25 +352,25 @@ public class PasswordlessQueries {
         return finalResult;
     }
 
-    public static PasswordlessCode getCode(Start start, Session session, String codeId)
+    public static PasswordlessCode getCode(Start start, SessionObject sessionObject, String codeId)
             throws StorageQueryException, SQLException {
 
-        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(session);
+        PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionObject);
 
         PasswordlessCodesDO codesDO = codesDAO.getCodeWhereCodeIdEquals(codeId);
         return PasswordlessCodeRowMapper.getInstance().mapOrThrow(codesDO);
     }
 
-    public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
+    public static PasswordlessCode getCodeByLinkCodeHash(Start start, SessionObject sessionObject, String linkCodeHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         Transaction transaction = session.beginTransaction();
 
         try {
 
-            PasswordlessCode passwordlessCode = PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, session,
-                    linkCodeHash);
+            PasswordlessCode passwordlessCode = PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start,
+                    sessionObject, linkCodeHash);
 
             transaction.commit();
 
@@ -385,7 +387,7 @@ public class PasswordlessQueries {
         }
     }
 
-    public static List<UserInfo> getUsersByIdList(Start start, Session session, List<String> ids)
+    public static List<UserInfo> getUsersByIdList(Start start, SessionObject sessionObject, List<String> ids)
             throws SQLException, StorageQueryException {
         List<UserInfo> finalResult = new ArrayList<>();
         if (ids.size() > 0) {
@@ -401,6 +403,7 @@ public class PasswordlessQueries {
                 }
             }
             QUERY.append(")");
+            Session session = (Session) sessionObject.getSession();
 
             NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
             for (int i = 0; i < ids.size(); i++) {
@@ -417,30 +420,31 @@ public class PasswordlessQueries {
         return finalResult;
     }
 
-    public static UserInfo getUserById(Start start, Session session, String userId)
+    public static UserInfo getUserById(Start start, SessionObject sessionObject, String userId)
             throws StorageQueryException, SQLException {
         List<String> input = new ArrayList<>();
         input.add(userId);
-        List<UserInfo> result = getUsersByIdList(start, session, input);
+
+        List<UserInfo> result = getUsersByIdList(start, sessionObject, input);
         if (result.size() == 1) {
             return result.get(0);
         }
         return null;
     }
 
-    public static UserInfo getUserByEmail(Start start, Session session, @Nonnull String email)
+    public static UserInfo getUserByEmail(Start start, SessionObject sessionObject, @Nonnull String email)
             throws StorageQueryException, SQLException {
 
-        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(session);
+        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionObject);
 
         PasswordlessUsersDO usersDO = usersDAO.getUserWhereEmailEquals(email);
         return UserInfoRowMapper.getInstance().mapOrThrow(usersDO);
 
     }
 
-    public static UserInfo getUserByPhoneNumber(Start start, Session session, @Nonnull String phoneNumber)
+    public static UserInfo getUserByPhoneNumber(Start start, SessionObject sessionObject, @Nonnull String phoneNumber)
             throws StorageQueryException, SQLException {
-        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(session);
+        PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionObject);
 
         PasswordlessUsersDO usersDO = usersDAO.getUserWherePhoneNumberEquals(phoneNumber);
         return UserInfoRowMapper.getInstance().mapOrThrow(usersDO);

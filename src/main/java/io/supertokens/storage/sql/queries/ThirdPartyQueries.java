@@ -21,6 +21,7 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.pluginInterface.thirdparty.UserInfo;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -90,18 +91,18 @@ public class ThirdPartyQueries {
         });
     }
 
-    public static UserInfo getThirdPartyUserInfoUsingId(Start start, Session session, String userId)
+    public static UserInfo getThirdPartyUserInfoUsingId(Start start, SessionObject sessionObject, String userId)
             throws SQLException, StorageQueryException {
         List<String> input = new ArrayList<>();
         input.add(userId);
-        List<UserInfo> result = getUsersInfoUsingIdList(start, session, input);
+        List<UserInfo> result = getUsersInfoUsingIdList(start, sessionObject, input);
         if (result.size() == 1) {
             return result.get(0);
         }
         return null;
     }
 
-    public static List<UserInfo> getUsersInfoUsingIdList(Start start, Session session, List<String> ids)
+    public static List<UserInfo> getUsersInfoUsingIdList(Start start, SessionObject sessionObject, List<String> ids)
             throws SQLException, StorageQueryException {
         List<UserInfo> finalResult = new ArrayList<>();
         if (ids.size() > 0) {
@@ -118,7 +119,7 @@ public class ThirdPartyQueries {
                 }
             }
             QUERY.append(")");
-
+            Session session = (Session) sessionObject.getSession();
             NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
             for (int i = 0; i < ids.size(); i++) {
                 // i+1 cause this starts with 1 and not 0
@@ -134,10 +135,10 @@ public class ThirdPartyQueries {
         return finalResult;
     }
 
-    public static UserInfo getThirdPartyUserInfoUsingId(Start start, Session session, String thirdPartyId,
+    public static UserInfo getThirdPartyUserInfoUsingId(Start start, SessionObject sessionObject, String thirdPartyId,
             String thirdPartyUserId) throws SQLException, StorageQueryException {
 
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
                 .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(thirdPartyId, thirdPartyUserId);
@@ -146,20 +147,20 @@ public class ThirdPartyQueries {
 
     }
 
-    public static void updateUserEmail_Transaction(Start start, Session sessionInstance, String thirdPartyId,
+    public static void updateUserEmail_Transaction(Start start, SessionObject sessionObject, String thirdPartyId,
             String thirdPartyUserId, String newEmail) throws SQLException {
 
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionInstance);
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(thirdPartyId, thirdPartyUserId,
                 newEmail);
 
     }
 
-    public static UserInfo getUserInfoUsingId_Transaction(Start start, Session sessionInstance, String thirdPartyId,
+    public static UserInfo getUserInfoUsingId_Transaction(Start start, SessionObject sessionObject, String thirdPartyId,
             String thirdPartyUserId) throws SQLException, StorageQueryException {
 
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionInstance);
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
                 .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(thirdPartyId, thirdPartyUserId);
@@ -171,10 +172,10 @@ public class ThirdPartyQueries {
 
     }
 
-    public static UserInfo[] getThirdPartyUsersByEmail(Start start, Session session, @NotNull String email)
+    public static UserInfo[] getThirdPartyUsersByEmail(Start start, SessionObject sessionObject, @NotNull String email)
             throws SQLException, StorageQueryException {
 
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         List<ThirdPartyUsersDO> doList = thirdPartyUsersDAO.getWhereEmailEquals(email);
         return getUsersFromResult(doList);
@@ -196,10 +197,10 @@ public class ThirdPartyQueries {
     }
 
     @Deprecated
-    public static UserInfo[] getThirdPartyUsers(Start start, Session session, @NotNull Integer limit,
+    public static UserInfo[] getThirdPartyUsers(Start start, SessionObject sessionObject, @NotNull Integer limit,
             @NotNull String timeJoinedOrder) throws SQLException, StorageQueryException, InvalidOrderTypeException {
 
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         List<ThirdPartyUsersDO> thirdPartyUsersDOS = thirdPartyUsersDAO
                 .getByTimeJoinedOrderAndUserIdOrderAndLimit(timeJoinedOrder, OrderEnum.DESC.name(), limit);
@@ -207,7 +208,7 @@ public class ThirdPartyQueries {
     }
 
     @Deprecated
-    public static UserInfo[] getThirdPartyUsers(Start start, Session session, @NotNull String userId,
+    public static UserInfo[] getThirdPartyUsers(Start start, SessionObject sessionObject, @NotNull String userId,
             @NotNull Long timeJoined, @NotNull Integer limit, @NotNull String timeJoinedOrder)
             throws SQLException, StorageQueryException {
         String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
@@ -215,6 +216,8 @@ public class ThirdPartyQueries {
                 + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
                 + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
+
+        Session session = (Session) sessionObject.getSession();
 
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
         nativeQuery.setParameter(1, timeJoined);
@@ -238,8 +241,8 @@ public class ThirdPartyQueries {
     }
 
     @Deprecated
-    public static long getUsersCount(Start start, Session session) throws SQLException {
-        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
+    public static long getUsersCount(Start start, SessionObject sessionObject) throws SQLException {
+        ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
         return thirdPartyUsersDAO.getCount();
     }

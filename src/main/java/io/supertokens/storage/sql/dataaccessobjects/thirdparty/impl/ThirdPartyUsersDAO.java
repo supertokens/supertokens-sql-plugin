@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.thirdparty.ThirdPartyUsersInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPartyUsersInterfaceDAO {
 
-    public ThirdPartyUsersDAO(Session sessionInstance) {
+    public ThirdPartyUsersDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

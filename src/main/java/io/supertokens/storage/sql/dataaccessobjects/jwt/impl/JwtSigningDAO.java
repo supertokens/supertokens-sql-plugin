@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.jwt.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.jwt.JwtSigningInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.jwtsigning.JWTSigningKeysDO;
@@ -31,7 +32,7 @@ import java.util.List;
 
 public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningInterfaceDAO {
 
-    public JwtSigningDAO(Session sessionInstance) {
+    public JwtSigningDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

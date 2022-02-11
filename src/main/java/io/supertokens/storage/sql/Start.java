@@ -45,6 +45,7 @@ import io.supertokens.pluginInterface.passwordless.exception.*;
 import io.supertokens.pluginInterface.passwordless.sqlStorage.PasswordlessSQLStorage;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.storage.sql.config.Config;
@@ -167,7 +168,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
-            T t = logic.mainLogic(session);
+            T t = logic.mainLogic(new SessionObject(session));
             transaction.commit();
             return t;
 
@@ -229,7 +230,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             });
 
             transaction = session.beginTransaction();
-            T t = logic.mainLogicAndCommit(session);
+            T t = logic.mainLogicAndCommit((SessionObject) session);
             transaction.commit();
             return t;
 
@@ -256,10 +257,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void commitTransaction(Session sessionInstance) throws StorageQueryException {
+    public void commitTransaction(SessionObject sessionInstance) throws StorageQueryException {
         Transaction transaction = null;
         try {
-            transaction = (Transaction) sessionInstance.getTransaction();
+            Session session = (Session) sessionInstance;
+            transaction = (Transaction) session.getTransaction();
             transaction.commit();
         } catch (PersistenceException e) {
             if (transaction != null) {
@@ -271,7 +273,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo getLegacyAccessTokenSigningKey_Transaction(Session sessionInstance)
+    public KeyValueInfo getLegacyAccessTokenSigningKey_Transaction(SessionObject sessionInstance)
             throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, ACCESS_TOKEN_SIGNING_KEY_NAME);
@@ -281,7 +283,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void removeLegacyAccessTokenSigningKey_Transaction(Session sessionInstance) throws StorageQueryException {
+    public void removeLegacyAccessTokenSigningKey_Transaction(SessionObject sessionInstance)
+            throws StorageQueryException {
         try {
             GeneralQueries.deleteKeyValue_Transaction(this, sessionInstance, ACCESS_TOKEN_SIGNING_KEY_NAME);
         } catch (PersistenceException | InterruptedException e) {
@@ -290,7 +293,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo[] getAccessTokenSigningKeys_Transaction(Session sessionInstance) throws StorageQueryException {
+    public KeyValueInfo[] getAccessTokenSigningKeys_Transaction(SessionObject sessionInstance)
+            throws StorageQueryException {
         try {
             return SessionQueries.getAccessTokenSigningKeys_Transaction(this, sessionInstance);
         } catch (PersistenceException e) {
@@ -299,7 +303,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void addAccessTokenSigningKey_Transaction(Session sessionInstance, KeyValueInfo info)
+    public void addAccessTokenSigningKey_Transaction(SessionObject sessionInstance, KeyValueInfo info)
             throws StorageQueryException {
         try {
             SessionQueries.addAccessTokenSigningKey_Transaction(this, sessionInstance, info.createdAtTime, info.value);
@@ -317,7 +321,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo getRefreshTokenSigningKey_Transaction(Session sessionInstance) throws StorageQueryException {
+    public KeyValueInfo getRefreshTokenSigningKey_Transaction(SessionObject sessionInstance)
+            throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, REFRESH_TOKEN_KEY_NAME);
         } catch (PersistenceException | InterruptedException e) {
@@ -326,7 +331,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void setRefreshTokenSigningKey_Transaction(Session sessionInstance, KeyValueInfo info)
+    public void setRefreshTokenSigningKey_Transaction(SessionObject sessionInstance, KeyValueInfo info)
             throws StorageQueryException {
         try {
             GeneralQueries.setKeyValue_Transaction(this, sessionInstance, REFRESH_TOKEN_KEY_NAME, info);
@@ -439,7 +444,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public SessionInfo getSessionInfo_Transaction(Session sessionInstance, String sessionHandle)
+    public SessionInfo getSessionInfo_Transaction(SessionObject sessionInstance, String sessionHandle)
             throws StorageQueryException {
         try {
             return SessionQueries.getSessionInfo_Transaction(this, sessionInstance, sessionHandle);
@@ -449,8 +454,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateSessionInfo_Transaction(Session sessionInstance, String sessionHandle, String refreshTokenHash2,
-            long expiry) throws StorageQueryException {
+    public void updateSessionInfo_Transaction(SessionObject sessionInstance, String sessionHandle,
+            String refreshTokenHash2, long expiry) throws StorageQueryException {
         try {
             SessionQueries.updateSessionInfo_Transaction(this, sessionInstance, sessionHandle, refreshTokenHash2,
                     expiry);
@@ -460,7 +465,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void setKeyValue_Transaction(Session sessionInstance, String key, KeyValueInfo info)
+    public void setKeyValue_Transaction(SessionObject sessionInstance, String key, KeyValueInfo info)
             throws StorageQueryException {
         try {
             GeneralQueries.setKeyValue_Transaction(this, sessionInstance, key, info);
@@ -470,7 +475,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo getKeyValue_Transaction(Session sessionInstance, String key) throws StorageQueryException {
+    public KeyValueInfo getKeyValue_Transaction(SessionObject sessionInstance, String key)
+            throws StorageQueryException {
         try {
             return GeneralQueries.getKeyValue_Transaction(this, sessionInstance, key);
         } catch (PersistenceException | InterruptedException e) {
@@ -577,8 +583,10 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
             session = HibernateSessionPool.getSessionFactory(this).openSession();
+            SessionObject sessionObject = new SessionObject(session);
+
             transaction = session.beginTransaction();
-            EmailPasswordQueries.addPasswordResetToken(this, session, passwordResetTokenInfo.userId,
+            EmailPasswordQueries.addPasswordResetToken(this, sessionObject, passwordResetTokenInfo.userId,
                     passwordResetTokenInfo.token, passwordResetTokenInfo.tokenExpiry);
             transaction.commit();
         } catch (SQLException | InterruptedException e) {
@@ -617,7 +625,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Session sessionInstance,
+    public PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(SessionObject sessionInstance,
             String userId) throws StorageQueryException {
         try {
             return EmailPasswordQueries.getAllPasswordResetTokenInfoForUser_Transaction(this, sessionInstance, userId);
@@ -627,7 +635,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteAllPasswordResetTokensForUser_Transaction(Session sessionInstance, String userId)
+    public void deleteAllPasswordResetTokensForUser_Transaction(SessionObject sessionInstance, String userId)
             throws StorageQueryException {
         try {
             EmailPasswordQueries.deleteAllPasswordResetTokensForUser_Transaction(this, sessionInstance, userId);
@@ -637,7 +645,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateUsersPassword_Transaction(Session sessionInstance, String userId, String newPassword)
+    public void updateUsersPassword_Transaction(SessionObject sessionInstance, String userId, String newPassword)
             throws StorageQueryException {
         try {
             EmailPasswordQueries.updateUsersPassword_Transaction(this, sessionInstance, userId, newPassword);
@@ -647,7 +655,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateUsersEmail_Transaction(Session sessionTransactionn, String userId, String email)
+    public void updateUsersEmail_Transaction(SessionObject sessionTransactionn, String userId, String email)
             throws StorageQueryException, DuplicateEmailException {
         try {
             EmailPasswordQueries.updateUsersEmail_Transaction(this, sessionTransactionn, userId, email);
@@ -662,7 +670,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public UserInfo getUserInfoUsingId_Transaction(Session sessionInstance, String userId)
+    public UserInfo getUserInfoUsingId_Transaction(SessionObject sessionInstance, String userId)
             throws StorageQueryException {
         try {
             return EmailPasswordQueries.getUserInfoUsingId_Transaction(this, sessionInstance, userId);
@@ -714,8 +722,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(Session sessionInstance,
-            String userId, String email) throws StorageQueryException {
+    public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(
+            SessionObject sessionInstance, String userId, String email) throws StorageQueryException {
         try {
             return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(this, sessionInstance,
                     userId, email);
@@ -725,7 +733,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteAllEmailVerificationTokensForUser_Transaction(Session sessionInstance, String userId,
+    public void deleteAllEmailVerificationTokensForUser_Transaction(SessionObject sessionInstance, String userId,
             String email) throws StorageQueryException {
         try {
             EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(this, sessionInstance, userId,
@@ -736,7 +744,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateIsEmailVerified_Transaction(Session sessionInstance, String userId, String email,
+    public void updateIsEmailVerified_Transaction(SessionObject sessionInstance, String userId, String email,
             boolean isEmailVerified) throws StorageQueryException {
         try {
             EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(this, sessionInstance, userId, email,
@@ -765,8 +773,10 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
 
             session = HibernateSessionPool.getSessionFactory(this).openSession();
+            SessionObject sessionObject = new SessionObject(session);
             transaction = session.beginTransaction();
-            EmailVerificationQueries.addEmailVerificationToken(this, session, emailVerificationInfo.userId,
+
+            EmailVerificationQueries.addEmailVerificationToken(this, sessionObject, emailVerificationInfo.userId,
                     emailVerificationInfo.token, emailVerificationInfo.tokenExpiry, emailVerificationInfo.email);
             transaction.commit();
 
@@ -833,8 +843,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public io.supertokens.pluginInterface.thirdparty.UserInfo getUserInfoUsingId_Transaction(Session sessionInstance,
-            String thirdPartyId, String thirdPartyUserId) throws StorageQueryException {
+    public io.supertokens.pluginInterface.thirdparty.UserInfo getUserInfoUsingId_Transaction(
+            SessionObject sessionInstance, String thirdPartyId, String thirdPartyUserId) throws StorageQueryException {
         try {
             return ThirdPartyQueries.getUserInfoUsingId_Transaction(this, sessionInstance, thirdPartyId,
                     thirdPartyUserId);
@@ -844,7 +854,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateUserEmail_Transaction(Session sessionInstance, String thirdPartyId, String thirdPartyUserId,
+    public void updateUserEmail_Transaction(SessionObject sessionInstance, String thirdPartyId, String thirdPartyUserId,
             String newEmail) throws StorageQueryException {
         try {
             ThirdPartyQueries.updateUserEmail_Transaction(this, sessionInstance, thirdPartyId, thirdPartyUserId,
@@ -978,7 +988,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(Session sessionInstance) throws StorageQueryException {
+    public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(SessionObject sessionInstance)
+            throws StorageQueryException {
         try {
             return JWTSigningQueries.getJWTSigningKeys_Transaction(this, sessionInstance);
         } catch (SQLException e) {
@@ -987,7 +998,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void setJWTSigningKey_Transaction(Session sessionInstance, JWTSigningKeyInfo info)
+    public void setJWTSigningKey_Transaction(SessionObject sessionInstance, JWTSigningKeyInfo info)
             throws StorageQueryException, DuplicateKeyIdException {
         try {
             JWTSigningQueries.setJWTSigningKeyInfo_Transaction(this, sessionInstance, info);
@@ -1031,7 +1042,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public PasswordlessCode[] getCodesOfDevice(String deviceIdHash) throws StorageQueryException {
         return startSimpleTransactionHibernate(session -> {
-            return PasswordlessQueries.getCodesOfDevice(this, deviceIdHash);
+            return PasswordlessQueries.getCodesOfDevice(this, session, deviceIdHash);
         });
     }
 
@@ -1052,7 +1063,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public PasswordlessCode getCodeByLinkCodeHash(String linkCodeHash) throws StorageQueryException {
         return startSimpleTransactionHibernate(session -> {
-            return PasswordlessQueries.getCodeByLinkCodeHash(this, linkCodeHash);
+            return PasswordlessQueries.getCodeByLinkCodeHash(this, session, linkCodeHash);
         });
     }
 
@@ -1125,7 +1136,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public PasswordlessDevice getDevice_Transaction(Session sessionInstance, String deviceIdHash)
+    public PasswordlessDevice getDevice_Transaction(SessionObject sessionInstance, String deviceIdHash)
             throws StorageQueryException {
         try {
             return PasswordlessQueries.getDevice_Transaction(this, sessionInstance, deviceIdHash);
@@ -1135,7 +1146,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void incrementDeviceFailedAttemptCount_Transaction(Session sessionInstance, String deviceIdHash)
+    public void incrementDeviceFailedAttemptCount_Transaction(SessionObject sessionInstance, String deviceIdHash)
             throws StorageQueryException {
         try {
             PasswordlessQueries.incrementDeviceFailedAttemptCount_Transaction(this, sessionInstance, deviceIdHash);
@@ -1146,7 +1157,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public PasswordlessCode[] getCodesOfDevice_Transaction(Session sessionInstance, String deviceIdHash)
+    public PasswordlessCode[] getCodesOfDevice_Transaction(SessionObject sessionInstance, String deviceIdHash)
             throws StorageQueryException {
         try {
             return PasswordlessQueries.getCodesOfDevice_Transaction(this, sessionInstance, deviceIdHash);
@@ -1156,7 +1167,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteDevice_Transaction(Session sessionInstance, String deviceIdHash) throws StorageQueryException {
+    public void deleteDevice_Transaction(SessionObject sessionInstance, String deviceIdHash)
+            throws StorageQueryException {
         try {
             PasswordlessQueries.deleteDevice_Transaction(this, sessionInstance, deviceIdHash);
         } catch (SQLException e) {
@@ -1166,7 +1178,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteDevicesByPhoneNumber_Transaction(Session sessionInstance, @Nonnull String phoneNumber)
+    public void deleteDevicesByPhoneNumber_Transaction(SessionObject sessionInstance, @Nonnull String phoneNumber)
             throws StorageQueryException {
         try {
             PasswordlessQueries.deleteDevicesByPhoneNumber_Transaction(this, sessionInstance, phoneNumber);
@@ -1176,7 +1188,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteDevicesByEmail_Transaction(Session sessionInstance, @Nonnull String email)
+    public void deleteDevicesByEmail_Transaction(SessionObject sessionInstance, @Nonnull String email)
             throws StorageQueryException {
         try {
             PasswordlessQueries.deleteDevicesByEmail_Transaction(this, sessionInstance, email);
@@ -1197,7 +1209,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             session = HibernateSessionPool.getSessionFactory(this).openSession();
             transaction = session.beginTransaction();
 
-            PasswordlessQueries.createCode(this, session, code);
+            PasswordlessQueries.createCode(this, new SessionObject(session), code);
 
             transaction.commit();
 
@@ -1244,7 +1256,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public PasswordlessCode getCodeByLinkCodeHash_Transaction(Session sessionInstance, String linkCodeHash)
+    public PasswordlessCode getCodeByLinkCodeHash_Transaction(SessionObject sessionInstance, String linkCodeHash)
             throws StorageQueryException {
         try {
             return PasswordlessQueries.getCodeByLinkCodeHash_Transaction(this, sessionInstance, linkCodeHash);
@@ -1254,7 +1266,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void deleteCode_Transaction(Session sessionInstance, String deviceIdHash) throws StorageQueryException {
+    public void deleteCode_Transaction(SessionObject sessionInstance, String deviceIdHash)
+            throws StorageQueryException {
         try {
             PasswordlessQueries.deleteCode_Transaction(this, sessionInstance, deviceIdHash);
         } catch (SQLException e) {
@@ -1303,17 +1316,17 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateUserEmail_Transaction(Session sessionInstance, String userId, String email)
+    public void updateUserEmail_Transaction(SessionObject sessionInstance, String userId, String email)
             throws StorageQueryException, UnknownUserIdException, DuplicateEmailException {
 
         Session session = null;
         Transaction transaction = null;
         try {
-            session = HibernateSessionPool.getSessionFactory(this).openSession();
+            session = (Session) sessionInstance.getSession();
             transaction = session.beginTransaction();
             PasswordlessQueries.updateUserEmail_Transaction(this, sessionInstance, userId, email);
             transaction.commit();
-        } catch (PersistenceException | InterruptedException e) {
+        } catch (PersistenceException e) {
 
             if (transaction != null) {
                 transaction.rollback();
@@ -1333,7 +1346,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void updateUserPhoneNumber_Transaction(Session sessionInstance, String userId, String phoneNumber)
+    public void updateUserPhoneNumber_Transaction(SessionObject sessionInstance, String userId, String phoneNumber)
             throws StorageQueryException, UnknownUserIdException, DuplicatePhoneNumberException {
         try {
 

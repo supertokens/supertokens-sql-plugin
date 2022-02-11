@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.jwt.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.jwtsigning.JWTSigningKeysDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
@@ -40,11 +41,13 @@ public class JwtSigningDAOTest {
 
     JwtSigningDAO jwtSigningDAO;
     Session session;
+    SessionObject sessionObject;
 
     @Before
     public void before() throws Exception {
         session = HibernateUtilTest.getSessionFactory().openSession();
-        jwtSigningDAO = new JwtSigningDAO(session);
+        sessionObject = new SessionObject(session);
+        jwtSigningDAO = new JwtSigningDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         jwtSigningDAO.removeAll();
         transaction.commit();

@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.emailverification.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.emailverification.EmailVerificationTokensInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class EmailVerificationTokensDAO extends SessionTransactionDAO implements EmailVerificationTokensInterfaceDAO {
 
-    public EmailVerificationTokensDAO(Session sessionInstance) {
+    public EmailVerificationTokensDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

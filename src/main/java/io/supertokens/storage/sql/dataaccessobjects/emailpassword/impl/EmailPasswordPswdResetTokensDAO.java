@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.dataaccessobjects.emailpassword.impl;
 
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.emailpassword.EmailPasswordPswdResetTokensInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
@@ -34,7 +35,7 @@ import java.util.List;
 public class EmailPasswordPswdResetTokensDAO extends SessionTransactionDAO
         implements EmailPasswordPswdResetTokensInterfaceDAO {
 
-    public EmailPasswordPswdResetTokensDAO(Session sessionInstance) {
+    public EmailPasswordPswdResetTokensDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

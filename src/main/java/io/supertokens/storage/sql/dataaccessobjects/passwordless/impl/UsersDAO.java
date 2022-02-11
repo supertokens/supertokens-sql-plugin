@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.UsersInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class UsersDAO extends SessionTransactionDAO implements UsersInterfaceDAO {
 
-    public UsersDAO(Session sessionInstance) {
+    public UsersDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

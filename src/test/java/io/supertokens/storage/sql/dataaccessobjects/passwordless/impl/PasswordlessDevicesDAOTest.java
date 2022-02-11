@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.Session;
@@ -33,11 +34,13 @@ public class PasswordlessDevicesDAOTest {
 
     PasswordlessDevicesDAO passwordlessDevicesDAO;
     Session session;
+    SessionObject sessionObject;
 
     @Before
     public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
-        passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
+        sessionObject = new SessionObject(session);
+        passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         passwordlessDevicesDAO.removeAll();
         transaction.commit();

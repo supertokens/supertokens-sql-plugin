@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
@@ -35,12 +36,15 @@ import static org.junit.Assert.*;
 public class SessionInfoDAOTest {
 
     Session session;
+    SessionObject sessionObject;
+    SessionInfoDAO sessionInfoDAO;
 
     @Before
     public void before() throws Exception {
         session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+        sessionObject = new SessionObject(session);
+        sessionInfoDAO = new SessionInfoDAO(sessionObject);
         sessionInfoDAO.removeAll();
         transaction.commit();
     }
@@ -48,7 +52,7 @@ public class SessionInfoDAOTest {
     @After
     public void after() throws Exception {
         Transaction transaction = session.beginTransaction();
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
+
         sessionInfoDAO.removeAll();
         transaction.commit();
         session.close();
@@ -58,7 +62,6 @@ public class SessionInfoDAOTest {
     public void insertIntoTableValues() throws Exception {
 
         Transaction transaction = session.beginTransaction();
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         String id = (String) sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO,
                 SESSION_DATA, EXPIRES_AT, CREATED_AT, JWT_USER_PAYLOAD);
@@ -71,8 +74,6 @@ public class SessionInfoDAOTest {
 
     @Test
     public void insertIntoTableValuesException() throws Exception {
-
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
@@ -100,8 +101,6 @@ public class SessionInfoDAOTest {
     @Test
     public void getWhereSessionHandle_lockedEquals() throws InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
@@ -124,8 +123,6 @@ public class SessionInfoDAOTest {
 
     @Test
     public void getWhereSessionHandleEquals_lockedException() throws InterruptedException {
-
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
 
@@ -153,8 +150,6 @@ public class SessionInfoDAOTest {
     public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals()
             throws SessionHandleNotFoundException, InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
 
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
@@ -181,8 +176,6 @@ public class SessionInfoDAOTest {
     public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException()
             throws SessionHandleNotFoundException, InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
@@ -208,8 +201,6 @@ public class SessionInfoDAOTest {
     @Test
     public void deleteWhereUserIdEquals() throws Exception {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
 
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
@@ -228,8 +219,6 @@ public class SessionInfoDAOTest {
 
     @Test
     public void deleteWhereUserIdEqualsException() throws Exception {
-
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
 
@@ -259,8 +248,6 @@ public class SessionInfoDAOTest {
     @Test
     public void getSessionHandlesWhereUserIdEquals() throws UserIdNotFoundException, InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
@@ -281,8 +268,6 @@ public class SessionInfoDAOTest {
     @Test
     public void getSessionHandlesWhereUserIdEqualsException() throws InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
@@ -302,8 +287,6 @@ public class SessionInfoDAOTest {
     @Test
     public void getWhereSessionHandleEquals() throws InterruptedException {
 
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
-
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
@@ -322,8 +305,6 @@ public class SessionInfoDAOTest {
 
     @Test
     public void getWhereSessionHandleEqualsException() throws InterruptedException {
-
-        SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(session);
 
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,

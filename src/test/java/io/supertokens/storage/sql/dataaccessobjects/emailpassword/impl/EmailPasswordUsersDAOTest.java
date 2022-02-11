@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.dataaccessobjects.emailpassword.impl;
 
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordPswdResetTokensPKDO;
 import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
@@ -41,12 +42,14 @@ public class EmailPasswordUsersDAOTest {
     EmailPasswordUsersDAO emailPasswordUsersDAO;
     EmailPasswordPswdResetTokensDAO emailPasswordPswdResetTokensDAO;
     Session session;
+    SessionObject sessionObject;
 
     @Before
     public void beforeTest() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
-        emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
-        emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(session);
+        sessionObject = new SessionObject(session);
+        emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
+        emailPasswordPswdResetTokensDAO = new EmailPasswordPswdResetTokensDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         emailPasswordUsersDAO.removeAll();
         transaction.commit();

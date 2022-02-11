@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
@@ -40,11 +41,13 @@ public class ThirdPartyUsersDAOTest {
 
     ThirdPartyUsersDAO thirdPartyUsersDAO;
     Session session;
+    SessionObject sessionObject;
 
     @Before
     public void before() throws InterruptedException {
         session = HibernateUtilTest.getSessionFactory().openSession();
-        thirdPartyUsersDAO = new ThirdPartyUsersDAO(session);
+        sessionObject = new SessionObject(session);
+        thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
         Transaction transaction = session.beginTransaction();
         thirdPartyUsersDAO.removeAll();
         transaction.commit();

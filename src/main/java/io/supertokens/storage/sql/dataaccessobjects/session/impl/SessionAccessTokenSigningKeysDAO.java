@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.session.SessionAccessTokenSigningKeysInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
@@ -33,7 +34,7 @@ import java.util.List;
 public class SessionAccessTokenSigningKeysDAO extends SessionTransactionDAO
         implements SessionAccessTokenSigningKeysInterfaceDAO {
 
-    public SessionAccessTokenSigningKeysDAO(Session sessionInstance) {
+    public SessionAccessTokenSigningKeysDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

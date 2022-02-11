@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.dataaccessobjects.passwordless.impl;
 
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.passwordless.PasswordlessUsersInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
@@ -30,7 +31,7 @@ import java.util.List;
 
 public class PasswordlessUsersDAO extends SessionTransactionDAO implements PasswordlessUsersInterfaceDAO {
 
-    public PasswordlessUsersDAO(Session sessionInstance) {
+    public PasswordlessUsersDAO(SessionObject sessionInstance) {
         super(sessionInstance);
     }
 

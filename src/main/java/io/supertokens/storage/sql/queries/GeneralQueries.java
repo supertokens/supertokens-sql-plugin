@@ -21,6 +21,7 @@ import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 
+import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.ProcessState;
 import io.supertokens.storage.sql.Start;
@@ -208,7 +209,7 @@ public class GeneralQueries {
 
     }
 
-    public static void setKeyValue_Transaction(Start start, Session sessionInstance, String key, KeyValueInfo info)
+    public static void setKeyValue_Transaction(Start start, SessionObject sessionObject, String key, KeyValueInfo info)
             throws InterruptedException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getKeyValueTable()
                 + "(name, value, created_at_time) VALUES(?, ?, ?) "
@@ -228,9 +229,9 @@ public class GeneralQueries {
         session.close();
     }
 
-    public static void setKeyValue(Start start, Session sessionInstance, String key, KeyValueInfo info)
+    public static void setKeyValue(Start start, SessionObject sessionObject, String key, KeyValueInfo info)
             throws InterruptedException {
-        setKeyValue_Transaction(start, sessionInstance, key, info);
+        setKeyValue_Transaction(start, sessionObject, key, info);
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws InterruptedException {
@@ -254,12 +255,12 @@ public class GeneralQueries {
 
     }
 
-    public static KeyValueInfo getKeyValue_Transaction(Start start, Session sessionInstance, String key)
+    public static KeyValueInfo getKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
             throws InterruptedException {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = ? FOR UPDATE";
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
@@ -275,7 +276,7 @@ public class GeneralQueries {
         return result.get(0);
     }
 
-    public static void deleteKeyValue_Transaction(Start start, Session sessionInstance, String key)
+    public static void deleteKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
             throws InterruptedException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
@@ -360,7 +361,7 @@ public class GeneralQueries {
         return result.get(0);
     }
 
-    public static AuthRecipeUserInfo[] getUsers(Start start, Session session, @NotNull Integer limit,
+    public static AuthRecipeUserInfo[] getUsers(Start start, SessionObject sessionObject, @NotNull Integer limit,
             @NotNull String timeJoinedOrder, @Nullable RECIPE_ID[] includeRecipeIds, @Nullable String userId,
             @Nullable Long timeJoined) throws SQLException, StorageQueryException {
 
@@ -393,6 +394,8 @@ public class GeneralQueries {
                         + " ? OR (time_joined = ? AND user_id <= ?)) ORDER BY time_joined " + timeJoinedOrder
                         + ", user_id DESC LIMIT ?";
 
+                Session session = (Session) sessionObject.getSession();
+
                 NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
                 nativeQuery.setParameter(1, timeJoined);
                 nativeQuery.setParameter(2, timeJoined);
@@ -424,6 +427,7 @@ public class GeneralQueries {
                 String QUERY = "SELECT user_id, recipe_id FROM " + Config.getConfig(start).getUsersTable()
                         + recipeIdCondition + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC LIMIT ?";
 
+                Session session = (Session) sessionObject.getSession();
                 NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
                 nativeQuery.setParameter(1, limit);
                 Transaction transaction = session.getTransaction();
@@ -465,7 +469,7 @@ public class GeneralQueries {
 
         // we give the userId[] for each recipe to fetch all those user's details
         for (RECIPE_ID recipeId : recipeIdToUserIdListMap.keySet()) {
-            List<? extends AuthRecipeUserInfo> users = getUserInfoForRecipeIdFromUserIds(start, session, recipeId,
+            List<? extends AuthRecipeUserInfo> users = getUserInfoForRecipeIdFromUserIds(start, sessionObject, recipeId,
                     recipeIdToUserIdListMap.get(recipeId));
 
             // we fill in all the slots in finalResult based on their position in usersFromQuery
@@ -483,12 +487,14 @@ public class GeneralQueries {
         return finalResult;
     }
 
-    private static List<? extends AuthRecipeUserInfo> getUserInfoForRecipeIdFromUserIds(Start start, Session session,
-            RECIPE_ID recipeId, List<String> userIds) throws StorageQueryException, SQLException {
+    private static List<? extends AuthRecipeUserInfo> getUserInfoForRecipeIdFromUserIds(Start start,
+            SessionObject sessionObject, RECIPE_ID recipeId, List<String> userIds)
+            throws StorageQueryException, SQLException {
+
         if (recipeId == RECIPE_ID.EMAIL_PASSWORD) {
-            return EmailPasswordQueries.getUsersInfoUsingIdList(start, session, userIds);
+            return EmailPasswordQueries.getUsersInfoUsingIdList(start, sessionObject, userIds);
         } else if (recipeId == RECIPE_ID.THIRD_PARTY) {
-            return ThirdPartyQueries.getUsersInfoUsingIdList(start, session, userIds);
+            return ThirdPartyQueries.getUsersInfoUsingIdList(start, sessionObject, userIds);
         } else {
             throw new IllegalArgumentException("No implementation of get users for recipe: " + recipeId.toString());
         }
