@@ -107,7 +107,7 @@ public class HibernateSessionPool {
         settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
         settings.put(Environment.SHOW_SQL, true);
 
-        settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
+        // settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
         // HikariCP settings
 
         settings.put("hibernate.hikari.connectionTimeout", "20000");
@@ -207,40 +207,35 @@ public class HibernateSessionPool {
                 }
 
                 while (true) {
-                    try {
-                        registryBuilder.applySettings(settings);
+                    registryBuilder.applySettings(settings);
 
-                        registry = registryBuilder.build();
-                        MetadataSources sources = new MetadataSources(registry)
-                                .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
-                                .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
-                                .addAnnotatedClass(EmailPasswordUsersDO.class)
-                                .addAnnotatedClass(EmailVerificationTokensDO.class)
-                                .addAnnotatedClass(EmailVerificationTokensPKDO.class)
-                                .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
-                                .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
+                    registry = registryBuilder.build();
+                    MetadataSources sources = new MetadataSources(registry)
+                            .addAnnotatedClass(EmailPasswordPswdResetTokensDO.class)
+                            .addAnnotatedClass(EmailPasswordPswdResetTokensPKDO.class)
+                            .addAnnotatedClass(EmailPasswordUsersDO.class)
+                            .addAnnotatedClass(EmailVerificationTokensDO.class)
+                            .addAnnotatedClass(EmailVerificationTokensPKDO.class)
+                            .addAnnotatedClass(EmailVerificationVerifiedEmailsDO.class)
+                            .addAnnotatedClass(EmailVerificationVerifiedEmailsPKDO.class)
 
-                                .addAnnotatedClass(PasswordlessCodesDO.class)
-                                .addAnnotatedClass(PasswordlessDevicesDO.class)
-                                .addAnnotatedClass(PasswordlessUsersDO.class)
+                            .addAnnotatedClass(PasswordlessCodesDO.class).addAnnotatedClass(PasswordlessDevicesDO.class)
+                            .addAnnotatedClass(PasswordlessUsersDO.class)
 
-                                .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
+                            .addAnnotatedClass(UsersDO.class).addAnnotatedClass(KeyValueDO.class)
 
-                                .addAnnotatedClass(JWTSigningKeysDO.class)
+                            .addAnnotatedClass(JWTSigningKeysDO.class)
 
-                                .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
-                                .addAnnotatedClass(SessionInfoDO.class)
+                            .addAnnotatedClass(SessionAccessTokenSigningKeysDO.class)
+                            .addAnnotatedClass(SessionInfoDO.class)
 
-                                .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class)
+                            .addAnnotatedClass(ThirdPartyUsersDO.class).addAnnotatedClass(ThirdPartyUsersPKDO.class)
 
-                        ;
+                    ;
 
-                        Metadata metadata = sources.getMetadataBuilder().build();
-                        sessionFactory = metadata.getSessionFactoryBuilder().build();
-                        break;
-                    } catch (IllegalStateException | ServiceException s) {
-                        Thread.sleep(2000);
-                    }
+                    Metadata metadata = sources.getMetadataBuilder().build();
+                    sessionFactory = metadata.getSessionFactoryBuilder().build();
+                    break;
                 }
 
             } catch (Exception e) {

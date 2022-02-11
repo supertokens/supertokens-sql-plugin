@@ -26,9 +26,6 @@ import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
  */
 public class CustomNamingStrategy implements PhysicalNamingStrategy {
 
-    // TODO: get this strategy reviewed
-    private final static String PREFIX = System.getenv("MYSQL_TABLE_NAMES_PREFIX");
-
     @Override
     public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return name;
@@ -41,7 +38,11 @@ public class CustomNamingStrategy implements PhysicalNamingStrategy {
 
     @Override
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment jdbcEnvironment) {
-        return Identifier.toIdentifier(PREFIX + name.getText());
+        if (System.getenv().containsKey("MYSQL_TABLE_NAMES_PREFIX")) {
+            String PREFIX = System.getenv("MYSQL_TABLE_NAMES_PREFIX");
+            return Identifier.toIdentifier(PREFIX + name.getText());
+        }
+        return name;
     }
 
     @Override
