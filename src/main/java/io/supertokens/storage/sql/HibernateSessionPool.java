@@ -166,10 +166,6 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
         if (!start.enabled) {
             throw new RuntimeException("Connection refused");
         }
-
-        if (Thread.currentThread() != start.mainThread) {
-            throw new QuitProgramFromPluginException("Should not come here");
-        }
     }
 
     /**
@@ -239,7 +235,7 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
 
                         Metadata metadata = sources.getMetadataBuilder().build();
                         sessionFactory = metadata.getSessionFactoryBuilder().build();
-
+                        break;
                     } catch (Exception e) {
 
                         if (e.getMessage().contains("Connection refused")) {

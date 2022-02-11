@@ -31,7 +31,7 @@ import java.math.BigInteger;
 @Setter
 @Entity
 @AllArgsConstructor
-@Table(indexes = { @Index(columnList = "created_at") })
+@Table(name = "passwordless_codes", indexes = { @Index(columnList = "created_at") })
 public class PasswordlessCodesDO {
 
     @Deprecated

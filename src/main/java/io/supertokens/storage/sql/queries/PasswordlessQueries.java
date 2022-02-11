@@ -84,20 +84,12 @@ public class PasswordlessQueries {
                 + Config.getConfig(start).getPasswordlessCodesTable() + "(created_at);";
     }
 
-    public static void createDeviceWithCode(Start start, String email, String phoneNumber, String linkCodeSalt,
-            PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransactionHibernate(session -> {
-            try {
-                PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(session);
-                passwordlessDevicesDAO.insertIntoTableValues(code.deviceIdHash, email, phoneNumber, linkCodeSalt, 0,
-                        null);
-                PasswordlessQueries.createCode_Transaction(start, session, code);
+    public static void createDeviceWithCode(Start start, SessionObject sessionObject, String email, String phoneNumber,
+            String linkCodeSalt, PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException {
 
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
-            }
-            return null;
-        });
+        PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
+        passwordlessDevicesDAO.insertIntoTableValues(code.deviceIdHash, email, phoneNumber, linkCodeSalt, 0, null);
+        PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
     }
 
     public static PasswordlessDevice getDevice_Transaction(Start start, SessionObject sessionObject,
@@ -140,8 +132,7 @@ public class PasswordlessQueries {
     }
 
     // TODO: optimize later
-    private static void createCode_Transaction(Start start, SessionObject sessionObject, PasswordlessCode code)
-            throws SQLException {
+    private static void createCode_Transaction(Start start, SessionObject sessionObject, PasswordlessCode code) {
 
         PasswordlessCodesDAO passwordlessCodesDAO = new PasswordlessCodesDAO(sessionObject);
         PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
@@ -152,15 +143,7 @@ public class PasswordlessQueries {
 
     public static void createCode(Start start, SessionObject sessionObject, PasswordlessCode code)
             throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransactionHibernate(con -> {
-
-            try {
-                PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
-            } catch (SQLException e) {
-                throw new StorageTransactionLogicException(e);
-            }
-            return null;
-        });
+        PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
     }
 
     // TODO: optimize later
@@ -319,20 +302,8 @@ public class PasswordlessQueries {
     public static PasswordlessCode[] getCodesOfDevice(Start start, SessionObject sessionObject, String deviceIdHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = (Session) sessionObject.getSession();
-        Transaction transaction = session.beginTransaction();
-        try {
-            return PasswordlessQueries.getCodesOfDevice_Transaction(start, sessionObject, deviceIdHash);
-        } catch (PersistenceException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw e;
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-        }
+        return PasswordlessQueries.getCodesOfDevice_Transaction(start, sessionObject, deviceIdHash);
+
     }
 
     public static PasswordlessCode[] getCodesBefore(Start start, SessionObject sessionObject, long time)
@@ -364,27 +335,8 @@ public class PasswordlessQueries {
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, SessionObject sessionObject, String linkCodeHash)
             throws StorageQueryException, SQLException, InterruptedException {
 
-        Session session = (Session) sessionObject.getSession();
-        Transaction transaction = session.beginTransaction();
+        return PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, sessionObject, linkCodeHash);
 
-        try {
-
-            PasswordlessCode passwordlessCode = PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start,
-                    sessionObject, linkCodeHash);
-
-            transaction.commit();
-
-            return passwordlessCode;
-        } catch (PersistenceException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            throw e;
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-        }
     }
 
     public static List<UserInfo> getUsersByIdList(Start start, SessionObject sessionObject, List<String> ids)

@@ -230,8 +230,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             });
 
             transaction = session.beginTransaction();
-            T t = logic.mainLogicAndCommit((SessionObject) session);
-            transaction.commit();
+            T t = logic.mainLogicAndCommit(new SessionObject(session));
             return t;
 
         } catch (StorageTransactionLogicException | StorageQueryException | PersistenceException
@@ -260,7 +259,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public void commitTransaction(SessionObject sessionInstance) throws StorageQueryException {
         Transaction transaction = null;
         try {
-            Session session = (Session) sessionInstance;
+            Session session = (Session) sessionInstance.getSession();
             transaction = (Transaction) session.getTransaction();
             transaction.commit();
         } catch (PersistenceException e) {
@@ -1102,8 +1101,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Transaction transaction = null;
         try {
             session = HibernateSessionPool.getSessionFactory(this).openSession();
+            SessionObject sessionObject = new SessionObject(session);
             transaction = session.beginTransaction();
-            PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, linkCodeSalt, code);
+            PasswordlessQueries.createDeviceWithCode(this, sessionObject, email, phoneNumber, linkCodeSalt, code);
             transaction.commit();
         } catch (PersistenceException | StorageTransactionLogicException | InterruptedException e) {
 
