@@ -191,7 +191,12 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         criteriaQuery.select(root);
         criteriaQuery.where(criteriaBuilder.equal(root.get("session_handle"), sessionHandle));
         Query<SessionInfoDO> query = session.createQuery(criteriaQuery);
-        SessionInfoDO sessionInfoDO = query.getSingleResult();
+        SessionInfoDO sessionInfoDO = null;
+        try {
+            sessionInfoDO = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return sessionInfoDO;
     }
 

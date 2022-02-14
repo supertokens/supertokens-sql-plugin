@@ -141,7 +141,13 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         criteriaQuery.where(criteriaBuilder.equal(root.get("user_id"), userId));
         Query<EmailPasswordUsersDO> query = session.createQuery(criteriaQuery)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE);
-        EmailPasswordUsersDO result = query.getSingleResult();
+
+        EmailPasswordUsersDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
@@ -155,7 +161,12 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         criteriaQuery.select(root);
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         Query<EmailPasswordUsersDO> query = session.createQuery(criteriaQuery);
-        EmailPasswordUsersDO result = query.getSingleResult();
+        EmailPasswordUsersDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 

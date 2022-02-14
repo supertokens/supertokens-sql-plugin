@@ -215,7 +215,7 @@ public class GeneralQueries {
                 + "(name, value, created_at_time) VALUES(?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE value = ?, created_at_time = ?";
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
         nativeQuery.setParameter(2, info.value);
@@ -223,10 +223,7 @@ public class GeneralQueries {
         nativeQuery.setParameter(4, info.value);
         nativeQuery.setParameter(5, info.createdAtTime);
 
-        Transaction transaction = session.beginTransaction();
         nativeQuery.executeUpdate();
-        transaction.commit();
-        session.close();
     }
 
     public static void setKeyValue(Start start, SessionObject sessionObject, String key, KeyValueInfo info)
@@ -234,19 +231,16 @@ public class GeneralQueries {
         setKeyValue_Transaction(start, sessionObject, key, info);
     }
 
-    public static KeyValueInfo getKeyValue(Start start, String key) throws InterruptedException {
+    public static KeyValueInfo getKeyValue(Start start, SessionObject sessionObject, String key)
+            throws InterruptedException {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = :name";
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter("name", key);
 
-        Transaction transaction = session.getTransaction();
-        // TODO: check if this works
         List<KeyValueInfo> result = nativeQuery.list();
-        transaction.commit();
-        session.close();
 
         if (result == null)
             return null;
@@ -264,11 +258,8 @@ public class GeneralQueries {
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
-        // Transaction transaction = session.getTransaction();
         // TODO: check if this works
         List<KeyValueInfo> result = nativeQuery.list();
-        // transaction.commit();
-        session.close();
 
         if (result.size() == 0)
             return null;
@@ -280,16 +271,11 @@ public class GeneralQueries {
             throws InterruptedException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
-        Transaction transaction = session.getTransaction();
-        // TODO: check if this works
         nativeQuery.executeUpdate();
-        transaction.commit();
-        session.close();
-
     }
 
     @TestOnly
@@ -329,7 +315,7 @@ public class GeneralQueries {
 //        executeUpdateQuery(start, CREATE_QUERY);
     }
 
-    public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)
+    public static long getUsersCount(Start start, SessionObject sessionObject, RECIPE_ID[] includeRecipeIds)
             throws SQLException, InterruptedException {
         StringBuilder QUERY = new StringBuilder(
                 "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getUsersTable());
@@ -346,14 +332,11 @@ public class GeneralQueries {
             QUERY.append(")");
         }
 
-        Session session = HibernateSessionPool.getSessionFactory(start).openSession();
+        Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
 
-        Transaction transaction = session.getTransaction();
         // TODO: check if this works ( earlier checking column total )
         List<Long> result = nativeQuery.list();
-        transaction.commit();
-        session.close();
 
         if (result == null)
             return 0;
@@ -402,11 +385,8 @@ public class GeneralQueries {
                 nativeQuery.setParameter(3, userId);
                 nativeQuery.setParameter(4, limit);
 
-                Transaction transaction = session.getTransaction();
                 // TODO: check if this works ( earlier checking column total )
                 List<Object> result = nativeQuery.list();
-                transaction.commit();
-                session.close();
 
                 // TODO: fix this
                 if (result != null) {
@@ -430,11 +410,10 @@ public class GeneralQueries {
                 Session session = (Session) sessionObject.getSession();
                 NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
                 nativeQuery.setParameter(1, limit);
-                Transaction transaction = session.getTransaction();
+
                 // TODO: check if this works ( earlier checking column total )
                 List<Object> result = nativeQuery.list();
-                transaction.commit();
-                session.close();
+
                 // TODO: fix this
                 if (result != null) {
                     Iterator<Object> iterator = result.iterator();

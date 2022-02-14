@@ -17,7 +17,6 @@
 package io.supertokens.storage.sql.queries;
 
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
-import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.pluginInterface.RECIPE_ID;
@@ -35,8 +34,8 @@ import io.supertokens.storage.sql.dataaccessobjects.passwordless.impl.UsersDAO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessUsersDO;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
 
 import javax.annotation.Nonnull;
@@ -142,7 +141,7 @@ public class PasswordlessQueries {
     }
 
     public static void createCode(Start start, SessionObject sessionObject, PasswordlessCode code)
-            throws StorageTransactionLogicException, StorageQueryException {
+            throws HibernateException {
         PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
     }
 
@@ -179,6 +178,7 @@ public class PasswordlessQueries {
         PasswordlessCodesDAO passwordlessCodesDO = new PasswordlessCodesDAO(sessionObject);
 
         PasswordlessCodesDO codesDO = passwordlessCodesDO.getWhereLinkCodeHashEquals(linkCodeHash);
+
         return PasswordlessCodeRowMapper.getInstance().mapOrThrow(codesDO);
 
     }
@@ -203,6 +203,7 @@ public class PasswordlessQueries {
                     PasswordlessUsersDAO passwordlessUsersDAO = new PasswordlessUsersDAO(session);
                     passwordlessUsersDAO.insertValuesIntoTable(user.id, user.email, user.phoneNumber, user.timeJoined);
                 }
+                start.commitTransaction(session);
             } catch (PersistenceException throwables) {
                 throw new StorageTransactionLogicException(throwables);
             }
@@ -263,6 +264,7 @@ public class PasswordlessQueries {
 
         PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(deviceIdHash);
+
         return PasswordlessDeviceRowMapper.getInstance().mapOrThrow(devicesDO);
     }
 
@@ -363,10 +365,10 @@ public class PasswordlessQueries {
                 nativeQuery.setParameter(i + 1, ids.get(i));
             }
 
-            List<PasswordlessUsersDO> list = nativeQuery.getResultList();
-            Iterator<PasswordlessUsersDO> iterator = list.iterator();
+            List<Object[]> list = nativeQuery.getResultList();
+            Iterator<Object[]> iterator = list.iterator();
             while (iterator.hasNext()) {
-                finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(iterator.next()));
+                finalResult.add(UserInfoRowMapperNativeQuery.getInstance().mapOrThrow(iterator.next()));
             }
         }
         return finalResult;
@@ -414,6 +416,9 @@ public class PasswordlessQueries {
 
         @Override
         public PasswordlessDevice map(PasswordlessDevicesDO result) throws Exception {
+            if (result == null) {
+                return null;
+            }
             return new PasswordlessDevice(result.getDevice_id_hash(), result.getEmail(), result.getPhone_number(),
                     result.getLink_code_salt(), result.getFailed_attempts());
         }
@@ -431,8 +436,33 @@ public class PasswordlessQueries {
 
         @Override
         public PasswordlessCode map(PasswordlessCodesDO result) throws Exception {
+            if (result == null) {
+                return null;
+            }
+
             return new PasswordlessCode(result.getCode_id(), result.getDevice().getDevice_id_hash(),
                     result.getLink_code_hash(), result.getCreated_at());
+        }
+    }
+
+    private static class UserInfoRowMapperNativeQuery implements RowMapper<UserInfo, Object[]> {
+        private static final UserInfoRowMapperNativeQuery INSTANCE = new UserInfoRowMapperNativeQuery();
+
+        private UserInfoRowMapperNativeQuery() {
+        }
+
+        private static UserInfoRowMapperNativeQuery getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public UserInfo map(Object[] result) throws Exception {
+            if (result == null) {
+                return null;
+            }
+            return new UserInfo(result[0] != null ? result[0].toString() : "",
+                    result[1] != null ? result[1].toString() : null, result[2] != null ? result[2].toString() : null,
+                    Long.valueOf(result[3].toString()));
         }
     }
 
@@ -448,6 +478,9 @@ public class PasswordlessQueries {
 
         @Override
         public UserInfo map(PasswordlessUsersDO result) throws Exception {
+            if (result == null) {
+                return null;
+            }
             return new UserInfo(result.getUser_id(), result.getEmail(), result.getPhone_number(),
                     result.getTime_joined());
         }

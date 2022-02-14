@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
 @Entity
 @AllArgsConstructor
 @Table(name = "passwordless_devices", indexes = { @Index(columnList = "email"), @Index(columnList = "phone_number") })
+@org.hibernate.annotations.NamedQuery(name = "PasswordlessDevicesDO_deleteWhereEmailEquals", query = "DELETE FROM PasswordlessDevicesDO WHERE email = :email")
 public class PasswordlessDevicesDO {
 
     @Deprecated
@@ -52,6 +54,7 @@ public class PasswordlessDevicesDO {
     @Column(columnDefinition = "INT  NOT NULL")
     int failed_attempts;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", orphanRemoval = true)
+    @Cascade({ org.hibernate.annotations.CascadeType.DELETE, org.hibernate.annotations.CascadeType.SAVE_UPDATE })
     List<PasswordlessCodesDO> codes;
 }

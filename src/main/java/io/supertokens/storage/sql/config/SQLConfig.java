@@ -69,7 +69,7 @@ public class SQLConfig {
     private String mysql_thirdparty_users_table_name = null;
 
     @JsonProperty
-    private String mysql_table_names_prefix = "SUPERTOKENS";
+    private String mysql_table_names_prefix = "";
 
     @JsonProperty
     private String mysql_connection_uri = null;

@@ -28,6 +28,7 @@ import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
@@ -155,7 +156,13 @@ public class EmailPasswordPswdResetTokensDAO extends SessionTransactionDAO
 
         criteriaQuery.where(criteriaBuilder.equal(root.get("primaryKey").get("token"), token));
         Query<EmailPasswordPswdResetTokensDO> query = session.createQuery(criteriaQuery);
-        EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = query.getSingleResult();
+        EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = null;
+
+        try {
+            emailPasswordPswdResetTokensDO = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return emailPasswordPswdResetTokensDO;
     }
 

@@ -125,7 +125,12 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         Predicate predicateTwo = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         Query<EmailVerificationVerifiedEmailsDO> query = session.createQuery(criteriaQuery);
-        EmailVerificationVerifiedEmailsDO result = query.getSingleResult();
+        EmailVerificationVerifiedEmailsDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 

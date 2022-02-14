@@ -44,8 +44,7 @@ public class PasswordlessCodesDO {
     String code_id;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @Cascade({ CascadeType.SAVE_UPDATE, CascadeType.DELETE })
-    @JoinColumn(name = "device_id_hash")
+    @JoinColumn(name = "device_id_hash", foreignKey = @ForeignKey(foreignKeyDefinition = "FOREIGN KEY(device) REFERENCES PasswordlessDevicesDO(device_id) ON DELETE CASCADE", value = ConstraintMode.CONSTRAINT))
     PasswordlessDevicesDO device;
 
     @Column(length = 44, unique = true, nullable = false)

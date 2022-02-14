@@ -52,6 +52,7 @@ import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.jdbc.Work;
@@ -67,6 +68,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
 import java.util.List;
+
+import static io.supertokens.storage.sql.constants.ErrorMessageConstants.DUPLICATE_ENTRY;
+import static io.supertokens.storage.sql.constants.ErrorMessageConstants.FOREIGN_KEY;
 
 public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
         ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage {
@@ -410,7 +414,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public KeyValueInfo getKeyValue(String key) throws StorageQueryException {
         return startSimpleTransactionHibernate(session -> {
-            return GeneralQueries.getKeyValue(this, key);
+            return GeneralQueries.getKeyValue(this, session, key);
         });
     }
 
@@ -973,7 +977,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public long getUsersCount(RECIPE_ID[] includeRecipeIds) throws StorageQueryException {
         return startSimpleTransactionHibernate(session -> {
-            return GeneralQueries.getUsersCount(this, includeRecipeIds);
+            return GeneralQueries.getUsersCount(this, session, includeRecipeIds);
         });
     }
 
@@ -1026,16 +1030,37 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public PasswordlessDevice[] getDevicesByEmail(String email) throws StorageQueryException {
-        return startSimpleTransactionHibernate(session -> {
-            return PasswordlessQueries.getDevicesByEmail(this, session, email);
-        });
+        SessionObject sessionObject = null;
+
+        try {
+            sessionObject = new SessionObject(HibernateSessionPool.getSessionFactory(this).openSession());
+            return PasswordlessQueries.getDevicesByEmail(this, sessionObject, email);
+
+        } catch (InterruptedException | SQLException e) {
+            return null;
+        } finally {
+            if (sessionObject != null) {
+                ((Session) sessionObject.getSession()).close();
+            }
+        }
     }
 
     @Override
     public PasswordlessDevice[] getDevicesByPhoneNumber(String phoneNumber) throws StorageQueryException {
-        return startSimpleTransactionHibernate(session -> {
-            return PasswordlessQueries.getDevicesByPhoneNumber(this, session, phoneNumber);
-        });
+
+        SessionObject sessionObject = null;
+
+        try {
+            sessionObject = new SessionObject(HibernateSessionPool.getSessionFactory(this).openSession());
+            return PasswordlessQueries.getDevicesByPhoneNumber(this, sessionObject, phoneNumber);
+
+        } catch (InterruptedException | SQLException e) {
+            return null;
+        } finally {
+            if (sessionObject != null) {
+                ((Session) sessionObject.getSession()).close();
+            }
+        }
     }
 
     @Override
@@ -1213,36 +1238,30 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             transaction.commit();
 
-        } catch (StorageTransactionLogicException e) {
+        } catch (Exception e) {
 
             if (transaction != null) {
                 transaction.rollback();
             }
 
-            String message = e.actualException.getMessage();
+            String message = e.getCause().getCause().getMessage();
 
-            if (message.contains("foreign key") && message.contains(Config.getConfig(this).getPasswordlessCodesTable())
-                    && message.contains("device_id_hash")) {
+            if (message.contains(FOREIGN_KEY) && message.contains(Config.getConfig(this).getPasswordlessCodesTable())
+                    && message.contains(code.deviceIdHash)) {
                 throw new UnknownDeviceIdHash();
             }
 
-            if (message.contains("Duplicate entry")) {
+            if (message.contains(DUPLICATE_ENTRY)
+                    && message.contains(Config.getConfig(this).getPasswordlessCodesTable())) {
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")) {
+                if (message.contains(code.id)) {
                     throw new DuplicateCodeIdException();
                 }
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")) {
+                if (message.contains(code.linkCodeHash)) {
                     throw new DuplicateLinkCodeHashException();
                 }
 
-            }
-            throw new StorageQueryException(e.actualException);
-
-        } catch (InterruptedException e) {
-
-            if (transaction != null) {
-                transaction.rollback();
             }
             throw new StorageQueryException(e);
 
@@ -1281,7 +1300,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
             PasswordlessQueries.createUser(this, user);
-
         } catch (StorageTransactionLogicException e) {
 
             String message = e.actualException.getMessage();

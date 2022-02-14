@@ -114,8 +114,12 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
         criteria.select(root);
         criteria.where(criteriaBuilder.equal(root.get("link_code_hash"), linkCodeHash));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
-        PasswordlessCodesDO result = query.getSingleResult();
-
+        PasswordlessCodesDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
@@ -159,8 +163,12 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
         criteria.select(root);
         criteria.where(criteriaBuilder.equal(root.get("code_id"), codeId));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
-        PasswordlessCodesDO result = query.getSingleResult();
-
+        PasswordlessCodesDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 }

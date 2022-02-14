@@ -115,8 +115,12 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
 
         criteriaQuery.where(criteriaBuilder.equal(root.get("device_id_hash"), deviceIdHash));
 
-        PasswordlessDevicesDO result = session.createQuery(criteriaQuery).getSingleResult();
-
+        PasswordlessDevicesDO result = null;
+        try {
+            result = session.createQuery(criteriaQuery).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
@@ -161,14 +165,12 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
 
-        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-
-        if (rowsUpdated == 0)
-            throw new NoResultException();
+        session.createQuery(criteriaDelete).executeUpdate();
     }
 
     @Override
     public void deleteWhereEmailEquals(String email) {
+
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
@@ -178,10 +180,8 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
         Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("email"), email));
 
-        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
+        session.createQuery(criteriaDelete).executeUpdate();
 
-        if (rowsUpdated == 0)
-            throw new NoResultException();
     }
 
     @Override
@@ -194,9 +194,6 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
         List<PasswordlessDevicesDO> result = query.getResultList();
-
-        if (result.size() == 0)
-            throw new NoResultException();
 
         return result;
     }
@@ -211,9 +208,6 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
         criteriaQuery.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
         Query<PasswordlessDevicesDO> query = session.createQuery(criteriaQuery);
         List<PasswordlessDevicesDO> result = query.getResultList();
-
-        if (result.size() == 0)
-            throw new NoResultException();
 
         return result;
     }

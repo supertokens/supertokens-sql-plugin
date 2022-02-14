@@ -25,6 +25,7 @@ import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.List;
@@ -113,7 +114,12 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
         criteria.select(root);
         criteria.where(criteriaBuilder.equal(root.get("user_id"), userId));
         Query<PasswordlessUsersDO> query = session.createQuery(criteria);
-        PasswordlessUsersDO result = query.getSingleResult();
+        PasswordlessUsersDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
@@ -146,7 +152,12 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
         criteria.select(root);
         criteria.where(criteriaBuilder.equal(root.get("email"), email));
         Query<PasswordlessUsersDO> query = session.createQuery(criteria);
-        PasswordlessUsersDO result = query.getSingleResult();
+        PasswordlessUsersDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
@@ -159,7 +170,12 @@ public class PasswordlessUsersDAO extends SessionTransactionDAO implements Passw
         criteria.select(root);
         criteria.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
         Query<PasswordlessUsersDO> query = session.createQuery(criteria);
-        PasswordlessUsersDO result = query.getSingleResult();
+        PasswordlessUsersDO result = null;
+        try {
+            result = query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
         return result;
     }
 
