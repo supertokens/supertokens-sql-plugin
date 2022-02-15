@@ -20,6 +20,7 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -162,8 +163,8 @@ public class EmailVerificationQueries {
         return false;
     }
 
-    // TODO: create a function similar to this with hibernate impl and move
-    public static void deleteUserInfo(Start start, String userId) throws StorageQueryException {
+    public static void deleteUserInfo(Start start, String userId)
+            throws StorageQueryException, StorageTransactionLogicException {
         start.startTransactionHibernate(session -> {
             {
                 EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(

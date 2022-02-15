@@ -193,14 +193,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public <T> T startTransactionHibernate(TransactionLogicHibernate<T> logic) throws StorageQueryException {
+    public <T> T startTransactionHibernate(TransactionLogicHibernate<T> logic)
+            throws StorageQueryException, StorageTransactionLogicException {
         int tries = 0;
         while (true) {
             tries++;
             try {
                 return startTransactionHelper(logic);
                 // TODO: fix this exception handling for hibernate related transactions
-            } catch (PersistenceException | StorageTransactionLogicException | InterruptedException e) {
+            } catch (PersistenceException | StorageQueryException | InterruptedException | UnknownUserIdException e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e.getCause() instanceof SQLTransactionRollbackException
                         || e.getMessage().toLowerCase().contains("deadlock")) && tries < 3) {
@@ -216,15 +217,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         }
     }
 
-    private <T> T startTransactionHelper(TransactionLogicHibernate<T> logic)
-            throws PersistenceException, StorageQueryException, StorageTransactionLogicException, InterruptedException {
+    private <T> T startTransactionHelper(TransactionLogicHibernate<T> logic) throws StorageQueryException,
+            StorageTransactionLogicException, UnknownUserIdException, InterruptedException {
 
-        Session session = HibernateSessionPool.getSessionFactory(this).openSession();
+        Session session = null;
         Transaction transaction = null;
         final Integer[] defaultTransactionIsolation = { null };
 
         try {
-
+            session = HibernateSessionPool.getSessionFactory(this).openSession();
             session.doWork(new Work() {
                 @Override
                 public void execute(Connection connection) throws SQLException {
@@ -237,15 +238,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             T t = logic.mainLogicAndCommit(new SessionObject(session));
             return t;
 
-        } catch (StorageTransactionLogicException | StorageQueryException | PersistenceException
-                | UnknownUserIdException e) {
+        } catch (PersistenceException | InterruptedException | UnknownUserIdException e) {
 
             if (transaction != null) {
 
                 transaction.rollback();
 
             }
-            throw new StorageQueryException(e);
+            throw e;
 
         } finally {
             session.doWork(new Work() {
@@ -529,7 +529,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             EmailPasswordQueries.signUp(this, userInfo.id, userInfo.email, userInfo.passwordHash, userInfo.timeJoined);
 
-        } catch (PersistenceException e) { // TODO: add exception type
+        } catch (PersistenceException | StorageTransactionLogicException e) { // TODO: add exception type
 
             if (transaction != null) {
                 transaction.rollback();
@@ -558,9 +558,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void deleteEmailPasswordUser(String userId) throws StorageQueryException {
-
-        EmailPasswordQueries.deleteUser(this, userId);
-
+        try {
+            EmailPasswordQueries.deleteUser(this, userId);
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -811,7 +813,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void deleteEmailVerificationUserInfo(String userId) throws StorageQueryException {
-        EmailVerificationQueries.deleteUserInfo(this, userId);
+        try {
+            EmailVerificationQueries.deleteUserInfo(this, userId);
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1341,14 +1347,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Transaction transaction = null;
         try {
             session = (Session) sessionInstance.getSession();
-            transaction = session.beginTransaction();
             PasswordlessQueries.updateUserEmail_Transaction(this, sessionInstance, userId, email);
-            transaction.commit();
         } catch (PersistenceException e) {
-
-            if (transaction != null) {
-                transaction.rollback();
-            }
 
             if (e.getMessage().contains("Duplicate entry")
                     && (e.getMessage().endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))) {
@@ -1356,10 +1356,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             }
             throw new StorageQueryException(e);
 
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
     }
 

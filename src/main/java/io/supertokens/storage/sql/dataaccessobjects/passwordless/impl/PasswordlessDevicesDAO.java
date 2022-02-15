@@ -156,31 +156,23 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
 
     @Override
     public void deleteWherePhoneNumberEquals(String phoneNumber) {
+
         Session session = (Session) sessionInstance;
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        List<PasswordlessDevicesDO> devicesDOS = getDevicesWherePhoneNumberEquals(phoneNumber);
+        devicesDOS.parallelStream().forEach(device -> {
+            session.delete(device);
+        });
 
-        CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
-                .createCriteriaDelete(PasswordlessDevicesDO.class);
-
-        Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
-        criteriaDelete.where(criteriaBuilder.equal(root.get("phone_number"), phoneNumber));
-
-        session.createQuery(criteriaDelete).executeUpdate();
     }
 
     @Override
     public void deleteWhereEmailEquals(String email) {
 
         Session session = (Session) sessionInstance;
-        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-
-        CriteriaDelete<PasswordlessDevicesDO> criteriaDelete = criteriaBuilder
-                .createCriteriaDelete(PasswordlessDevicesDO.class);
-
-        Root<PasswordlessDevicesDO> root = criteriaDelete.from(PasswordlessDevicesDO.class);
-        criteriaDelete.where(criteriaBuilder.equal(root.get("email"), email));
-
-        session.createQuery(criteriaDelete).executeUpdate();
+        List<PasswordlessDevicesDO> devicesDOS = getDevicesWhereEmailEquals(email);
+        devicesDOS.parallelStream().forEach(device -> {
+            session.delete(device);
+        });
 
     }
 

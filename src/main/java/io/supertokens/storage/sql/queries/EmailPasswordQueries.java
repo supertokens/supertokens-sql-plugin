@@ -22,6 +22,7 @@ import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -147,7 +148,7 @@ public class EmailPasswordQueries {
     }
 
     public static void signUp(Start start, String userId, String email, String passwordHash, long timeJoined)
-            throws StorageQueryException {
+            throws StorageQueryException, StorageTransactionLogicException {
         start.startTransactionHibernate(session -> {
 
             {
@@ -164,7 +165,8 @@ public class EmailPasswordQueries {
         });
     }
 
-    public static void deleteUser(Start start, String userId) throws StorageQueryException {
+    public static void deleteUser(Start start, String userId)
+            throws StorageQueryException, StorageTransactionLogicException {
         start.startTransactionHibernate(session -> {
             UsersDAO usersDAO = new UsersDAO(session);
             usersDAO.deleteWhereUserIdEqualsAndRecipeIdEquals(userId, RECIPE_ID.EMAIL_PASSWORD.toString());

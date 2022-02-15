@@ -54,7 +54,7 @@ public class PasswordlessDevicesDO {
     @Column(columnDefinition = "INT  NOT NULL")
     int failed_attempts;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "device", orphanRemoval = true)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "device")
     @Cascade({ org.hibernate.annotations.CascadeType.DELETE, org.hibernate.annotations.CascadeType.SAVE_UPDATE })
     List<PasswordlessCodesDO> codes;
 }
