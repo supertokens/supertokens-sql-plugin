@@ -57,7 +57,7 @@ public class SessionInfoDO {
 
     @Column
     @Type(type = "text")
-    private String sessions_data;
+    private String session_data;
 
     @Column(nullable = false)
     private long expires_at;

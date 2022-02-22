@@ -32,7 +32,6 @@ import io.supertokens.storage.sql.dataaccessobjects.session.impl.SessionInfoDAO;
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
-import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
 
@@ -67,18 +66,13 @@ public class SessionQueries {
     }
 
     public static SessionInfo getSessionInfo_Transaction(Start start, SessionObject sessionObject, String sessionHandle)
-            throws NoResultException {
+            throws NoResultException, StorageQueryException {
 
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(sessionHandle);
 
-        JsonParser jp = new JsonParser();
-
-        return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
-                sessionInfoDO.getRefresh_token_hash_2(), jp.parse(sessionInfoDO.getSessions_data()).getAsJsonObject(),
-                sessionInfoDO.getExpires_at(), jp.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
-                sessionInfoDO.getCreated_at_time());
+        return SessionInfoRowMapper.INSTANCE.mapOrThrow(sessionInfoDO);
     }
 
     public static void updateSessionInfo_Transaction(Start start, SessionObject sessionObject, String sessionHandle,
@@ -119,14 +113,14 @@ public class SessionQueries {
     }
 
     public static void deleteSessionsOfUser(Start start, SessionObject sessionObject, String userId)
-            throws SQLException, UserIdNotFoundException {
+            throws SQLException {
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
         sessionInfoDAO.deleteWhereUserIdEquals(userId);
     }
 
     public static String[] getAllSessionHandlesForUser(Start start, SessionObject sessionObject, String userId)
-            throws SQLException, UserIdNotFoundException {
+            throws SQLException {
 
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
 
@@ -147,12 +141,8 @@ public class SessionQueries {
 
         SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(sessionHandle);
 
-        JsonParser jp = new JsonParser();
+        return SessionInfoRowMapper.getInstance().mapOrThrow(sessionInfoDO);
 
-        return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
-                sessionInfoDO.getRefresh_token_hash_2(), jp.parse(sessionInfoDO.getSessions_data()).getAsJsonObject(),
-                sessionInfoDO.getExpires_at(), jp.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
-                sessionInfoDO.getCreated_at_time());
     }
 
     public static int updateSession(Start start, SessionObject sessionObject, String sessionHandle,
@@ -204,9 +194,6 @@ public class SessionQueries {
 
         List<SessionAccessTokenSigningKeysDO> results = keysDAO.getAll();
 
-        if (results.size() == 0)
-            throw new NoResultException();
-
         KeyValueInfo[] keyValueInfos = new KeyValueInfo[results.size()];
         Iterator<SessionAccessTokenSigningKeysDO> iterator = results.iterator();
         int counter = 0;
@@ -226,7 +213,7 @@ public class SessionQueries {
         keysDAO.deleteWhereCreatedAtTimeLessThan(time);
     }
 
-    private static class SessionInfoRowMapper implements RowMapper<SessionInfo, ResultSet> {
+    private static class SessionInfoRowMapper implements RowMapper<SessionInfo, SessionInfoDO> {
         private static final SessionInfoRowMapper INSTANCE = new SessionInfoRowMapper();
 
         private SessionInfoRowMapper() {
@@ -237,13 +224,20 @@ public class SessionQueries {
         }
 
         @Override
-        public SessionInfo map(ResultSet result) throws Exception {
+        public SessionInfo map(SessionInfoDO sessionInfoDO) throws Exception {
+
+            if (sessionInfoDO == null) {
+                return null;
+            }
+
             JsonParser jp = new JsonParser();
-            return new SessionInfo(result.getString("session_handle"), result.getString("user_id"),
-                    result.getString("refresh_token_hash_2"),
-                    jp.parse(result.getString("session_data")).getAsJsonObject(), result.getLong("expires_at"),
-                    jp.parse(result.getString("jwt_user_payload")).getAsJsonObject(),
-                    result.getLong("created_at_time"));
+
+            return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
+                    sessionInfoDO.getRefresh_token_hash_2(),
+                    jp.parse(sessionInfoDO.getSession_data()).getAsJsonObject(), sessionInfoDO.getExpires_at(),
+                    jp.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
+                    sessionInfoDO.getCreated_at_time());
+
         }
     }
 

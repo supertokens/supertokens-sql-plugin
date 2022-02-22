@@ -254,8 +254,12 @@ public class EmailPasswordUsersDAO extends SessionTransactionDAO implements Emai
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(EmailPasswordUsersDO.class)));
-        Long rows = session.createQuery(criteriaQuery).getSingleResult();
-        return rows;
+        try {
+            Long rows = session.createQuery(criteriaQuery).getSingleResult();
+            return rows;
+        } catch (NoResultException e) {
+            return 0l;
+        }
     }
 
 }

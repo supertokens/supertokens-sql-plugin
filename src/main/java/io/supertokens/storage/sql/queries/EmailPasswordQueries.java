@@ -135,9 +135,7 @@ public class EmailPasswordQueries {
         EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO = emailPasswordPswdResetTokensDAO
                 .getPasswordResetTokenInfo(token);
 
-        return new PasswordResetTokenInfo(emailPasswordPswdResetTokensDO.getPrimaryKey().getUser_id().getUser_id(),
-                emailPasswordPswdResetTokensDO.getPrimaryKey().getToken(),
-                emailPasswordPswdResetTokensDO.getToken_expiry());
+        return PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(emailPasswordPswdResetTokensDO);
     }
 
     public static void addPasswordResetToken(Start start, SessionObject sessionObject, String userId, String tokenHash,
@@ -160,7 +158,7 @@ public class EmailPasswordQueries {
                 EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(session);
                 emailPasswordUsersDAO.insert(userId, email, passwordHash, timeJoined);
             }
-
+            start.commitTransaction(session);
             return null;
         });
     }
@@ -212,11 +210,11 @@ public class EmailPasswordQueries {
                 nativeQuery.setParameter(i + 1, ids.get(i));
             }
 
-            List<EmailPasswordUsersDO> list = nativeQuery.getResultList();
+            List<Object[]> list = nativeQuery.getResultList();
 
-            Iterator<EmailPasswordUsersDO> iterator = list.iterator();
+            Iterator<Object[]> iterator = list.iterator();
             while (iterator.hasNext()) {
-                finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(iterator.next()));
+                finalResult.add(UserInfoObjectMapper.getInstance().mapOrThrow(iterator.next()));
             }
         }
 
@@ -230,8 +228,9 @@ public class EmailPasswordQueries {
         EmailPasswordUsersDAO emailPasswordUsersDAO = new EmailPasswordUsersDAO(sessionObject);
         try {
             EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWhereUserIdEquals_locked(id);
-            return new UserInfo(emailPasswordUsersDO.getUser_id(), emailPasswordUsersDO.getEmail(),
-                    emailPasswordUsersDO.getPassword_hash(), emailPasswordUsersDO.getTime_joined());
+
+            return UserInfoRowMapper.getInstance().mapOrThrow(emailPasswordUsersDO);
+
         } catch (NoResultException noResultException) {
             return null;
         }
@@ -244,8 +243,8 @@ public class EmailPasswordQueries {
         try {
             EmailPasswordUsersDO emailPasswordUsersDO = emailPasswordUsersDAO.getWhereEmailEquals(email);
 
-            return new UserInfo(emailPasswordUsersDO.getUser_id(), emailPasswordUsersDO.getEmail(),
-                    emailPasswordUsersDO.getPassword_hash(), emailPasswordUsersDO.getTime_joined());
+            return UserInfoRowMapper.getInstance().mapOrThrow(emailPasswordUsersDO);
+
         } catch (NoResultException noResultException) {
             return null;
         }
@@ -290,7 +289,8 @@ public class EmailPasswordQueries {
         return emailPasswordUsersDAO.getCount();
     }
 
-    private static class PasswordResetTokenInfoRowMapper implements RowMapper<PasswordResetTokenInfo, ResultSet> {
+    private static class PasswordResetTokenInfoRowMapper
+            implements RowMapper<PasswordResetTokenInfo, EmailPasswordPswdResetTokensDO> {
         private static final PasswordResetTokenInfoRowMapper INSTANCE = new PasswordResetTokenInfoRowMapper();
 
         private PasswordResetTokenInfoRowMapper() {
@@ -301,9 +301,16 @@ public class EmailPasswordQueries {
         }
 
         @Override
-        public PasswordResetTokenInfo map(ResultSet result) throws Exception {
-            return new PasswordResetTokenInfo(result.getString("user_id"), result.getString("token"),
-                    result.getLong("token_expiry"));
+        public PasswordResetTokenInfo map(EmailPasswordPswdResetTokensDO emailPasswordPswdResetTokensDO)
+                throws Exception {
+
+            if (emailPasswordPswdResetTokensDO == null) {
+                return null;
+            }
+
+            return new PasswordResetTokenInfo(emailPasswordPswdResetTokensDO.getPrimaryKey().getUser_id().getUser_id(),
+                    emailPasswordPswdResetTokensDO.getPrimaryKey().getToken(),
+                    emailPasswordPswdResetTokensDO.getToken_expiry());
         }
     }
 
@@ -319,8 +326,36 @@ public class EmailPasswordQueries {
 
         @Override
         public UserInfo map(EmailPasswordUsersDO result) throws Exception {
+
+            if (result == null) {
+                return null;
+            }
+
             return new UserInfo(result.getUser_id(), result.getEmail(), result.getPassword_hash(),
                     result.getTime_joined());
+        }
+    }
+
+    private static class UserInfoObjectMapper implements RowMapper<UserInfo, Object[]> {
+        private static final UserInfoObjectMapper INSTANCE = new UserInfoObjectMapper();
+
+        private UserInfoObjectMapper() {
+        }
+
+        private static UserInfoObjectMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public UserInfo map(Object[] result) throws Exception {
+
+            if (result == null) {
+                return null;
+            }
+
+            return new UserInfo(result[0] != null ? result[0].toString() : "",
+                    result[1] != null ? result[1].toString() : null, result[2] != null ? result[2].toString() : null,
+                    Long.valueOf(result[3].toString()));
         }
     }
 }

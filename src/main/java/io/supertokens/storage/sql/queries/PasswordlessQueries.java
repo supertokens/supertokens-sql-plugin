@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.queries;
 
+import io.supertokens.pluginInterface.passwordless.exception.UnknownDeviceIdHash;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -84,7 +85,8 @@ public class PasswordlessQueries {
     }
 
     public static void createDeviceWithCode(Start start, SessionObject sessionObject, String email, String phoneNumber,
-            String linkCodeSalt, PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException {
+            String linkCodeSalt, PasswordlessCode code)
+            throws StorageTransactionLogicException, StorageQueryException, UnknownDeviceIdHash {
 
         PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         passwordlessDevicesDAO.insertIntoTableValues(code.deviceIdHash, email, phoneNumber, linkCodeSalt, 0, null);
@@ -112,7 +114,7 @@ public class PasswordlessQueries {
             throws SQLException {
         PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
-        passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(deviceIdHash);
+        passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals_transaction(deviceIdHash);
     }
 
     public static void deleteDevicesByPhoneNumber_Transaction(Start start, SessionObject sessionObject,
@@ -127,21 +129,26 @@ public class PasswordlessQueries {
 
         PasswordlessDevicesDAO devicesDAO = new PasswordlessDevicesDAO(sessionObject);
 
-        devicesDAO.deleteWhereEmailEquals(email);
+        devicesDAO.deleteWhereEmailEquals_transaction(email);
     }
 
     // TODO: optimize later
-    private static void createCode_Transaction(Start start, SessionObject sessionObject, PasswordlessCode code) {
+    private static void createCode_Transaction(Start start, SessionObject sessionObject, PasswordlessCode code)
+            throws UnknownDeviceIdHash {
 
         PasswordlessCodesDAO passwordlessCodesDAO = new PasswordlessCodesDAO(sessionObject);
         PasswordlessDevicesDAO passwordlessDevicesDAO = new PasswordlessDevicesDAO(sessionObject);
         PasswordlessDevicesDO devicesDO = passwordlessDevicesDAO.getWhereDeviceIdHashEquals(code.deviceIdHash);
 
+        if (devicesDO == null) {
+            throw new UnknownDeviceIdHash();
+        }
+
         passwordlessCodesDAO.insertIntoTableValues(code.id, devicesDO, code.linkCodeHash, code.createdAt);
     }
 
     public static void createCode(Start start, SessionObject sessionObject, PasswordlessCode code)
-            throws HibernateException {
+            throws HibernateException, UnknownDeviceIdHash {
         PasswordlessQueries.createCode_Transaction(start, sessionObject, code);
     }
 
@@ -190,23 +197,18 @@ public class PasswordlessQueries {
         codesDAO.deleteWhereCodeIdEquals(codeId);
     }
 
-    public static void createUser(Start start, UserInfo user)
-            throws StorageTransactionLogicException, StorageQueryException {
+    public static void createUser(Start start, UserInfo user) throws Exception {
         start.startTransactionHibernate(session -> {
-            try {
-                {
-                    UsersDAO usersDAO = new UsersDAO(session);
-                    usersDAO.insertIntoTableValues(user.id, RECIPE_ID.PASSWORDLESS.toString(), user.timeJoined);
-                }
-
-                {
-                    PasswordlessUsersDAO passwordlessUsersDAO = new PasswordlessUsersDAO(session);
-                    passwordlessUsersDAO.insertValuesIntoTable(user.id, user.email, user.phoneNumber, user.timeJoined);
-                }
-                start.commitTransaction(session);
-            } catch (PersistenceException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+            {
+                UsersDAO usersDAO = new UsersDAO(session);
+                usersDAO.insertIntoTableValues(user.id, RECIPE_ID.PASSWORDLESS.toString(), user.timeJoined);
             }
+
+            {
+                PasswordlessUsersDAO passwordlessUsersDAO = new PasswordlessUsersDAO(session);
+                passwordlessUsersDAO.insertValuesIntoTable(user.id, user.email, user.phoneNumber, user.timeJoined);
+            }
+            start.commitTransaction(session);
             return null;
         });
     }
@@ -253,7 +255,7 @@ public class PasswordlessQueries {
     }
 
     public static void updateUserPhoneNumber_Transaction(Start start, SessionObject sessionObject, String userId,
-            String phoneNumber) throws SQLException, UnknownUserIdException {
+            String phoneNumber) throws PersistenceException, UnknownUserIdException {
         PasswordlessUsersDAO usersDAO = new PasswordlessUsersDAO(sessionObject);
 
         usersDAO.updatePhoneNumberWhereUserIdEquals(userId, phoneNumber);
@@ -331,6 +333,7 @@ public class PasswordlessQueries {
         PasswordlessCodesDAO codesDAO = new PasswordlessCodesDAO(sessionObject);
 
         PasswordlessCodesDO codesDO = codesDAO.getCodeWhereCodeIdEquals(codeId);
+
         return PasswordlessCodeRowMapper.getInstance().mapOrThrow(codesDO);
     }
 

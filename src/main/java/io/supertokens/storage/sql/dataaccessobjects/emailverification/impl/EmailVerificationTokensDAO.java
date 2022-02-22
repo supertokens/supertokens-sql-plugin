@@ -85,8 +85,12 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
                 .createQuery(EmailVerificationTokensDO.class);
         Root<EmailVerificationTokensDO> root = criteriaQuery.from(EmailVerificationTokensDO.class);
         criteriaQuery.where(criteriaBuilder.equal(root.get("primary_key").get("token"), token));
-        EmailVerificationTokensDO emailVerificationTokensDO = session.createQuery(criteriaQuery).getSingleResult();
-        return emailVerificationTokensDO;
+        try {
+            EmailVerificationTokensDO emailVerificationTokensDO = session.createQuery(criteriaQuery).getSingleResult();
+            return emailVerificationTokensDO;
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     @Override
@@ -102,9 +106,6 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         List<EmailVerificationTokensDO> emailVerificationTokensDOList = session.createQuery(criteriaQuery)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
-
-        if (emailVerificationTokensDOList.size() == 0)
-            throw new NoResultException();
 
         return emailVerificationTokensDOList;
     }
@@ -122,9 +123,6 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         List<EmailVerificationTokensDO> emailVerificationTokensDOList = session.createQuery(criteriaQuery)
                 .getResultList();
-
-        if (emailVerificationTokensDOList.size() == 0)
-            throw new NoResultException();
 
         return emailVerificationTokensDOList;
     }

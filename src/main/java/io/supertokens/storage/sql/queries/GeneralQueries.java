@@ -18,6 +18,7 @@ package io.supertokens.storage.sql.queries;
 
 import io.supertokens.pluginInterface.KeyValueInfo;
 import io.supertokens.pluginInterface.RECIPE_ID;
+import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.PersistenceException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -232,7 +235,7 @@ public class GeneralQueries {
     }
 
     public static KeyValueInfo getKeyValue(Start start, SessionObject sessionObject, String key)
-            throws InterruptedException {
+            throws InterruptedException, StorageQueryException {
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = :name";
 
@@ -240,17 +243,18 @@ public class GeneralQueries {
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter("name", key);
 
-        List<KeyValueInfo> result = nativeQuery.list();
+        List<Object[]> result = nativeQuery.list();
 
-        if (result == null)
+        if (result == null || result.size() == 0)
             return null;
 
-        return result.get(0);
+        return KeyValueInfoRowMapper.getInstance().mapOrThrow(result.get(0));
 
     }
 
     public static KeyValueInfo getKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
-            throws InterruptedException {
+            throws InterruptedException, StorageQueryException {
+
         String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
                 + " WHERE name = ? FOR UPDATE";
 
@@ -258,13 +262,13 @@ public class GeneralQueries {
         NativeQuery nativeQuery = session.createNativeQuery(QUERY);
         nativeQuery.setParameter(1, key);
 
-        // TODO: check if this works
-        List<KeyValueInfo> result = nativeQuery.list();
+        List<Object[]> result = nativeQuery.list();
 
-        if (result.size() == 0)
+        if (result == null || result.size() == 0) {
             return null;
-
-        return result.get(0);
+        }
+        Object[] obj = result.get(0);
+        return KeyValueInfoRowMapper.INSTANCE.mapOrThrow(obj);
     }
 
     public static void deleteKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
@@ -335,13 +339,12 @@ public class GeneralQueries {
         Session session = (Session) sessionObject.getSession();
         NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
 
-        // TODO: check if this works ( earlier checking column total )
-        List<Long> result = nativeQuery.list();
+        List<BigInteger> result = nativeQuery.list();
 
         if (result == null)
             return 0;
 
-        return result.get(0);
+        return Long.valueOf(result.get(0).toString());
     }
 
     public static AuthRecipeUserInfo[] getUsers(Start start, SessionObject sessionObject, @NotNull Integer limit,
@@ -385,17 +388,17 @@ public class GeneralQueries {
                 nativeQuery.setParameter(3, userId);
                 nativeQuery.setParameter(4, limit);
 
-                // TODO: check if this works ( earlier checking column total )
-                List<Object> result = nativeQuery.list();
+                List<Object[]> result = nativeQuery.list();
 
-                // TODO: fix this
-                if (result != null) {
-                    Iterator<Object> iterator = result.iterator();
+                if (result != null && result.size() != 0) {
+                    Iterator<Object[]> iterator = result.iterator();
                     while (iterator.hasNext()) {
-                        usersFromQuery.add(new UserInfoPaginationResultHolder(
-//                                result.getString("user_id"),
-//                                result.getString("recipe_id"))
-                                "a", "b"));
+
+                        Object[] res = iterator.next();
+                        usersFromQuery
+                                .add(new UserInfoPaginationResultHolder(res[0] != null ? String.valueOf(res[0]) : null,
+                                        res[1] != null ? String.valueOf(res[1]) : null));
+
                     }
                 }
 
@@ -411,18 +414,16 @@ public class GeneralQueries {
                 NativeQuery nativeQuery = session.createNativeQuery(QUERY.toString());
                 nativeQuery.setParameter(1, limit);
 
-                // TODO: check if this works ( earlier checking column total )
-                List<Object> result = nativeQuery.list();
+                List<Object[]> result = nativeQuery.list();
 
-                // TODO: fix this
-                if (result != null) {
-                    Iterator<Object> iterator = result.iterator();
+                if (result != null && result.size() != 0) {
+                    Iterator<Object[]> iterator = result.iterator();
                     while (iterator.hasNext()) {
 
-                        usersFromQuery.add(new UserInfoPaginationResultHolder(
-//                                result.getString("user_id"),
-//                                result.getString("recipe_id"))
-                                "a", "b"));
+                        Object[] res = iterator.next();
+                        usersFromQuery
+                                .add(new UserInfoPaginationResultHolder(res[0] != null ? String.valueOf(res[0]) : null,
+                                        res[1] != null ? String.valueOf(res[1]) : null));
 
                     }
                 }
@@ -489,19 +490,20 @@ public class GeneralQueries {
         }
     }
 
-//    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
-//        private static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
-//
-//        private KeyValueInfoRowMapper() {
-//        }
-//
-//        private static KeyValueInfoRowMapper getInstance() {
-//            return INSTANCE;
-//        }
-//
-//        @Override
-//        public KeyValueInfo map(ResultSet result) throws Exception {
-//            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
-//        }
-//    }
+    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, Object[]> {
+        private static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
+
+        private KeyValueInfoRowMapper() {
+        }
+
+        private static KeyValueInfoRowMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public KeyValueInfo map(Object[] result) throws Exception {
+            return new KeyValueInfo(result[0] != null ? String.valueOf(result[0]) : null,
+                    result[1] != null ? ((BigDecimal) result[1]).longValue() : 0l);
+        }
+    }
 }

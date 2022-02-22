@@ -25,6 +25,7 @@ import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
@@ -81,6 +82,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
     @Override
     public String insertIntoTableValues(String codeId, PasswordlessDevicesDO deviceId, String linkCodeHash,
             long createdAt) {
+
         PasswordlessCodesDO codesDO = new PasswordlessCodesDO(codeId, deviceId, linkCodeHash, createdAt);
 
         Session session = (Session) sessionInstance;
@@ -98,9 +100,6 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
         criteria.where(criteriaBuilder.equal(root.get("device"), devicesDO));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         List<PasswordlessCodesDO> results = query.getResultList();
-
-        if (results.size() == 0)
-            throw new NoResultException();
 
         return results;
     }
@@ -131,10 +130,8 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
                 .createCriteriaDelete(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteriaDelete.from(PasswordlessCodesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("code_id"), codeId));
-        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
+        session.createQuery(criteriaDelete).executeUpdate();
 
-        if (rowsUpdated == 0)
-            throw new NoResultException();
     }
 
     @Override
@@ -147,9 +144,6 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
         criteria.where(criteriaBuilder.lessThan(root.get("created_at"), createdAt));
         Query<PasswordlessCodesDO> query = session.createQuery(criteria);
         List<PasswordlessCodesDO> result = query.getResultList();
-
-        if (result.size() == 0)
-            throw new NoResultException();
 
         return result;
     }
@@ -166,7 +160,7 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
         PasswordlessCodesDO result = null;
         try {
             result = query.getSingleResult();
-        } catch (NoResultException e) {
+        } catch (NoResultException | EntityNotFoundException e) {
             return null;
         }
         return result;

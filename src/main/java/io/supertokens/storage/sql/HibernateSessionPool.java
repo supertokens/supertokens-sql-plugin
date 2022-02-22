@@ -64,7 +64,7 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
     private static String errorMessage = "Error connecting to SQL instance. Please make sure that SQL is running and that "
             + "you have" + " specified the correct values for ('host' and 'port') or for 'connection_uri'";
 
-    public static SessionFactory getSessionFactory(Start start) throws InterruptedException {
+    public static synchronized SessionFactory getSessionFactory(Start start) throws InterruptedException {
         return getSessionFactory(start, false);
     }
 

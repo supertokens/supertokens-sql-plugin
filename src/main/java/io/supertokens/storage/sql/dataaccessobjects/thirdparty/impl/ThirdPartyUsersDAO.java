@@ -95,9 +95,13 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         ThirdPartyUsersDO thirdPartyUsersDO = null;
 
-        thirdPartyUsersDO = session.createQuery(criteriaQuery).getSingleResult();
+        try {
+            thirdPartyUsersDO = session.createQuery(criteriaQuery).getSingleResult();
 
-        return thirdPartyUsersDO;
+            return thirdPartyUsersDO;
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     @Override
@@ -133,9 +137,6 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
 
         int rowsUpdated = session.createQuery(criteriaUpdate).executeUpdate();
 
-        if (rowsUpdated == 0)
-            throw new NoResultException();
-
     }
 
     @Override
@@ -154,10 +155,14 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         criteriaQuery.where(criteriaBuilder.and(predicateOne, predicateTwo));
         ThirdPartyUsersDO thirdPartyUsersDO = null;
 
-        thirdPartyUsersDO = session.createQuery(criteriaQuery).setLockMode(LockModeType.PESSIMISTIC_WRITE)
-                .getSingleResult();
+        try {
+            thirdPartyUsersDO = session.createQuery(criteriaQuery).setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                    .getSingleResult();
 
-        return thirdPartyUsersDO;
+            return thirdPartyUsersDO;
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     @Override
@@ -172,9 +177,6 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         List<ThirdPartyUsersDO> thirdPartyUsersDOs = null;
 
         thirdPartyUsersDOs = session.createQuery(criteriaQuery).getResultList();
-
-        if (thirdPartyUsersDOs.size() == 0)
-            throw new NoResultException();
 
         return thirdPartyUsersDOs;
     }
@@ -211,9 +213,6 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         List<ThirdPartyUsersDO> resultList = session.createQuery(criteriaQuery).setFirstResult(0).setMaxResults(limit)
                 .getResultList();
 
-        if (resultList.size() == 0)
-            throw new NoResultException();
-
         return resultList;
 
     }
@@ -224,8 +223,12 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(ThirdPartyUsersDO.class)));
-        Long rows = session.createQuery(criteriaQuery).getSingleResult();
-        return rows;
+        try {
+            Long rows = session.createQuery(criteriaQuery).getSingleResult();
+            return rows;
+        } catch (NoResultException e) {
+            return 0l;
+        }
     }
 
     @Override

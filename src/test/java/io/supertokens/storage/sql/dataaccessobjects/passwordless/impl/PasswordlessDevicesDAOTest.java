@@ -158,7 +158,7 @@ public class PasswordlessDevicesDAOTest {
         assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
 
         transaction = session.beginTransaction();
-        passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+        passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals_transaction(DEVICE_ID_HASH);
         transaction.commit();
         session.clear();
 
@@ -171,7 +171,7 @@ public class PasswordlessDevicesDAOTest {
         Transaction transaction = session.beginTransaction();
 
         try {
-            passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals(DEVICE_ID_HASH);
+            passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals_transaction(DEVICE_ID_HASH);
             transaction.commit();
         } catch (NoResultException e) {
             if (transaction != null) {
@@ -232,7 +232,7 @@ public class PasswordlessDevicesDAOTest {
         assertTrue(passwordlessDevicesDAO.getAll().size() == 1);
 
         transaction = session.beginTransaction();
-        passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+        passwordlessDevicesDAO.deleteWhereEmailEquals_transaction(EMAIL);
         transaction.commit();
         session.clear();
 
@@ -244,7 +244,7 @@ public class PasswordlessDevicesDAOTest {
         Transaction transaction = session.beginTransaction();
 
         try {
-            passwordlessDevicesDAO.deleteWhereEmailEquals(EMAIL);
+            passwordlessDevicesDAO.deleteWhereEmailEquals_transaction(EMAIL);
             transaction.commit();
         } catch (NoResultException e) {
 

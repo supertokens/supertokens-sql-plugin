@@ -91,16 +91,15 @@ public class EmailVerificationQueries {
     }
 
     public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, SessionObject sessionObject,
-            String token) throws NoResultException {
+            String token) throws NoResultException, StorageQueryException {
 
         EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
 
         EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
                 .getEmailVerificationTokenWhereTokenEquals(token);
 
-        return new EmailVerificationTokenInfo(emailVerificationTokensDO.getPrimary_key().getUser_id(),
-                emailVerificationTokensDO.getPrimary_key().getToken(), emailVerificationTokensDO.getToken_expiry(),
-                emailVerificationTokensDO.getPrimary_key().getEmail());
+        return EmailVerificationTokenInfoRowMapper.getInstance().mapOrThrow(emailVerificationTokensDO);
+
     }
 
     public static void addEmailVerificationToken(Start start, SessionObject sessionObject, String userId,
@@ -191,13 +190,12 @@ public class EmailVerificationQueries {
 
     public static void revokeAllTokens(Start start, SessionObject sessionObject, String userId, String email)
             throws UserAndEmailNotFoundException {
-        EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
-                sessionObject);
-        emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
+        EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
+        emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
     }
 
     private static class EmailVerificationTokenInfoRowMapper
-            implements RowMapper<EmailVerificationTokenInfo, ResultSet> {
+            implements RowMapper<EmailVerificationTokenInfo, EmailVerificationTokensDO> {
         private static final EmailVerificationTokenInfoRowMapper INSTANCE = new EmailVerificationTokenInfoRowMapper();
 
         private EmailVerificationTokenInfoRowMapper() {
@@ -208,9 +206,14 @@ public class EmailVerificationQueries {
         }
 
         @Override
-        public EmailVerificationTokenInfo map(ResultSet result) throws Exception {
-            return new EmailVerificationTokenInfo(result.getString("user_id"), result.getString("token"),
-                    result.getLong("token_expiry"), result.getString("email"));
+        public EmailVerificationTokenInfo map(EmailVerificationTokensDO emailVerificationTokensDO) throws Exception {
+
+            if (emailVerificationTokensDO == null) {
+                return null;
+            }
+            return new EmailVerificationTokenInfo(emailVerificationTokensDO.getPrimary_key().getUser_id(),
+                    emailVerificationTokensDO.getPrimary_key().getToken(), emailVerificationTokensDO.getToken_expiry(),
+                    emailVerificationTokensDO.getPrimary_key().getEmail());
         }
     }
 }

@@ -64,8 +64,11 @@ public class ThirdPartyQueries {
                             userInfo.email, userInfo.timeJoined);
                 }
 
-            } catch (PersistenceException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+                start.commitTransaction(session);
+            } catch (PersistenceException exception) {
+                throw exception;
+            } catch (Exception e) {
+                throw new StorageTransactionLogicException(e);
             }
             return null;
         });
@@ -126,10 +129,10 @@ public class ThirdPartyQueries {
                 nativeQuery.setParameter(i + 1, ids.get(i));
             }
 
-            List<ThirdPartyUsersDO> list = nativeQuery.getResultList();
-            Iterator<ThirdPartyUsersDO> iterator = list.iterator();
+            List<Object[]> list = nativeQuery.getResultList();
+            Iterator<Object[]> iterator = list.iterator();
             while (iterator.hasNext()) {
-                finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(iterator.next()));
+                finalResult.add(UserInfoObjectMapper.getInstance().mapOrThrow(iterator.next()));
             }
         }
         return finalResult;
@@ -225,12 +228,12 @@ public class ThirdPartyQueries {
         nativeQuery.setParameter(3, userId);
         nativeQuery.setParameter(4, limit);
 
-        List<ThirdPartyUsersDO> list = nativeQuery.getResultList();
-        Iterator<ThirdPartyUsersDO> iterator = list.iterator();
+        List<Object[]> list = nativeQuery.getResultList();
+        Iterator<Object[]> iterator = list.iterator();
         List<UserInfo> temp = new ArrayList<>();
 
         while (iterator.hasNext()) {
-            temp.add(UserInfoRowMapper.getInstance().mapOrThrow(iterator.next()));
+            temp.add(UserInfoObjectMapper.getInstance().mapOrThrow(iterator.next()));
         }
 
         UserInfo[] finalResult = new UserInfo[temp.size()];
@@ -247,6 +250,32 @@ public class ThirdPartyQueries {
         return thirdPartyUsersDAO.getCount();
     }
 
+    private static class UserInfoObjectMapper implements RowMapper<UserInfo, Object[]> {
+        private static final UserInfoObjectMapper INSTANCE = new UserInfoObjectMapper();
+
+        private UserInfoObjectMapper() {
+        }
+
+        private static UserInfoObjectMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public UserInfo map(Object[] result) throws Exception {
+
+            if (result == null) {
+                return null;
+            }
+
+            return new UserInfo(result[0] != null ? result[0].toString() : "",
+                    result[3] != null ? result[3].toString() : "",
+                    new UserInfo.ThirdParty(result[1] != null ? result[1].toString() : "",
+                            result[2] != null ? result[2].toString() : ""),
+                    result[4] != null ? Long.valueOf(result[4].toString()) : 0l);
+
+        }
+    }
+
     private static class UserInfoRowMapper implements RowMapper<UserInfo, ThirdPartyUsersDO> {
         private static final UserInfoRowMapper INSTANCE = new UserInfoRowMapper();
 
@@ -259,6 +288,9 @@ public class ThirdPartyQueries {
 
         @Override
         public UserInfo map(ThirdPartyUsersDO result) throws Exception {
+            if (result == null) {
+                return null;
+            }
             return new UserInfo(result.getUser_id(), result.getEmail(),
                     new UserInfo.ThirdParty(result.getPrimary_key().getThird_party_id(),
                             result.getPrimary_key().getThird_party_user_id()),

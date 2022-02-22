@@ -19,10 +19,8 @@ package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.session.SessionInfoInterfaceDAO;
-import io.supertokens.storage.sql.domainobjects.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
-import io.supertokens.storage.sql.exceptions.UserIdNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
@@ -101,8 +99,12 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         criteriaQuery.select(root);
         criteriaQuery.where(criteriaBuilder.equal(root.get("session_handle"), sessionHandle));
         Query<SessionInfoDO> query = session.createQuery(criteriaQuery);
-        SessionInfoDO sessionInfoDO = query.setLockMode(LockModeType.PESSIMISTIC_WRITE).getSingleResult();
-        return sessionInfoDO;
+        try {
+            SessionInfoDO sessionInfoDO = query.setLockMode(LockModeType.PESSIMISTIC_WRITE).getSingleResult();
+            return sessionInfoDO;
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     @Override
@@ -126,7 +128,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
     }
 
     @Override
-    public void deleteWhereUserIdEquals(String userId) throws UserIdNotFoundException {
+    public void deleteWhereUserIdEquals(String userId) {
 
         Session session = (Session) sessionInstance;
 
@@ -136,15 +138,12 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
         criteriaDelete.where(criteriaBuilder.equal(root.get("user_id"), userId));
 
-        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
-
-        if (rowsUpdated == 0)
-            throw new UserIdNotFoundException("user_id not found in session_info");
+        session.createQuery(criteriaDelete).executeUpdate();
 
     }
 
     @Override
-    public String[] getSessionHandlesWhereUserIdEquals(String userId) throws UserIdNotFoundException {
+    public String[] getSessionHandlesWhereUserIdEquals(String userId) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<SessionInfoDO> criteriaQuery = criteriaBuilder.createQuery(SessionInfoDO.class);
@@ -153,9 +152,6 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
         criteriaQuery.where(criteriaBuilder.equal(root.get("user_id"), userId));
         List resultList = session.createQuery(criteriaQuery).getResultList();
-
-        if (resultList.size() == 0)
-            throw new UserIdNotFoundException("user_id not found in session_info");
 
         String[] results = new String[resultList.size()];
         int counter = 0;
@@ -206,7 +202,11 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         criteriaQuery.select(criteriaBuilder.count(criteriaQuery.from(SessionInfoDO.class)));
-        Long rows = session.createQuery(criteriaQuery).getSingleResult();
-        return rows;
+        try {
+            Long rows = session.createQuery(criteriaQuery).getSingleResult();
+            return rows;
+        } catch (NoResultException e) {
+            return 0l;
+        }
     }
 }

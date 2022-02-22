@@ -143,9 +143,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         Root<EmailVerificationVerifiedEmailsDO> root = criteriaDelete.from(EmailVerificationVerifiedEmailsDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId));
 
-        int rowsUpdated = session.createQuery(criteriaDelete).executeUpdate();
+        session.createQuery(criteriaDelete).executeUpdate();
 
-        if (rowsUpdated == 0)
-            throw new NoResultException("UserID not found");
     }
 }
