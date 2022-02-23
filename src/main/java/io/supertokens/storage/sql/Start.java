@@ -49,6 +49,7 @@ import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.constants.ConstraintNameConstants;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.output.Logging;
@@ -66,6 +67,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.NoResultException;
+import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -208,7 +210,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } catch (Exception e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e.getCause() instanceof SQLTransactionRollbackException
-                        || e.getMessage().toLowerCase().contains("deadlock")) && tries < 3) {
+                        || e.getMessage().toLowerCase().contains("deadlock") || e instanceof OptimisticLockException
+                        || e.getCause() instanceof OptimisticLockException) && tries < 3) {
                     try {
                         Thread.sleep((long) (10 + (Math.random() * 20)));
                     } catch (InterruptedException ignored) {
@@ -220,6 +223,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                     throw (StorageTransactionLogicException) e;
                 } else if (e instanceof PersistenceException) {
                     throw (PersistenceException) e;
+                } else if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
                 }
                 throw new StorageQueryException(e);
             }
@@ -256,12 +261,18 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throw e;
 
         } finally {
+
+            if (transaction != null && transaction.isActive()) {
+                transaction.commit();
+            }
+
             session.doWork(new Work() {
                 @Override
                 public void execute(Connection connection) throws SQLException {
                     connection.setTransactionIsolation(defaultTransactionIsolation[0]);
                 }
             });
+
             if (session != null)
                 session.close();
         }
@@ -546,7 +557,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             }
 
             String message = null;
-
+            String constraint_name = null;
             if (e instanceof StorageQueryException) {
                 PersistenceException persistenceException = (PersistenceException) ((StorageQueryException) e)
                         .getCause();
@@ -555,11 +566,18 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else if (e instanceof PersistenceException) {
                 message = ((ConstraintViolationException) ((PersistenceException) e).getCause()).getSQLException()
                         .getMessage();
+                constraint_name = ((ConstraintViolationException) ((PersistenceException) e).getCause())
+                        .getConstraintName();
             } else {
                 message = e.getMessage();
             }
 
-            if (message.contains(DUPLICATE_ENTRY)
+            // match directly with constraints
+            if (ConstraintNameConstants.EmailPasswordUsersDO_email_constraint.equalsIgnoreCase(constraint_name)) {
+                throw new DuplicateEmailException();
+            }
+            message = message.replaceAll("\n", "");
+            if (message.matches(DUPLICATE_ENTRY)
                     && message.contains(Config.getConfig(this).getEmailPasswordUsersTable())) {
 
                 if (message.contains(userInfo.email)) {
@@ -568,7 +586,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                     throw new DuplicateUserIdException();
                 }
 
-            } else if (message.contains(DUPLICATE_ENTRY) && message.contains(Config.getConfig(this).getUsersTable())) {
+            } else if (message.matches(DUPLICATE_ENTRY) && message.contains(Config.getConfig(this).getUsersTable())) {
                 if (message.contains(userInfo.id)) {
                     throw new DuplicateUserIdException();
                 }
@@ -576,7 +594,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throw new StorageQueryException(e);
 //
 //
-//            if (message.contains(DUPLICATE_ENTRY)
+//            if (message.matches(DUPLICATE_ENTRY)
 //                    && (message.endsWith("'" + Config.getConfig(this).getEmailPasswordUsersTable() + ".email'")
 //                            || message.endsWith("'email'"))) {
 //            } else if (message.contains("Duplicate entry")
@@ -646,13 +664,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else {
                 message = e.getMessage();
             }
+            message = message.replaceAll("\n", "");
 
-            if (message.contains(DUPLICATE_ENTRY)
+            if (message.matches(DUPLICATE_ENTRY)
                     && (message.contains(Config.getConfig(this).getPasswordResetTokensTable()))
                     && (message.contains(passwordResetTokenInfo.token))
                     && (message.contains(passwordResetTokenInfo.userId))) {
                 throw new DuplicatePasswordResetTokenException();
-            } else if (message.contains(FOREIGN_KEY) && message.contains("user_id")) {
+            } else if (message.matches(FOREIGN_KEY) && message.contains("user_id")) {
                 throw new UnknownUserIdException();
             }
             throw new StorageQueryException(e);
@@ -721,7 +740,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else {
                 message = e.getMessage();
             }
-            if (message.contains(DUPLICATE_ENTRY)
+            message = message.replaceAll("\n", "");
+
+            if (message.matches(DUPLICATE_ENTRY)
                     && (message.contains(Config.getConfig(this).getEmailPasswordUsersTable())
                             && message.contains(email))) {
                 throw new DuplicateEmailException();
@@ -811,7 +832,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(this, sessionInstance, userId, email,
                     isEmailVerified);
         } catch (SQLException e) {
-            if (!isEmailVerified || !(e.getMessage().contains("Duplicate entry")
+            if (!isEmailVerified || !(e.getMessage().matches(DUPLICATE_ENTRY)
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailVerificationTable() + ".PRIMARY'")
                             || e.getMessage().endsWith("'PRIMARY'")))) {
                 throw new StorageQueryException(e);
@@ -854,8 +875,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else {
                 message = e.getMessage();
             }
+            message = message.replaceAll("\n", "");
 
-            if (message.contains("Duplicate entry")
+            if (message.matches(DUPLICATE_ENTRY)
                     && (message.endsWith("'" + Config.getConfig(this).getEmailVerificationTokensTable() + ".PRIMARY'")
                             || message.endsWith("'PRIMARY'"))) {
                 throw new DuplicateEmailVerificationTokenException();
@@ -966,7 +988,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new StorageQueryException(e);
             }
 
-            if (message.contains(DUPLICATE_ENTRY)) {
+            message = message.replaceAll("\n", "");
+
+            if (message.matches(DUPLICATE_ENTRY)) {
 
                 if (message.contains(userInfo.thirdParty.userId) && message.contains(userInfo.thirdParty.id)
                         && message.contains(Config.getConfig(this).getThirdPartyUsersTable())) {
@@ -1101,11 +1125,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             String message = null;
 
             if (e instanceof PersistenceException) {
-                message = ((SQLIntegrityConstraintViolationException) ((PersistenceException) e).getCause().getCause())
-                        .getMessage();
+                message = ((PersistenceException) e).getCause().getCause().getMessage();
             }
+            message = message.replaceAll("\n", "");
 
-            if (message.contains(DUPLICATE_ENTRY) && message.contains(info.keyId)
+            if (message.matches(DUPLICATE_ENTRY) && message.contains(info.keyId)
                     && message.contains(Config.getConfig(this).getJWTSigningKeysTable())) {
                 throw new DuplicateKeyIdException();
             }
@@ -1241,7 +1265,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else {
                 message = e.getMessage();
             }
-            if (message.contains(DUPLICATE_ENTRY)) {
+            message = message.replaceAll("\n", "");
+
+            if (message.matches(DUPLICATE_ENTRY)) {
                 if (message.contains(Config.getConfig(this).getPasswordlessDevicesTable())
                         && message.contains(code.deviceIdHash)) {
                     throw new DuplicateDeviceIdHashException();
@@ -1368,8 +1394,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else if (e instanceof PersistenceException) {
 
                 String message = e.getCause().getCause().getMessage();
+                message = message.replaceAll("\n", "");
 
-                if (message.contains(DUPLICATE_ENTRY)
+                if (message.matches(DUPLICATE_ENTRY)
                         && message.contains(Config.getConfig(this).getPasswordlessCodesTable())) {
 
                     if (message.contains(code.id)) {
@@ -1433,8 +1460,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             } else if (e instanceof PersistenceException) {
                 message = ((ConstraintViolationException) e.getCause()).getSQLException().getMessage();
             }
+            message = message.replaceAll("\n", "");
 
-            if (message.contains(DUPLICATE_ENTRY)) {
+            if (message.matches(DUPLICATE_ENTRY)) {
                 if (message.contains(user.id)) {
                     if (message.contains(Config.getConfig(this).getPasswordlessUsersTable())
                             || message.contains(Config.getConfig(this).getUsersTable())) {
@@ -1477,8 +1505,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             if (e.getCause() != null && e.getCause().getCause() != null) {
                 String message = e.getCause().getCause().getMessage();
+                message = message.replaceAll("\n", "");
 
-                if (message.contains("Duplicate entry")
+                if (message.matches(DUPLICATE_ENTRY)
                         && message.contains(Config.getConfig(this).getPasswordlessUsersTable())
                         && message.contains(email)) {
                     throw new DuplicateEmailException();
@@ -1500,8 +1529,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             if (e.getCause() != null && e.getCause().getCause() != null) {
                 String message = e.getCause().getCause().getMessage();
+                message = message.replaceAll("\n", "");
 
-                if (message.contains("Duplicate entry")
+                if (message.matches(DUPLICATE_ENTRY)
                         && message.contains(Config.getConfig(this).getPasswordlessUsersTable())
                         && message.contains(phoneNumber)) {
                     throw new DuplicatePhoneNumberException();

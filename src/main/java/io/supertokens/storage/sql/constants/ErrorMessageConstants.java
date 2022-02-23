@@ -17,6 +17,6 @@
 package io.supertokens.storage.sql.constants;
 
 public class ErrorMessageConstants {
-    public static final String DUPLICATE_ENTRY = "Duplicate entry";
-    public static final String FOREIGN_KEY = "foreign key";
+    public static final String DUPLICATE_ENTRY = ".*((Duplicate\\s+entry)|(duplicate)).*";
+    public static final String FOREIGN_KEY = ".*(foreign key).*";
 }

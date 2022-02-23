@@ -14,30 +14,9 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.dataaccessobjects;
+package io.supertokens.storage.sql.constants;
 
-import org.jetbrains.annotations.TestOnly;
+public class ConstraintNameConstants {
 
-import javax.persistence.PersistenceException;
-import java.io.Serializable;
-import java.util.List;
-
-/**
- * This is the interface declares base methods that need to be implemented by an DAO class
- * 
- * @param <T>
- */
-public interface DAO<T> {
-
-    Serializable create(T entity) throws Exception;
-
-    T getWherePrimaryKeyEquals(Object id) throws Exception;
-
-    List<T> getAll();
-
-    int deleteWherePrimaryKeyEquals(Object id) throws Exception;
-
-    @TestOnly
-    void removeAll();
-
+    public static final String EmailPasswordUsersDO_email_constraint = "unqiue_email_emailpassword_users";
 }

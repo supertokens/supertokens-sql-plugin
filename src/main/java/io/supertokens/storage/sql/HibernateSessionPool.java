@@ -69,6 +69,69 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
     }
 
     /**
+     * Load postgres
+     *
+     */
+    public static HashMap<String, Object> getSettings_postgres(Start start) {
+        HashMap<String, Object> settings = new HashMap<>();
+
+        settings.put(Environment.DRIVER, "org.postgresql.Driver");
+        settings.put(Environment.URL, "jdbc:postgresql://localhost:5432/supertokens");
+        settings.put(Environment.USER, "root");
+        settings.put(Environment.PASS, "root");
+        settings.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+        settings.put(Environment.SHOW_SQL, true);
+
+        // settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
+        // HikariCP settings
+
+//        settings.put("hibernate.hikari.connectionTimeout", "20000");
+//        settings.put("hibernate.hikari.minimumIdle", "10");
+//        settings.put("hibernate.hikari.maximumPoolSize", "16");
+//        settings.put("hibernate.hikari.idleTimeout", "300000");
+//        settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+
+        // settings.put("hibernate.hikari.cachePrepStmts", "true");
+        // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
+        // settings.put("hibernate.hikari.prepStmtCacheSqlLimit", "2048");
+        // settings.put("hibernate.hikari.poolName", "SuperTokens");
+
+        return settings;
+    }
+
+    /**
+     * Load cockroachDB
+     */
+    public static HashMap<String, Object> getSettings_cockroachDB(Start start) {
+        HashMap<String, Object> settings = new HashMap<>();
+
+        settings.put(Environment.DRIVER, "org.postgresql.Driver");
+        settings.put(Environment.URL, "jdbc:postgresql://localhost:26257/supertokens?sslmode=disable");
+        settings.put(Environment.USER, "root");
+        settings.put(Environment.PASS, "root");
+        settings.put("hibernate.dialect", "org.hibernate.dialect.CockroachDB201Dialect");
+        settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+        settings.put(Environment.SHOW_SQL, true);
+
+        // settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
+        // HikariCP settings
+
+//        settings.put("hibernate.hikari.connectionTimeout", "20000");
+//        settings.put("hibernate.hikari.minimumIdle", "10");
+//        settings.put("hibernate.hikari.maximumPoolSize", "16");
+//        settings.put("hibernate.hikari.idleTimeout", "300000");
+//        settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+
+        // settings.put("hibernate.hikari.cachePrepStmts", "true");
+        // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
+        // settings.put("hibernate.hikari.prepStmtCacheSqlLimit", "2048");
+        // settings.put("hibernate.hikari.poolName", "SuperTokens");
+
+        return settings;
+    }
+
+    /**
      * Load non in-memory settings
      * 
      * @param start
@@ -148,10 +211,10 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
         settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
         // HikariCP settings
 
-        settings.put("hibernate.hikari.connectionTimeout", "20000");
-        settings.put("hibernate.hikari.minimumIdle", "10");
-        settings.put("hibernate.hikari.maximumPoolSize", "5");
-        settings.put("hibernate.hikari.idleTimeout", "300000");
+//        settings.put("hibernate.hikari.connectionTimeout", "20000");
+//        settings.put("hibernate.hikari.minimumIdle", "10");
+//        settings.put("hibernate.hikari.maximumPoolSize", "5");
+//        settings.put("hibernate.hikari.idleTimeout", "300000");
         settings.put("hibernate.dialect", "org.hibernate.dialect.HSQLDialect");
 
         return settings;
@@ -204,7 +267,9 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
                         if (inMemory) {
                             settings = getInMemorySettings();
                         } else {
-                            settings = getSettings(start);
+                            // settings = getSettings(start);
+                            // settings = getInMemorySettings();
+                            settings = getSettings_postgres(start);
                         }
 
                         registryBuilder.applySettings(settings);

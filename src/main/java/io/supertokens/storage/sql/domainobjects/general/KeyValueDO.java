@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobjects.general;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,6 +28,7 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
 @Table(name = "key_value")
 public class KeyValueDO {
 
@@ -47,6 +49,6 @@ public class KeyValueDO {
     private String value;
 
     @Column
-    private BigInteger created_at_time;
+    private long created_at_time;
 
 }

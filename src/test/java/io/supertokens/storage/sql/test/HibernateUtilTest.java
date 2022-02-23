@@ -63,24 +63,32 @@ public class HibernateUtilTest {
                 try {
                     Map<String, Object> settings = new HashMap<>();
 
-                    // TODO: to be changed later to an in memory version
-                    settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
-                    settings.put(Environment.URL, "jdbc:mysql://localhost:3306/supertokens");
+                    settings.put(Environment.DRIVER, "org.postgresql.Driver");
+                    settings.put(Environment.URL, "jdbc:postgresql://localhost:26257/supertokens?sslmode=disable");
                     settings.put(Environment.USER, "root");
                     settings.put(Environment.PASS, "root");
-                    settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
-
+                    settings.put("hibernate.dialect", "org.hibernate.dialect.CockroachDB201Dialect");
                     settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
                     settings.put(Environment.SHOW_SQL, true);
 
-                    settings.put("hibernate.physical_naming_strategy",
-                            "io.supertokens.storage.sql.CustomNamingStrategy");
-                    // HikariCP settings
-
-                    settings.put("hibernate.hikari.connectionTimeout", "20000");
-                    settings.put("hibernate.hikari.minimumIdle", "10");
-                    settings.put("hibernate.hikari.maximumPoolSize", "5");
-                    settings.put("hibernate.hikari.idleTimeout", "300000");
+                    // TODO: to be changed later to an in memory version
+//                    settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
+//                    settings.put(Environment.URL, "jdbc:mysql://localhost:3306/supertokens");
+//                    settings.put(Environment.USER, "root");
+//                    settings.put(Environment.PASS, "root");
+//                    settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+//
+//                    settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
+//                    settings.put(Environment.SHOW_SQL, true);
+//
+//                    settings.put("hibernate.physical_naming_strategy",
+//                            "io.supertokens.storage.sql.CustomNamingStrategy");
+//                    // HikariCP settings
+//
+//                    settings.put("hibernate.hikari.connectionTimeout", "20000");
+//                    settings.put("hibernate.hikari.minimumIdle", "10");
+//                    settings.put("hibernate.hikari.maximumPoolSize", "5");
+//                    settings.put("hibernate.hikari.idleTimeout", "300000");
 
                     // Create registry
                     StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();

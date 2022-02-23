@@ -27,6 +27,8 @@ import io.supertokens.storage.sql.HibernateSessionPool;
 import io.supertokens.storage.sql.ProcessState;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.dataaccessobjects.general.KeyValueDAO;
+import io.supertokens.storage.sql.domainobjects.general.KeyValueDO;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
@@ -214,19 +216,16 @@ public class GeneralQueries {
 
     public static void setKeyValue_Transaction(Start start, SessionObject sessionObject, String key, KeyValueInfo info)
             throws InterruptedException {
-        String QUERY = "INSERT INTO " + Config.getConfig(start).getKeyValueTable()
-                + "(name, value, created_at_time) VALUES(?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE value = ?, created_at_time = ?";
 
-        Session session = (Session) sessionObject.getSession();
-        NativeQuery nativeQuery = session.createNativeQuery(QUERY);
-        nativeQuery.setParameter(1, key);
-        nativeQuery.setParameter(2, info.value);
-        nativeQuery.setParameter(3, info.createdAtTime);
-        nativeQuery.setParameter(4, info.value);
-        nativeQuery.setParameter(5, info.createdAtTime);
+        KeyValueDAO keyValueDAO = new KeyValueDAO(sessionObject);
+        KeyValueDO keyValueDO = keyValueDAO.getWhereNameEquals_transaction(key);
 
-        nativeQuery.executeUpdate();
+        if (keyValueDO == null) {
+            keyValueDAO.insertIntoValues(key, info.value, info.createdAtTime);
+        } else {
+            keyValueDAO.updateWhereNameEquals_transaction(key, info.value, info.createdAtTime);
+        }
+
     }
 
     public static void setKeyValue(Start start, SessionObject sessionObject, String key, KeyValueInfo info)
@@ -248,27 +247,15 @@ public class GeneralQueries {
         if (result == null || result.size() == 0)
             return null;
 
-        return KeyValueInfoRowMapper.getInstance().mapOrThrow(result.get(0));
+        return KeyValueInfoRowObjectMapper.getInstance().mapOrThrow(result.get(0));
 
     }
 
     public static KeyValueInfo getKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
             throws InterruptedException, StorageQueryException {
 
-        String QUERY = "SELECT value, created_at_time FROM " + Config.getConfig(start).getKeyValueTable()
-                + " WHERE name = ? FOR UPDATE";
-
-        Session session = (Session) sessionObject.getSession();
-        NativeQuery nativeQuery = session.createNativeQuery(QUERY);
-        nativeQuery.setParameter(1, key);
-
-        List<Object[]> result = nativeQuery.list();
-
-        if (result == null || result.size() == 0) {
-            return null;
-        }
-        Object[] obj = result.get(0);
-        return KeyValueInfoRowMapper.INSTANCE.mapOrThrow(obj);
+        KeyValueDAO keyValueDAO = new KeyValueDAO(sessionObject);
+        return KeyValueInfoRowMapper.INSTANCE.mapOrThrow(keyValueDAO.getWhereNameEquals_transaction(key));
     }
 
     public static void deleteKeyValue_Transaction(Start start, SessionObject sessionObject, String key)
@@ -490,7 +477,27 @@ public class GeneralQueries {
         }
     }
 
-    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, Object[]> {
+    private static class KeyValueInfoRowObjectMapper implements RowMapper<KeyValueInfo, Object[]> {
+        private static final KeyValueInfoRowObjectMapper INSTANCE = new KeyValueInfoRowObjectMapper();
+
+        private KeyValueInfoRowObjectMapper() {
+        }
+
+        private static KeyValueInfoRowObjectMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public KeyValueInfo map(Object[] result) throws Exception {
+            if (result == null) {
+                return null;
+            }
+            return new KeyValueInfo(result[0] != null ? String.valueOf(result[0]) : null,
+                    result[1] != null ? ((BigInteger) result[1]).longValue() : 0l);
+        }
+    }
+
+    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, KeyValueDO> {
         private static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
 
         private KeyValueInfoRowMapper() {
@@ -501,9 +508,12 @@ public class GeneralQueries {
         }
 
         @Override
-        public KeyValueInfo map(Object[] result) throws Exception {
-            return new KeyValueInfo(result[0] != null ? String.valueOf(result[0]) : null,
-                    result[1] != null ? ((BigDecimal) result[1]).longValue() : 0l);
+        public KeyValueInfo map(KeyValueDO result) throws Exception {
+            if (result == null) {
+                return null;
+            }
+            return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
         }
     }
+
 }

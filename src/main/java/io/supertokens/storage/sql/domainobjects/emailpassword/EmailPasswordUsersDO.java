@@ -21,16 +21,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+
+import static io.supertokens.storage.sql.constants.ConstraintNameConstants.EmailPasswordUsersDO_email_constraint;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @Entity
-@Table(name = "emailpassword_users")
+@Table(name = "emailpassword_users", uniqueConstraints = @UniqueConstraint(columnNames = {
+        "email" }, name = EmailPasswordUsersDO_email_constraint))
 public class EmailPasswordUsersDO {
 
 //     return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailPasswordUsersTable() + " ("
@@ -47,7 +47,7 @@ public class EmailPasswordUsersDO {
     @Column(length = 36)
     private String user_id;
 
-    @Column(length = 256, nullable = false, unique = true)
+    @Column(length = 256, nullable = false)
     private String email;
 
     @Column(length = 128, nullable = false)
