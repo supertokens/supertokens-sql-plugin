@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.thirdparty;
 
 import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
-import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 
 import java.io.Serializable;
 import java.util.List;
@@ -42,8 +41,8 @@ public interface ThirdPartyUsersInterfaceDAO extends DAO {
      * String QUERY = "UPDATE " + Config.getConfig(start).getThirdPartyUsersTable()
      * + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
      */
-    public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-            String ThirdPartyUserId, String email);
+    public int updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId, String ThirdPartyUserId,
+            String email);
 
     /**
      * String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
@@ -65,7 +64,7 @@ public interface ThirdPartyUsersInterfaceDAO extends DAO {
      * + ", user_id DESC LIMIT ?";
      */
     public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder,
-            String userIdOrder, Integer limit) throws InvalidOrderTypeException;
+            String userIdOrder, Integer limit);
 
     /**
      * String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();

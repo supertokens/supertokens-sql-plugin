@@ -106,21 +106,9 @@ public class PasswordlessCodesDAOTest {
                 .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH);
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
-
-        try {
-            List<PasswordlessCodesDO> codesDO = passwordlessCodesDAO
-                    .getCodesWhereDeviceIdHashEquals(passwordlessDevicesDO);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        List<PasswordlessCodesDO> codesDO = passwordlessCodesDAO.getCodesWhereDeviceIdHashEquals(passwordlessDevicesDO);
+        transaction.commit();
+        assertTrue(codesDO.size() == 0);
     }
 
     @Test
@@ -131,7 +119,7 @@ public class PasswordlessCodesDAOTest {
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "two", null, LINKED_CODE_HASH + "two", CREATED_AT);
         transaction.commit();
 
-        PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "Two");
+        PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "two");
 
         assertTrue(codesDO.getCode_id().equals(CODE_ID + "two"));
         assertTrue(codesDO.getLink_code_hash().equals(LINKED_CODE_HASH + "two"));
@@ -145,19 +133,10 @@ public class PasswordlessCodesDAOTest {
 
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID, null, LINKED_CODE_HASH, CREATED_AT);
 
-        try {
-            PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "Two");
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        PasswordlessCodesDO codesDO = passwordlessCodesDAO.getWhereLinkCodeHashEquals(LINKED_CODE_HASH + "Two");
+        transaction.commit();
+
+        assertNull(codesDO);
 
     }
 
@@ -190,19 +169,9 @@ public class PasswordlessCodesDAOTest {
 
         assertTrue(passwordlessCodesDAO.getAll().size() == 1);
 
-        try {
-            passwordlessCodesDAO.deleteWhereCodeIdEquals(CODE_ID + "two");
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        int rows = passwordlessCodesDAO.deleteWhereCodeIdEquals(CODE_ID + "two");
+        transaction.commit();
+        assertTrue(rows == 0);
     }
 
     @Test
@@ -219,15 +188,8 @@ public class PasswordlessCodesDAOTest {
 
     @Test
     public void getCodesWhereCreatedAtLessThanException() {
-        try {
-            passwordlessCodesDAO.getCodesWhereCreatedAtLessThan(CREATED_AT + 45l);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
+        List<PasswordlessCodesDO> result = passwordlessCodesDAO.getCodesWhereCreatedAtLessThan(CREATED_AT + 45l);
+        assertTrue(result.size() == 0);
     }
 
     @Test
@@ -252,15 +214,7 @@ public class PasswordlessCodesDAOTest {
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "1", null, LINKED_CODE_HASH + "1", CREATED_AT);
         passwordlessCodesDAO.insertIntoTableValues(CODE_ID + "2", null, LINKED_CODE_HASH + "2", CREATED_AT + 20l);
         transaction.commit();
-
-        try {
-            passwordlessCodesDAO.getCodeWhereCodeIdEquals(CODE_ID + "3");
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure
-        }
-        fail();
+        PasswordlessCodesDO passwordlessCodesDO = passwordlessCodesDAO.getCodeWhereCodeIdEquals(CODE_ID + "3");
+        assertTrue(passwordlessCodesDO == null);
     }
 }

@@ -139,28 +139,38 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
      */
     public static HashMap<String, Object> getSettings(Start start) {
         HashMap<String, Object> settings = new HashMap<>();
-        // build connection url
+
         SQLConfig userConfig = Config.getConfig(start);
-        String scheme = userConfig.getConnectionScheme();
-        String hostName = userConfig.getHostName();
+        String connectionUrl = null;
 
-        String port = userConfig.getPort() + "";
-        if (!port.equals("-1")) {
-            port = ":" + port;
+        if (userConfig.getConnectionURI() != null) {
+
+            connectionUrl = userConfig.getConnectionURI();
+
         } else {
-            port = "";
+
+            // build connection url
+            String scheme = userConfig.getConnectionScheme();
+            String hostName = userConfig.getHostName();
+
+            String port = userConfig.getPort() + "";
+            if (!port.equals("-1")) {
+                port = ":" + port;
+            } else {
+                port = "";
+            }
+
+            String databaseName = userConfig.getDatabaseName();
+
+            String attributes = userConfig.getConnectionAttributes();
+            if (!attributes.equals("")) {
+                attributes = "?" + attributes;
+            }
+
+            connectionUrl = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
+
         }
 
-        String databaseName = userConfig.getDatabaseName();
-
-        String attributes = userConfig.getConnectionAttributes();
-        if (!attributes.equals("")) {
-            attributes = "?" + attributes;
-        }
-
-        String connectionUrl = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
-
-        settings.put(Environment.DRIVER, "org.mariadb.jdbc.Driver");
         settings.put(Environment.URL, connectionUrl);
 
         if (userConfig.getUser() != null) {
@@ -173,6 +183,7 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
         }
         settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
         settings.put(Environment.SHOW_SQL, true);
+        settings.put(Environment.DRIVER, userConfig.getSql_driver());
 
         // settings.put("hibernate.physical_naming_strategy", "io.supertokens.storage.sql.CustomNamingStrategy");
         // HikariCP settings
@@ -181,7 +192,7 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
         settings.put("hibernate.hikari.minimumIdle", "10");
         settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(userConfig.getConnectionPoolSize()));
         settings.put("hibernate.hikari.idleTimeout", "300000");
-        settings.put("hibernate.dialect", "org.hibernate.dialect.MariaDBDialect");
+        settings.put("hibernate.dialect", userConfig.getSql_driver());
 
         // settings.put("hibernate.hikari.cachePrepStmts", "true");
         // settings.put("hibernate.hikari.prepStmtCacheSize", "250");
@@ -268,8 +279,8 @@ public class HibernateSessionPool extends ResourceDistributor.SingletonResource 
                             settings = getInMemorySettings();
                         } else {
                             // settings = getSettings(start);
-                            // settings = getInMemorySettings();
-                            settings = getSettings_postgres(start);
+                            // settings = getSettings_postgres(start);
+                            settings = getSettings_cockroachDB(start);
                         }
 
                         registryBuilder.applySettings(settings);

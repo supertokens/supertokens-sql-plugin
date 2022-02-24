@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.emailverification;
 
 import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 
 import javax.persistence.NoResultException;
 import java.io.Serializable;
@@ -41,8 +40,7 @@ public interface EmailVerificationTokensInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTokensTable()
      * + " WHERE user_id = ? AND email = ?";
      */
-    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
-            throws UserAndEmailNotFoundException;
+    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email);
 
     /**
      * tring QUERY = "SELECT user_id, token, token_expiry, email FROM "

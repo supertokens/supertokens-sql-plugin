@@ -21,7 +21,6 @@ import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.emailverification.EmailverificationVerifiedEmailsInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsPKDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
@@ -59,7 +58,6 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         criteriaQuery.select(root);
         Query<EmailVerificationVerifiedEmailsDO> query = session.createQuery(criteriaQuery);
         List<EmailVerificationVerifiedEmailsDO> result = query.getResultList();
-        session.close();
         return result;
     }
 
@@ -99,8 +97,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
     }
 
     @Override
-    public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
-            throws UserAndEmailNotFoundException {
+    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
@@ -109,7 +106,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         Predicate predicateUserID = criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId);
         Predicate predicateEmail = criteriaBuilder.equal(root.get("primary_key").get("email"), email);
         criteriaDelete.where(criteriaBuilder.and(predicateUserID, predicateEmail));
-        session.createQuery(criteriaDelete).executeUpdate();
+        return session.createQuery(criteriaDelete).executeUpdate();
     }
 
     @Override
@@ -135,7 +132,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
     }
 
     @Override
-    public void deleteWhereUserIdEquals(String userId) {
+    public int deleteWhereUserIdEquals(String userId) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationVerifiedEmailsDO> criteriaDelete = criteriaBuilder
@@ -143,7 +140,7 @@ public class EmailverificationVerifiedEmailsDAO extends SessionTransactionDAO
         Root<EmailVerificationVerifiedEmailsDO> root = criteriaDelete.from(EmailVerificationVerifiedEmailsDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("primary_key").get("user_id"), userId));
 
-        session.createQuery(criteriaDelete).executeUpdate();
+        return session.createQuery(criteriaDelete).executeUpdate();
 
     }
 }

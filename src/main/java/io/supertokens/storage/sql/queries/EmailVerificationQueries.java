@@ -28,7 +28,6 @@ import io.supertokens.storage.sql.dataaccessobjects.emailverification.impl.Email
 import io.supertokens.storage.sql.dataaccessobjects.emailverification.impl.EmailverificationVerifiedEmailsDAO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import org.hibernate.Session;
 
 import javax.persistence.NoResultException;
@@ -71,11 +70,7 @@ public class EmailVerificationQueries {
         if (isEmailVerified) {
             emailverificationVerifiedEmailsDAO.insertIntoTable(userId, email);
         } else {
-            try {
-                emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
-            } catch (UserAndEmailNotFoundException u) {
-                // do nothing for now, figure out error handling chain
-            }
+            emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
         }
     }
 
@@ -83,11 +78,8 @@ public class EmailVerificationQueries {
             String userId, String email) throws SQLException {
 
         EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
-        try {
-            emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
-        } catch (UserAndEmailNotFoundException u) {
-            // do nothing for now
-        }
+        emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
+
     }
 
     public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, SessionObject sessionObject,
@@ -181,15 +173,14 @@ public class EmailVerificationQueries {
     }
 
     public static void unverifyEmail(Start start, SessionObject sessionObject, String userId, String email)
-            throws SQLException, UserAndEmailNotFoundException {
+            throws SQLException {
         EmailverificationVerifiedEmailsDAO emailverificationVerifiedEmailsDAO = new EmailverificationVerifiedEmailsDAO(
                 sessionObject);
 
         emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
     }
 
-    public static void revokeAllTokens(Start start, SessionObject sessionObject, String userId, String email)
-            throws UserAndEmailNotFoundException {
+    public static void revokeAllTokens(Start start, SessionObject sessionObject, String userId, String email) {
         EmailVerificationTokensDAO emailVerificationTokensDAO = new EmailVerificationTokensDAO(sessionObject);
         emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(userId, email);
     }

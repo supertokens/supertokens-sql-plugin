@@ -20,7 +20,6 @@ import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.dataaccessobjects.SessionTransactionDAO;
 import io.supertokens.storage.sql.dataaccessobjects.session.SessionInfoInterfaceDAO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
-import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
@@ -108,8 +107,8 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
     }
 
     @Override
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
-            String sessionHandle) throws SessionHandleNotFoundException {
+    public int updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
+            String sessionHandle) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
 
@@ -120,15 +119,12 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
         criteriaUpdate.where(criteriaBuilder.equal(root.get("session_handle"), sessionHandle));
 
-        int rowsUpdated = session.createQuery(criteriaUpdate).executeUpdate();
-
-        if (rowsUpdated == 0)
-            throw new SessionHandleNotFoundException("Session handle not found");
+        return session.createQuery(criteriaUpdate).executeUpdate();
 
     }
 
     @Override
-    public void deleteWhereUserIdEquals(String userId) {
+    public int deleteWhereUserIdEquals(String userId) {
 
         Session session = (Session) sessionInstance;
 
@@ -138,7 +134,7 @@ public class SessionInfoDAO extends SessionTransactionDAO implements SessionInfo
 
         criteriaDelete.where(criteriaBuilder.equal(root.get("user_id"), userId));
 
-        session.createQuery(criteriaDelete).executeUpdate();
+        return session.createQuery(criteriaDelete).executeUpdate();
 
     }
 

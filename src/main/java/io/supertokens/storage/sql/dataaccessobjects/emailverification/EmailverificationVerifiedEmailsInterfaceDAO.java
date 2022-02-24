@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.emailverification;
 
 import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 
 import java.io.Serializable;
 
@@ -34,8 +33,7 @@ public interface EmailverificationVerifiedEmailsInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTable()
      * + " WHERE user_id = ? AND email = ?";
      */
-    public void deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
-            throws UserAndEmailNotFoundException;
+    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email);
 
     /**
      * String QUERY = "SELECT * FROM " + Config.getConfig(start).getEmailVerificationTable()
@@ -47,6 +45,6 @@ public interface EmailverificationVerifiedEmailsInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailVerificationTable()
      * + " WHERE user_id = ?";
      */
-    public void deleteWhereUserIdEquals(String userId);
+    public int deleteWhereUserIdEquals(String userId);
 
 }

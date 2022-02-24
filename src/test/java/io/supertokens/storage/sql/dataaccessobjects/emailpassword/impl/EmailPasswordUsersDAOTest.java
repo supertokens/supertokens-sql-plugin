@@ -337,11 +337,7 @@ public class EmailPasswordUsersDAOTest {
 
     private EmailPasswordUsersDO createEmailPasswordUsersDO(String email, String passHash, long createdAt,
             String userId) {
-        EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO();
-        emailPasswordUsersDO.setEmail(email);
-        emailPasswordUsersDO.setPassword_hash(passHash);
-        emailPasswordUsersDO.setTime_joined(createdAt);
-        emailPasswordUsersDO.setUser_id(userId);
+        EmailPasswordUsersDO emailPasswordUsersDO = new EmailPasswordUsersDO(userId, email, passHash, createdAt);
         return emailPasswordUsersDO;
     }
 

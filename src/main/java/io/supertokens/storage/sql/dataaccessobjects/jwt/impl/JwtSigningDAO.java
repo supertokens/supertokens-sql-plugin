@@ -102,7 +102,12 @@ public class JwtSigningDAO extends SessionTransactionDAO implements JwtSigningIn
         criteria.orderBy(orderList);
 
         Query<JWTSigningKeysDO> query = session.createQuery(criteria);
-        List<JWTSigningKeysDO> results = query.setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        List<JWTSigningKeysDO> results = null;
+        try {
+            results = query.setLockMode(LockModeType.PESSIMISTIC_WRITE).getResultList();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
         return results;
     }
 }

@@ -22,13 +22,13 @@ import io.supertokens.storage.sql.dataaccessobjects.thirdparty.ThirdPartyUsersIn
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersPKDO;
 import io.supertokens.storage.sql.enums.OrderEnum;
-import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceException;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -117,8 +117,8 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
     }
 
     @Override
-    public void updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-            String thirdPartyUserId, String email) {
+    public int updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(String thirdPartyId, String thirdPartyUserId,
+            String email) {
 
         Session session = (Session) sessionInstance;
 
@@ -135,7 +135,7 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
 
         criteriaUpdate.where(criteriaBuilder.and(predicateOne, predicateTwo));
 
-        int rowsUpdated = session.createQuery(criteriaUpdate).executeUpdate();
+        return session.createQuery(criteriaUpdate).executeUpdate();
 
     }
 
@@ -176,14 +176,17 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         criteriaQuery.where(criteriaBuilder.equal(root.get("email"), email));
         List<ThirdPartyUsersDO> thirdPartyUsersDOs = null;
 
-        thirdPartyUsersDOs = session.createQuery(criteriaQuery).getResultList();
-
+        try {
+            thirdPartyUsersDOs = session.createQuery(criteriaQuery).getResultList();
+        } catch (Exception e) {
+            return null;
+        }
         return thirdPartyUsersDOs;
     }
 
     @Override
     public List<ThirdPartyUsersDO> getByTimeJoinedOrderAndUserIdOrderAndLimit(String timeJoinedOrder,
-            String userIdOrder, Integer limit) throws InvalidOrderTypeException {
+            String userIdOrder, Integer limit) {
 
         Session session = (Session) sessionInstance;
 
@@ -197,7 +200,7 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         } else if (timeJoinedOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
             ordersList.add(criteriaBuilder.asc(root.get("time_joined")));
         } else {
-            throw new InvalidOrderTypeException(timeJoinedOrder + " not defined");
+            throw new PersistenceException(timeJoinedOrder + " not defined");
         }
 
         if (userIdOrder.equalsIgnoreCase(OrderEnum.DESC.name())) {
@@ -205,7 +208,7 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
         } else if (userIdOrder.equalsIgnoreCase(OrderEnum.ASC.name())) {
             ordersList.add(criteriaBuilder.asc(root.get("user_id")));
         } else {
-            throw new InvalidOrderTypeException(userIdOrder + " not defined");
+            throw new PersistenceException(userIdOrder + " not defined");
         }
 
         criteriaQuery.orderBy(ordersList);

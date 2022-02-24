@@ -31,7 +31,6 @@ import io.supertokens.storage.sql.dataaccessobjects.session.impl.SessionAccessTo
 import io.supertokens.storage.sql.dataaccessobjects.session.impl.SessionInfoDAO;
 import io.supertokens.storage.sql.domainobjects.session.SessionAccessTokenSigningKeysDO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
-import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
 
@@ -76,7 +75,7 @@ public class SessionQueries {
     }
 
     public static void updateSessionInfo_Transaction(Start start, SessionObject sessionObject, String sessionHandle,
-            String refreshTokenHash2, long expiry) throws SQLException, SessionHandleNotFoundException {
+            String refreshTokenHash2, long expiry) throws SQLException {
 
         SessionInfoDAO sessionInfoDAO = new SessionInfoDAO(sessionObject);
         sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(refreshTokenHash2, expiry,

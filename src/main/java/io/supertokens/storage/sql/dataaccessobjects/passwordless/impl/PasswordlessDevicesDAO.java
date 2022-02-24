@@ -142,34 +142,44 @@ public class PasswordlessDevicesDAO extends SessionTransactionDAO implements Pas
     }
 
     @Override
-    public void deleteWhereDeviceIdHashEquals_transaction(String deviceIdHash) {
+    public int deleteWhereDeviceIdHashEquals_transaction(String deviceIdHash) {
 
         Session session = (Session) sessionInstance;
         PasswordlessDevicesDO devicesDO = getWhereDeviceIdHashEquals_locked(deviceIdHash);
+        if (devicesDO == null) {
+            return 0;
+        }
         session.delete(devicesDO);
-
+        return 1;
     }
 
     @Override
-    public void deleteWherePhoneNumberEquals(String phoneNumber) {
+    public int deleteWherePhoneNumberEquals(String phoneNumber) {
 
         Session session = (Session) sessionInstance;
         List<PasswordlessDevicesDO> devicesDOS = getDevicesWherePhoneNumberEquals(phoneNumber);
+        if (devicesDOS == null || devicesDOS.size() == 0) {
+            return 0;
+        }
         devicesDOS.parallelStream().forEach(device -> {
             session.delete(device);
         });
+        return 1;
 
     }
 
     @Override
-    public void deleteWhereEmailEquals_transaction(String email) {
+    public int deleteWhereEmailEquals_transaction(String email) {
 
         Session session = (Session) sessionInstance;
         List<PasswordlessDevicesDO> devicesDOS = getDevicesWhereEmailEquals_transaction(email);
+        if (devicesDOS == null || devicesDOS.size() == 0) {
+            return 0;
+        }
         devicesDOS.parallelStream().forEach(device -> {
             session.delete(device);
         });
-
+        return 1;
     }
 
     @Override

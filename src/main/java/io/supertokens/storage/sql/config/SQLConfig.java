@@ -74,6 +74,9 @@ public class SQLConfig {
     @JsonProperty
     private String mysql_connection_uri = null;
 
+    @JsonProperty
+    private String sql_driver = null;
+
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
     }
@@ -105,6 +108,13 @@ public class SQLConfig {
             }
         }
         return "allowPublicKeyRetrieval=true";
+    }
+
+    public String getSql_driver() {
+        if (sql_driver == null) {
+            return "org.hsqldb.jdbcDriver";
+        }
+        return sql_driver;
     }
 
     public String getHostName() {

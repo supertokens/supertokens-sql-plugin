@@ -19,7 +19,6 @@ package io.supertokens.storage.sql.dataaccessobjects.emailverification.impl;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensPKDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
@@ -151,14 +150,14 @@ public class EmailVerificationTokensDAOTest {
             int rows = emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "three",
                     EMAIL);
             if (rows == 0)
-                throw new UserAndEmailNotFoundException();
+                throw new Exception();
             transaction.commit();
 
         } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            assertTrue(e instanceof UserAndEmailNotFoundException);
+            assertTrue(true);
             return;
         }
         fail();
@@ -186,16 +185,10 @@ public class EmailVerificationTokensDAOTest {
         emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
         transaction.commit();
 
-        try {
-            EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
-                    .getEmailVerificationTokenWhereTokenEquals(TOKEN + "@");
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
+        EmailVerificationTokensDO emailVerificationTokensDO = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereTokenEquals(TOKEN + "@");
+
+        assertTrue(emailVerificationTokensDO == null);
 
     }
 
@@ -227,21 +220,10 @@ public class EmailVerificationTokensDAOTest {
 
         emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
         emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
-
-        try {
-            List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
-                    .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(USER_ID + "three", EMAIL);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals_locked(USER_ID + "three", EMAIL);
+        transaction.commit();
+        assertTrue(emailVerificationTokensDO.size() == 0);
 
     }
 
@@ -272,16 +254,9 @@ public class EmailVerificationTokensDAOTest {
         emailVerificationTokensDAO.insertIntoTable(USER_ID, EMAIL, TOKEN, TOKEN_EXPIRY);
         emailVerificationTokensDAO.insertIntoTable(USER_ID + "two", EMAIL, TOKEN, TOKEN_EXPIRY);
         transaction.commit();
-        try {
-            List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
-                    .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        List<EmailVerificationTokensDO> emailVerificationTokensDO = emailVerificationTokensDAO
+                .getEmailVerificationTokenWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
+        assertTrue(emailVerificationTokensDO.size() == 0);
     }
 
     @Test
@@ -303,17 +278,15 @@ public class EmailVerificationTokensDAOTest {
             int rows = emailVerificationTokensDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "two",
                     EMAIL);
             if (rows == 0) {
-                throw new UserAndEmailNotFoundException();
+                throw new Exception();
             }
             transaction.commit();
-        } catch (UserAndEmailNotFoundException e) {
+        } catch (Exception e) {
             if (transaction != null) {
                 transaction.rollback();
             }
             assertTrue(true);
             return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
         }
         fail();
     }

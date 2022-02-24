@@ -113,11 +113,11 @@ public class PasswordlessUsersDAOTest {
             transaction = session.beginTransaction();
             passwordlessUsersDAO.updateEmailWhereUserIdEquals(USER_ID + "Two", EMAIL);
             transaction.commit();
-        } catch (PersistenceException e) {
+        } catch (UnknownUserIdException e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            assertTrue(e.getCause() instanceof ConstraintViolationException);
+            assertTrue(true);
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
@@ -171,15 +171,7 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void getWhereUserIdEqualsException() {
-        try {
-            PasswordlessUsersDO usersDO = passwordlessUsersDAO.getWhereUserIdEquals(USER_ID);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        assertNull(passwordlessUsersDAO.getWhereUserIdEquals(USER_ID));
     }
 
     @Test
@@ -233,11 +225,11 @@ public class PasswordlessUsersDAOTest {
             transaction = session.beginTransaction();
             passwordlessUsersDAO.updatePhoneNumberWhereUserIdEquals(USER_ID + "Two", PHONE_NUMBER);
             transaction.commit();
-        } catch (PersistenceException e) {
+        } catch (UnknownUserIdException e) {
             if (transaction != null) {
                 transaction.rollback();
             }
-            assertTrue(e.getCause() instanceof ConstraintViolationException);
+            assertTrue(true);
             return;
         } catch (Exception e) {
             // do nothing failure case scenario
@@ -264,14 +256,6 @@ public class PasswordlessUsersDAOTest {
 
     @Test
     public void getWhereEmailEqualsException() {
-        try {
-            PasswordlessUsersDO usersDO = passwordlessUsersDAO.getUserWhereEmailEquals(EMAIL);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        assertNull(passwordlessUsersDAO.getUserWhereEmailEquals(EMAIL));
     }
 }

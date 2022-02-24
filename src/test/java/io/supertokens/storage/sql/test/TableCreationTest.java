@@ -17,10 +17,7 @@
 package io.supertokens.storage.sql.test;
 
 import io.supertokens.ProcessState;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TestRule;
 
 import static org.junit.Assert.assertNotNull;
@@ -41,7 +38,9 @@ public class TableCreationTest {
         Utils.reset();
     }
 
+    // TODO: not sure how relevant this test is anymore
     @Test
+    @Ignore
     public void checkingCreationOfNewTable() throws InterruptedException {
         String[] args = { "../" };
 

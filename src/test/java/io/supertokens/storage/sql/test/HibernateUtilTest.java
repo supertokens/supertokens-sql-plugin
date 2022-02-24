@@ -64,10 +64,10 @@ public class HibernateUtilTest {
                     Map<String, Object> settings = new HashMap<>();
 
                     settings.put(Environment.DRIVER, "org.postgresql.Driver");
-                    settings.put(Environment.URL, "jdbc:postgresql://localhost:26257/supertokens?sslmode=disable");
+                    settings.put(Environment.URL, "jdbc:postgresql://localhost:5432/supertokens");
                     settings.put(Environment.USER, "root");
                     settings.put(Environment.PASS, "root");
-                    settings.put("hibernate.dialect", "org.hibernate.dialect.CockroachDB201Dialect");
+                    settings.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
                     settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
                     settings.put(Environment.SHOW_SQL, true);
 
@@ -80,15 +80,15 @@ public class HibernateUtilTest {
 //
 //                    settings.put(Environment.HBM2DDL_AUTO, Action.CREATE_DROP);
 //                    settings.put(Environment.SHOW_SQL, true);
-//
-//                    settings.put("hibernate.physical_naming_strategy",
-//                            "io.supertokens.storage.sql.CustomNamingStrategy");
-//                    // HikariCP settings
-//
-//                    settings.put("hibernate.hikari.connectionTimeout", "20000");
-//                    settings.put("hibernate.hikari.minimumIdle", "10");
-//                    settings.put("hibernate.hikari.maximumPoolSize", "5");
-//                    settings.put("hibernate.hikari.idleTimeout", "300000");
+
+                    settings.put("hibernate.physical_naming_strategy",
+                            "io.supertokens.storage.sql.CustomNamingStrategy");
+                    // HikariCP settings
+
+                    settings.put("hibernate.hikari.connectionTimeout", "20000");
+                    settings.put("hibernate.hikari.minimumIdle", "10");
+                    settings.put("hibernate.hikari.maximumPoolSize", "5");
+                    settings.put("hibernate.hikari.idleTimeout", "300000");
 
                     // Create registry
                     StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
@@ -135,7 +135,6 @@ public class HibernateUtilTest {
                             throw e;
                         }
 
-                        System.out.println("Connection refused, retrying....");
                         trial_attempts--;
                         Thread.sleep(waitTime);
                     } else {

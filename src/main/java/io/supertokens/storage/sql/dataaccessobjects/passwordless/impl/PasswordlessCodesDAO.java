@@ -123,14 +123,14 @@ public class PasswordlessCodesDAO extends SessionTransactionDAO implements Passw
     }
 
     @Override
-    public void deleteWhereCodeIdEquals(String codeId) {
+    public int deleteWhereCodeIdEquals(String codeId) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<PasswordlessCodesDO> criteriaDelete = criteriaBuilder
                 .createCriteriaDelete(PasswordlessCodesDO.class);
         Root<PasswordlessCodesDO> root = criteriaDelete.from(PasswordlessCodesDO.class);
         criteriaDelete.where(criteriaBuilder.equal(root.get("code_id"), codeId));
-        session.createQuery(criteriaDelete).executeUpdate();
+        return session.createQuery(criteriaDelete).executeUpdate();
 
     }
 

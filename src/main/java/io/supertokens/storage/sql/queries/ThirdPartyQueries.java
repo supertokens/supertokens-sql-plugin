@@ -29,7 +29,6 @@ import io.supertokens.storage.sql.dataaccessobjects.passwordless.impl.UsersDAO;
 import io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl.ThirdPartyUsersDAO;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
 import io.supertokens.storage.sql.enums.OrderEnum;
-import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
 import org.jetbrains.annotations.NotNull;
@@ -201,7 +200,7 @@ public class ThirdPartyQueries {
 
     @Deprecated
     public static UserInfo[] getThirdPartyUsers(Start start, SessionObject sessionObject, @NotNull Integer limit,
-            @NotNull String timeJoinedOrder) throws SQLException, StorageQueryException, InvalidOrderTypeException {
+            @NotNull String timeJoinedOrder) throws SQLException, StorageQueryException {
 
         ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 

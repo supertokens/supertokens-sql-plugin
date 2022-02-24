@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.thirdparty.impl;
 
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.thirdparty.ThirdPartyUsersDO;
-import io.supertokens.storage.sql.exceptions.InvalidOrderTypeException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
@@ -87,20 +86,12 @@ public class ThirdPartyUsersDAOTest {
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID, USER_ID + "Two", EMAIL,
                 TIME_JOINED);
 
-        try {
-            ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
-                    .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
+                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID);
+        transaction.commit();
+
+        assertNull(thirdPartyUsersDO);
+
     }
 
     @Test
@@ -155,22 +146,11 @@ public class ThirdPartyUsersDAOTest {
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID, THIRD_PARTY_USER_ID, USER_ID, EMAIL, TIME_JOINED);
         transaction.commit();
         session.clear();
-        try {
-            transaction = session.beginTransaction();
-            thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID,
-                    THIRD_PARTY_USER_ID + "B", EMAIL + ".com");
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-
-        fail();
+        transaction = session.beginTransaction();
+        int rows = thirdPartyUsersDAO.updateEmailWhereThirdPartyIdEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID,
+                THIRD_PARTY_USER_ID + "B", EMAIL + ".com");
+        transaction.commit();
+        assertTrue(rows == 0);
 
     }
 
@@ -205,22 +185,12 @@ public class ThirdPartyUsersDAOTest {
                 TIME_JOINED);
         transaction.commit();
         session.clear();
-        try {
-            transaction = session.beginTransaction();
-            ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
-                    .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(THIRD_PARTY_ID + "Three",
-                            THIRD_PARTY_USER_ID);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        transaction = session.beginTransaction();
+        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
+                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals_locked(THIRD_PARTY_ID + "Three",
+                        THIRD_PARTY_USER_ID);
+        transaction.commit();
+        assertNull(thirdPartyUsersDO);
     }
 
     @Test
@@ -243,19 +213,13 @@ public class ThirdPartyUsersDAOTest {
                 TIME_JOINED);
         transaction.commit();
         session.clear();
-        try {
-            thirdPartyUsersDAO.getWhereEmailEquals(EMAIL + ".com");
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        List<ThirdPartyUsersDO> thirdPartyUsersDOs = thirdPartyUsersDAO.getWhereEmailEquals(EMAIL + ".com");
+        assertTrue(thirdPartyUsersDOs == null || thirdPartyUsersDOs.size() == 0);
+
     }
 
     @Test
-    public void getByTimeJoinedOrderAndUserIdOrderAndLimit() throws InvalidOrderTypeException {
+    public void getByTimeJoinedOrderAndUserIdOrderAndLimit() {
         Transaction transaction = session.beginTransaction();
 
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
@@ -281,7 +245,7 @@ public class ThirdPartyUsersDAOTest {
     }
 
     @Test
-    public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionOrderType() throws InvalidOrderTypeException {
+    public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionOrderType() {
         Transaction transaction = session.beginTransaction();
 
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "One", THIRD_PARTY_USER_ID, USER_ID + "One", EMAIL,
@@ -298,37 +262,26 @@ public class ThirdPartyUsersDAOTest {
         try {
             List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESCC",
                     "DESC", 3);
-        } catch (InvalidOrderTypeException e) {
-            assertTrue(true);
         } catch (Exception e) {
-            fail();
         }
 
         try {
             List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
                     "DESCC", 3);
-        } catch (InvalidOrderTypeException e) {
+        } catch (Exception e) {
             assertTrue(true);
             return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
         }
         fail();
 
     }
 
     @Test
-    public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionNoResult() throws InvalidOrderTypeException {
-        try {
-            List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
-                    "DESC", 3);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
+    public void getByTimeJoinedOrderAndUserIdOrderAndLimitExceptionNoResult() {
+
+        List<ThirdPartyUsersDO> resultList = thirdPartyUsersDAO.getByTimeJoinedOrderAndUserIdOrderAndLimit("DESC",
+                "DESC", 3);
+        assertTrue(resultList.size() == 0);
 
     }
 

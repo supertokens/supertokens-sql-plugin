@@ -47,7 +47,7 @@ public interface PasswordlessCodesInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessCodesTable() + " WHERE code_id
      * = ?";
      */
-    public void deleteWhereCodeIdEquals(String codeId);
+    public int deleteWhereCodeIdEquals(String codeId);
 
     /**
      * String QUERY = "SELECT code_id, device_id_hash, link_code_hash, created_at FROM "

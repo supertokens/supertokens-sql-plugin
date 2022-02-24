@@ -27,6 +27,8 @@ import org.junit.Test;
 
 import javax.persistence.NoResultException;
 
+import java.util.List;
+
 import static io.supertokens.storage.sql.TestConstants.*;
 import static org.junit.Assert.*;
 
@@ -109,22 +111,11 @@ public class PasswordlessDevicesDAOTest {
                 FAILED_ATTEMPTS, null);
         transaction.commit();
         session.clear();
-
-        try {
-            transaction = session.beginTransaction();
-            PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
-                    .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH + "Three");
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        transaction = session.beginTransaction();
+        PasswordlessDevicesDO passwordlessDevicesDO = passwordlessDevicesDAO
+                .getWhereDeviceIdHashEquals_locked(DEVICE_ID_HASH + "Three");
+        transaction.commit();
+        assertTrue(passwordlessDevicesDO == null);
     }
 
     @Test
@@ -169,20 +160,9 @@ public class PasswordlessDevicesDAOTest {
     @Test
     public void deleteWhereDeviceIdHashEqualsException() {
         Transaction transaction = session.beginTransaction();
-
-        try {
-            passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals_transaction(DEVICE_ID_HASH);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
+        int rows = passwordlessDevicesDAO.deleteWhereDeviceIdHashEquals_transaction(DEVICE_ID_HASH);
+        transaction.commit();
+        assertTrue(rows == 0);
 
     }
 
@@ -206,19 +186,10 @@ public class PasswordlessDevicesDAOTest {
     public void deleteWherePhoneNumberEqualsException() {
         Transaction transaction = session.beginTransaction();
 
-        try {
-            passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
+        int rows = passwordlessDevicesDAO.deleteWherePhoneNumberEquals(PHONE_NUMBER);
+        transaction.commit();
+
+        assertTrue(rows == 0);
 
     }
 
@@ -242,22 +213,10 @@ public class PasswordlessDevicesDAOTest {
     @Test
     public void deleteWhereEmailEqualsException() {
         Transaction transaction = session.beginTransaction();
+        int rows = passwordlessDevicesDAO.deleteWhereEmailEquals_transaction(EMAIL);
+        transaction.commit();
 
-        try {
-            passwordlessDevicesDAO.deleteWhereEmailEquals_transaction(EMAIL);
-            transaction.commit();
-        } catch (NoResultException e) {
-
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case
-        }
-        fail();
-
+        assertTrue(rows == 0);
     }
 
     @Test
@@ -281,16 +240,8 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getDevicesWhereEmailEquailsException() {
-
-        try {
-            passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing, failure case scenario
-        }
-        fail();
+        List<PasswordlessDevicesDO> result = passwordlessDevicesDAO.getDevicesWhereEmailEquals(EMAIL);
+        assertTrue(result.size() == 0);
     }
 
     @Test
@@ -314,14 +265,7 @@ public class PasswordlessDevicesDAOTest {
 
     @Test
     public void getDevicesWherePhoneNumberEqualsException() {
-        try {
-            passwordlessDevicesDAO.getDevicesWherePhoneNumberEquals(PHONE_NUMBER);
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing, failure case scenario
-        }
-        fail();
+        List<PasswordlessDevicesDO> result = passwordlessDevicesDAO.getDevicesWherePhoneNumberEquals(PHONE_NUMBER);
+        assertTrue(result.size() == 0);
     }
 }

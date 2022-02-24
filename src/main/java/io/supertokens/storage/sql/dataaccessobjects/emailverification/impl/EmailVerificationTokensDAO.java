@@ -22,7 +22,6 @@ import io.supertokens.storage.sql.dataaccessobjects.emailverification.EmailVerif
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationTokensPKDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.jetbrains.annotations.TestOnly;
@@ -63,8 +62,7 @@ public class EmailVerificationTokensDAO extends SessionTransactionDAO implements
     }
 
     @Override
-    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email)
-            throws UserAndEmailNotFoundException {
+    public int deleteFromTableWhereUserIdEqualsAndEmailEquals(String userId, String email) {
         Session session = (Session) sessionInstance;
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
         CriteriaDelete<EmailVerificationTokensDO> criteriaDelete = criteriaBuilder

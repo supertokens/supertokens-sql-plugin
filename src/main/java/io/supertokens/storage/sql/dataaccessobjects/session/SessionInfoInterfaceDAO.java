@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.session;
 
 import io.supertokens.storage.sql.dataaccessobjects.DAO;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
-import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 
 import javax.persistence.NoResultException;
 import java.io.Serializable;
@@ -45,13 +44,13 @@ public interface SessionInfoInterfaceDAO extends DAO {
      * String QUERY = "UPDATE " + Config.getConfig(start).getSessionInfoTable()
      * + " SET refresh_token_hash_2 = ?, expires_at = ?" + " WHERE session_handle = ?";
      */
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
-            String sessionHandle) throws SessionHandleNotFoundException;
+    public int updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(String refreshTokenHashTwo, long expiresAt,
+            String sessionHandle);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getSessionInfoTable() + " WHERE user_id = ?";
      */
-    public void deleteWhereUserIdEquals(String userId);
+    public int deleteWhereUserIdEquals(String userId);
 
     /**
      * String QUERY = "SELECT session_handle FROM " + Config.getConfig(start).getSessionInfoTable()

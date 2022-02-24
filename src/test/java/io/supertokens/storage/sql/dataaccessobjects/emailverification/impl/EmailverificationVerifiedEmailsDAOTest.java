@@ -19,7 +19,6 @@ package io.supertokens.storage.sql.dataaccessobjects.emailverification.impl;
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsDO;
 import io.supertokens.storage.sql.domainobjects.emailverification.EmailVerificationVerifiedEmailsPKDO;
-import io.supertokens.storage.sql.exceptions.UserAndEmailNotFoundException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
@@ -97,7 +96,6 @@ public class EmailverificationVerifiedEmailsDAOTest {
 
     @Test
     public void deleteFromTableWhereUserIdEqualsAndEmailEquals() throws Exception {
-        Session session = HibernateUtilTest.getSessionFactory().openSession();
         Transaction transaction = session.beginTransaction();
 
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
@@ -105,94 +103,77 @@ public class EmailverificationVerifiedEmailsDAOTest {
         emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
 
         emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
-
-        transaction.commit();
         assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 2);
+        transaction.commit();
 
     }
 
     @Test
-    public void deleteWhereUserIdEquals() {
-        fail();
+    public void deleteFromTableWhereUserIdEqualsAndEmailException() throws Exception {
+
+        Transaction transaction = session.beginTransaction();
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL + "two");
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
+
+        assertEquals(emailverificationVerifiedEmailsDAO
+                .deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL + "two"), 0);
+        transaction.commit();
+
     }
-//
-//    @Test
-//    public void deleteFromTableWhereUserIdEqualsAndEmailException() throws Exception {
-//
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL + "two");
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
-//
-//        try {
-//            emailverificationVerifiedEmailsDAO.deleteFromTableWhereUserIdEqualsAndEmailEquals(USER_ID + "three",
-//                    EMAIL + "two");
-//        } catch (UserAndEmailNotFoundException e) {
-//            assertTrue(true);
-//            return;
-//        } catch (Exception e) {
-//            // do nothing, failure case
-//        }
-//        fail();
-//
-//    }
-//
-//    @Test
-//    public void getWhereUserIdEqualsAndEmailEquals() {
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
-//
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
-//
-//        EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
-//                .getWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
-//
-//        assertTrue(emailVerificationVerifiedEmailsDO != null);
-//        assertTrue(emailVerificationVerifiedEmailsDO.getPrimary_key().getEmail().equals(EMAIL));
-//        assertTrue(emailVerificationVerifiedEmailsDO.getPrimary_key().getUser_id().equals(USER_ID));
-//
-//    }
-//
-//    @Test
-//    public void getWhereUserIdEqualsAndEmailEqualsException() {
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
-//
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
-//
-//        try {
-//            EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
-//                    .getWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
-//        } catch (NoResultException e) {
-//            assertTrue(true);
-//            return;
-//        } catch (Exception e) {
-//            // do nothing failure case scenario
-//        }
-//        fail();
-//    }
-//
-//    @Test
-//    public void deleteWhereUserIdEquals() throws Exception {
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
-//
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
-//
-//        emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "two");
-//        assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 1);
-//    }
-//
-//    @Test
-//    public void deleteWhereUserIdEqualsException() throws Exception {
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
-//
-//        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
-//
-//        try {
-//            emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "twoe");
-//        } catch (NoResultException e) {
-//            assertTrue(true);
-//            return;
-//        } catch (Exception e) {
-//            // do nothing failure case scenario
-//        }
-//        fail();
-//    }
+
+    @Test
+    public void getWhereUserIdEqualsAndEmailEquals() {
+        Transaction transaction = session.beginTransaction();
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
+
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
+        transaction.commit();
+
+        EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
+                .getWhereUserIdEqualsAndEmailEquals(USER_ID, EMAIL);
+
+        assertTrue(emailVerificationVerifiedEmailsDO != null);
+        assertTrue(emailVerificationVerifiedEmailsDO.getPrimary_key().getEmail().equals(EMAIL));
+        assertTrue(emailVerificationVerifiedEmailsDO.getPrimary_key().getUser_id().equals(USER_ID));
+
+    }
+
+    @Test
+    public void getWhereUserIdEqualsAndEmailEqualsException() {
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
+
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
+
+        EmailVerificationVerifiedEmailsDO emailVerificationVerifiedEmailsDO = emailverificationVerifiedEmailsDAO
+                .getWhereUserIdEqualsAndEmailEquals(USER_ID + "three", EMAIL);
+
+        assertEquals(emailVerificationVerifiedEmailsDO, null);
+
+    }
+
+    @Test
+    public void deleteWhereUserIdEquals() throws Exception {
+        Transaction transaction = session.beginTransaction();
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
+
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
+
+        emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "two");
+        assertTrue(emailverificationVerifiedEmailsDAO.getAll().size() == 1);
+
+        transaction.commit();
+    }
+
+    @Test
+    public void deleteWhereUserIdEqualsException() throws Exception {
+        Transaction transaction = session.beginTransaction();
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID, EMAIL);
+
+        emailverificationVerifiedEmailsDAO.insertIntoTable(USER_ID + "two", EMAIL);
+
+        assertEquals(emailverificationVerifiedEmailsDAO.deleteWhereUserIdEquals(USER_ID + "twoe"), 0);
+
+        transaction.commit();
+    }
 }

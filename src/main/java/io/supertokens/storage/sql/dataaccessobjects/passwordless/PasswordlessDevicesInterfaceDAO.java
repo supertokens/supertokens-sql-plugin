@@ -50,19 +50,19 @@ public interface PasswordlessDevicesInterfaceDAO extends DAO {
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
      * + " WHERE device_id_hash = ?";
      */
-    public void deleteWhereDeviceIdHashEquals_transaction(String deviceIdHash);
+    public int deleteWhereDeviceIdHashEquals_transaction(String deviceIdHash);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
      * + " WHERE phone_number = ?";
      */
-    public void deleteWherePhoneNumberEquals(String phoneNumber);
+    public int deleteWherePhoneNumberEquals(String phoneNumber);
 
     /**
      * String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE email
      * = ?";
      */
-    public void deleteWhereEmailEquals_transaction(String email);
+    public int deleteWhereEmailEquals_transaction(String email);
 
     /**
      * String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "

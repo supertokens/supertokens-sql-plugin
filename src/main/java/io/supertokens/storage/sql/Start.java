@@ -51,7 +51,6 @@ import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.constants.ConstraintNameConstants;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
-import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.HibernateException;
@@ -482,7 +481,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             SessionQueries.updateSessionInfo_Transaction(this, sessionInstance, sessionHandle, refreshTokenHash2,
                     expiry);
-        } catch (SQLException | SessionHandleNotFoundException e) {
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -577,19 +576,10 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new DuplicateEmailException();
             }
             message = message.replaceAll("\n", "");
-            if (message.matches(DUPLICATE_ENTRY)
-                    && message.contains(Config.getConfig(this).getEmailPasswordUsersTable())) {
+            if (message.matches(DUPLICATE_ENTRY) && message.contains(userInfo.id)) {
 
-                if (message.contains(userInfo.email)) {
-                    throw new DuplicateEmailException();
-                } else if (message.contains(userInfo.id)) {
-                    throw new DuplicateUserIdException();
-                }
+                throw new DuplicateUserIdException();
 
-            } else if (message.matches(DUPLICATE_ENTRY) && message.contains(Config.getConfig(this).getUsersTable())) {
-                if (message.contains(userInfo.id)) {
-                    throw new DuplicateUserIdException();
-                }
             }
             throw new StorageQueryException(e);
 //
@@ -666,9 +656,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             }
             message = message.replaceAll("\n", "");
 
-            if (message.matches(DUPLICATE_ENTRY)
-                    && (message.contains(Config.getConfig(this).getPasswordResetTokensTable()))
-                    && (message.contains(passwordResetTokenInfo.token))
+            if (message.matches(DUPLICATE_ENTRY) && (message.contains(passwordResetTokenInfo.token))
                     && (message.contains(passwordResetTokenInfo.userId))) {
                 throw new DuplicatePasswordResetTokenException();
             } else if (message.matches(FOREIGN_KEY) && message.contains("user_id")) {
@@ -1119,7 +1107,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException, DuplicateKeyIdException {
         try {
             JWTSigningQueries.setJWTSigningKeyInfo_Transaction(this, sessionInstance, info);
-            ((Session) sessionInstance.getSession()).flush();
+            // ((Session) sessionInstance.getSession()).flush();
         } catch (PersistenceException | SQLException e) {
 
             String message = null;

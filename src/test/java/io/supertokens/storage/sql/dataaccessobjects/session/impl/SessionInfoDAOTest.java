@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.dataaccessobjects.session.impl;
 
 import io.supertokens.pluginInterface.sqlStorage.SessionObject;
 import io.supertokens.storage.sql.domainobjects.session.SessionInfoDO;
-import io.supertokens.storage.sql.exceptions.SessionHandleNotFoundException;
 import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
@@ -128,26 +127,16 @@ public class SessionInfoDAOTest {
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
         transaction.commit();
-        try {
-            transaction = session.beginTransaction();
-            SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE + "Two");
-            transaction.commit();
-        } catch (NoResultException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        transaction = session.beginTransaction();
+        SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals_locked(SESSION_HANDLE + "Two");
+        transaction.commit();
+
+        assertTrue(sessionInfoDO == null);
 
     }
 
     @Test
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals()
-            throws SessionHandleNotFoundException, InterruptedException {
+    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals() throws InterruptedException {
 
         Transaction transaction = session.beginTransaction();
 
@@ -172,29 +161,18 @@ public class SessionInfoDAOTest {
     }
 
     @Test
-    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException()
-            throws SessionHandleNotFoundException, InterruptedException {
+    public void updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEqualsException() throws InterruptedException {
 
         Transaction transaction = session.beginTransaction();
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
         transaction.commit();
 
-        try {
-            transaction = session.beginTransaction();
-            sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(REFRESH_TOKEN_HASH_TWO + "UPDATED",
-                    EXPIRES_AT + 30l, SESSION_HANDLE + "TWO");
-            transaction.commit();
-        } catch (SessionHandleNotFoundException e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        transaction = session.beginTransaction();
+        int rows = sessionInfoDAO.updateRefreshTokenTwoAndExpiresAtWhereSessionHandleEquals(
+                REFRESH_TOKEN_HASH_TWO + "UPDATED", EXPIRES_AT + 30l, SESSION_HANDLE + "TWO");
+        transaction.commit();
+        assertTrue(rows == 0);
     }
 
     @Test
@@ -228,10 +206,10 @@ public class SessionInfoDAOTest {
         assertTrue(sessionInfoDAO.getAll().size() == 1);
 
         transaction = session.beginTransaction();
-        sessionInfoDAO.deleteWhereUserIdEquals(USER_ID + "two");
+        int rows = sessionInfoDAO.deleteWhereUserIdEquals(USER_ID + "two");
         transaction.commit();
 
-        assertTrue(sessionInfoDAO.getAll().size() == 0);
+        assertTrue(rows == 0);
 
     }
 
@@ -263,9 +241,8 @@ public class SessionInfoDAOTest {
                 CREATED_AT, JWT_USER_PAYLOAD);
         transaction.commit();
 
-        sessionInfoDAO.getSessionHandlesWhereUserIdEquals(USER_ID + "two");
-
-        assertTrue(sessionInfoDAO.getAll().size() == 0);
+        String[] results = sessionInfoDAO.getSessionHandlesWhereUserIdEquals(USER_ID + "two");
+        assertTrue(results.length == 0);
 
     }
 
@@ -295,16 +272,8 @@ public class SessionInfoDAOTest {
         sessionInfoDAO.insertIntoTableValues(SESSION_HANDLE, USER_ID, REFRESH_TOKEN_HASH_TWO, SESSION_DATA, EXPIRES_AT,
                 CREATED_AT, JWT_USER_PAYLOAD);
         transaction.commit();
-
-        try {
-            SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals(SESSION_HANDLE + "Two");
-        } catch (NoResultException e) {
-            assertTrue(true);
-            return;
-        } catch (Exception e) {
-            // do nothing failure case scenario
-        }
-        fail();
+        SessionInfoDO sessionInfoDO = sessionInfoDAO.getWhereSessionHandleEquals(SESSION_HANDLE + "Two");
+        assertNull(sessionInfoDO);
 
     }
 }
