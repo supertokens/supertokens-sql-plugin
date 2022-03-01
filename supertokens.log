@@ -1,0 +1,5 @@
+/*C2*/SET SCHEMA PUBLIC
+create table emailpassword_users (user_id varchar(36) not null, email varchar(256) not null, password_hash varchar(128) not null, time_joined numeric(19,2) not null, primary key (user_id))
+alter table emailpassword_users add constraint UK_o08mqb0iivix7tta8adsti5i6 unique (email)
+INSERT INTO EMAILPASSWORD_USERS VALUES('sample_user','sample@email.com','4FC83A05D38771371FC53AA81AAD869C1FEB7A28',10)
+COMMIT

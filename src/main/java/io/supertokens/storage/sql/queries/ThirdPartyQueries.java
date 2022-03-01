@@ -142,8 +142,8 @@ public class ThirdPartyQueries {
 
         ThirdPartyUsersDAO thirdPartyUsersDAO = new ThirdPartyUsersDAO(sessionObject);
 
-        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
-                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(thirdPartyId, thirdPartyUserId);
+        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO.getThirdPartyUserInfoUsingId(thirdPartyId,
+                thirdPartyUserId);
 
         return UserInfoRowMapper.getInstance().mapOrThrow(thirdPartyUsersDO);
 

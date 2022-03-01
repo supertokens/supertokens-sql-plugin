@@ -80,8 +80,7 @@ public class ThirdPartyUsersDAO extends SessionTransactionDAO implements ThirdPa
     }
 
     @Override
-    public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-            String thirdPartyUserId) {
+    public ThirdPartyUsersDO getThirdPartyUserInfoUsingId(String thirdPartyId, String thirdPartyUserId) {
         Session session = (Session) sessionInstance;
 
         CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();

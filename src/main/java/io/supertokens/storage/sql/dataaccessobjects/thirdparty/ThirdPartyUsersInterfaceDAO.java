@@ -28,8 +28,7 @@ public interface ThirdPartyUsersInterfaceDAO extends DAO {
      * + Config.getConfig(start).getThirdPartyUsersTable()
      * + " WHERE third_party_id = ? AND third_party_user_id = ?";
      */
-    public ThirdPartyUsersDO getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(String thirdPartyId,
-            String thirdPartyUserId);
+    public ThirdPartyUsersDO getThirdPartyUserInfoUsingId(String thirdPartyId, String thirdPartyUserId);
 
     /**
      * insert values into table

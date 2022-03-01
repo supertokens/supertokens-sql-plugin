@@ -22,13 +22,10 @@ import io.supertokens.storage.sql.test.HibernateUtilTest;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceException;
 
 import java.util.List;
@@ -68,8 +65,8 @@ public class ThirdPartyUsersDAOTest {
                 TIME_JOINED);
         transaction.commit();
 
-        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
-                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID);
+        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO.getThirdPartyUserInfoUsingId(THIRD_PARTY_ID + "Two",
+                THIRD_PARTY_USER_ID);
 
         assertTrue(thirdPartyUsersDO != null);
         assertTrue(thirdPartyUsersDO.getEmail().equals(EMAIL));
@@ -86,8 +83,8 @@ public class ThirdPartyUsersDAOTest {
         thirdPartyUsersDAO.insertValues(THIRD_PARTY_ID + "Two", THIRD_PARTY_USER_ID, USER_ID + "Two", EMAIL,
                 TIME_JOINED);
 
-        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO
-                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID + "Three", THIRD_PARTY_USER_ID);
+        ThirdPartyUsersDO thirdPartyUsersDO = thirdPartyUsersDAO.getThirdPartyUserInfoUsingId(THIRD_PARTY_ID + "Three",
+                THIRD_PARTY_USER_ID);
         transaction.commit();
 
         assertNull(thirdPartyUsersDO);
@@ -134,8 +131,8 @@ public class ThirdPartyUsersDAOTest {
 
         session.clear();
 
-        ThirdPartyUsersDO usersDO = thirdPartyUsersDAO
-                .getWhereThirdPartyIDEqualsAndThirdPartyUserIdEquals(THIRD_PARTY_ID, THIRD_PARTY_USER_ID);
+        ThirdPartyUsersDO usersDO = thirdPartyUsersDAO.getThirdPartyUserInfoUsingId(THIRD_PARTY_ID,
+                THIRD_PARTY_USER_ID);
 
         assertTrue(usersDO.getEmail().equals(EMAIL + "Hello"));
     }

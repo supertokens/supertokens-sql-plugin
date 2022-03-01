@@ -16,6 +16,8 @@
 
 package io.supertokens.storage.sql;
 
+import io.supertokens.storage.sql.config.SQLConfig;
+import io.supertokens.storage.sql.singletons.ConfigObject;
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
@@ -25,6 +27,8 @@ import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
  * physically on the database
  */
 public class CustomNamingStrategy implements PhysicalNamingStrategy {
+
+    private final SQLConfig sqlConfig = ConfigObject.getSqlConfig();
 
     @Override
     public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment jdbcEnvironment) {
@@ -38,11 +42,14 @@ public class CustomNamingStrategy implements PhysicalNamingStrategy {
 
     @Override
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment jdbcEnvironment) {
-        if (System.getenv().containsKey("MYSQL_TABLE_NAMES_PREFIX")) {
-            String PREFIX = System.getenv("MYSQL_TABLE_NAMES_PREFIX");
-            return Identifier.toIdentifier(PREFIX + name.getText());
+
+        String PREFIX = sqlConfig.getMysql_table_names_prefix();
+        String legacyTableName = tableName(name.getText());
+
+        if (legacyTableName != null) {
+            return Identifier.toIdentifier(legacyTableName);
         }
-        return name;
+        return Identifier.toIdentifier(PREFIX + name.getText());
     }
 
     @Override
@@ -53,5 +60,30 @@ public class CustomNamingStrategy implements PhysicalNamingStrategy {
     @Override
     public Identifier toPhysicalColumnName(Identifier name, JdbcEnvironment jdbcEnvironment) {
         return name;
+    }
+
+    /**
+     * Following private methods help with legacy table renaming conventions
+     */
+    private String tableName(String name) {
+        switch (name) {
+        case "key_value":
+            return sqlConfig.getKeyValueTable();
+        case "session_info":
+            return sqlConfig.getSessionInfoTable();
+        case "emailpassword_users":
+            return sqlConfig.getEmailPasswordUsersTable();
+        case "emailpassword_pswd_reset_tokens":
+            return sqlConfig.getPasswordResetTokensTable();
+        case "emailverification_tokens":
+            return sqlConfig.getEmailVerificationTokensTable();
+        case "emailverification_verified_emails":
+            return sqlConfig.getEmailVerificationTable();
+        case "thirdparty_users":
+            return sqlConfig.getThirdPartyUsersTable();
+        default:
+            return null;
+
+        }
     }
 }

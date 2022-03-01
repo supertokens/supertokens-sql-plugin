@@ -53,6 +53,7 @@ import io.supertokens.storage.sql.constants.ConstraintNameConstants;
 import io.supertokens.storage.sql.domainobjects.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import io.supertokens.storage.sql.singletons.ConfigObject;
 import org.hibernate.HibernateException;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.Session;
@@ -115,6 +116,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void loadConfig(String configFilePath) {
         Config.loadConfig(this, configFilePath);
+        ConfigObject.setSqlConfig(this);
     }
 
     @Override

@@ -77,6 +77,10 @@ public class SQLConfig {
     @JsonProperty
     private String sql_driver = null;
 
+    public String getMysql_table_names_prefix() {
+        return mysql_table_names_prefix;
+    }
+
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
     }
