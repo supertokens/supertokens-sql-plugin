@@ -15,6 +15,91 @@
       "jar": "https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar",
       "name": "SLF4j API 1.7.25",
       "src": "https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/hibernate/hibernate-gradle-plugin/5.6.5.Final/hibernate-gradle-plugin-5.6.5.Final.jar",
+      "name": "Hibernate 5.6.5",
+      "src": "https://repo1.maven.org/maven2/org/hibernate/hibernate-gradle-plugin/5.6.5.Final/hibernate-gradle-plugin-5.6.5.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/com/sun/xml/fastinfoset/FastInfoset/1.2.15/FastInfoset-1.2.15.jar",
+      "name": "FastInfoset 1.2.15",
+      "src": "https://repo1.maven.org/maven2/com/sun/xml/fastinfoset/FastInfoset/1.2.15/FastInfoset-1.2.15-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/antlr/antlr/2.7.7/antlr-2.7.7.jar",
+      "name": "antlr 2.7.7",
+      "src": "https://repo1.maven.org/maven2/antlr/antlr/2.7.7/antlr-2.7.7-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7.jar",
+      "name": "byte buddy 1.12.7",
+      "src": "https://repo1.maven.org/maven2/net/bytebuddy/byte-buddy/1.12.7/byte-buddy-1.12.7-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/com/fasterxml/classmate/1.5.1/classmate-1.5.1.jar",
+      "name": "classmate 1.5.1",
+      "src": "https://repo1.maven.org/maven2/com/fasterxml/classmate/1.5.1/classmate-1.5.1-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/hibernate/common/hibernate-commons-annotations/5.1.2.Final/hibernate-commons-annotations-5.1.2.Final.jar",
+      "name": "Hibernate commons annotation 5.1.2",
+      "src": "https://repo1.maven.org/maven2/org/hibernate/common/hibernate-commons-annotations/5.1.2.Final/hibernate-commons-annotations-5.1.2.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/hibernate/hibernate-core/5.6.5.Final/hibernate-core-5.6.5.Final.jar",
+      "name": "Hibernate core 5.6.5",
+      "src": "https://repo1.maven.org/maven2/org/hibernate/hibernate-core/5.6.5.Final/hibernate-core-5.6.5.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.7/istack-commons-runtime-3.0.7.jar",
+      "name": "Istack commons runtime 3.0.7",
+      "src": "https://repo1.maven.org/maven2/com/sun/istack/istack-commons-runtime/3.0.7/istack-commons-runtime-3.0.7-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/jboss/jandex/2.4.2.Final/jandex-2.4.2.Final.jar",
+      "name": "Jandex 2.4.2",
+      "src": "https://repo1.maven.org/maven2/org/jboss/jandex/2.4.2.Final/jandex-2.4.2.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar",
+      "name": "Javax Activation API 1.2.0",
+      "src": "https://repo1.maven.org/maven2/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/javax/persistence/javax.persistence-api/2.2/javax.persistence-api-2.2.jar",
+      "name": "Javax Persistence API 2.2",
+      "src": "https://repo1.maven.org/maven2/javax/persistence/javax.persistence-api/2.2/javax.persistence-api-2.2-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar",
+      "name": "Jaxb API 2.3.1",
+      "src": "https://repo1.maven.org/maven2/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.1/jaxb-runtime-2.3.1.jar",
+      "name": "Jaxb Runtime 2.3.1",
+      "src": "https://repo1.maven.org/maven2/org/glassfish/jaxb/jaxb-runtime/2.3.1/jaxb-runtime-2.3.1-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final.jar",
+      "name": "Jboss logging 3.4.3",
+      "src": "https://repo1.maven.org/maven2/org/jboss/logging/jboss-logging/3.4.3.Final/jboss-logging-3.4.3.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/jboss/spec/javax/transaction/jboss-transaction-api_1.2_spec/1.1.1.Final/jboss-transaction-api_1.2_spec-1.1.1.Final.jar",
+      "name": "Jboss transaction API 1.2_spec-1.1.1",
+      "src": "https://repo1.maven.org/maven2/org/jboss/spec/javax/transaction/jboss-transaction-api_1.2_spec/1.1.1.Final/jboss-transaction-api_1.2_spec-1.1.1.Final-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/jvnet/staxex/stax-ex/1.8/stax-ex-1.8.jar",
+      "name": "Stax ex 1.8",
+      "src": "https://repo1.maven.org/maven2/org/jvnet/staxex/stax-ex/1.8/stax-ex-1.8-sources.jar"
+    },
+    {
+      "jar": "https://repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.1/txw2-2.3.1.jar",
+      "name": "Txw2 2.3.1",
+      "src": "https://repo1.maven.org/maven2/org/glassfish/jaxb/txw2/2.3.1/txw2-2.3.1.jar-sources.jar"
     }
   ]
 }

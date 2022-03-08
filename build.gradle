@@ -19,6 +19,9 @@ dependencies {
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.10'
 
+    // https://mvnrepository.com/artifact/org.hibernate/hibernate-gradle-plugin
+    implementation group: 'org.hibernate', name: 'hibernate-gradle-plugin', version: '5.6.5.Final'
+
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-yaml
     compileOnly group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.0'
 
