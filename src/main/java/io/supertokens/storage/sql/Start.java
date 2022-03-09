@@ -212,7 +212,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                         : null;
 
                 // PSQL error class 40 is transaction rollback. See:
-                // https://www.sql.org/docs/12/errcodes-appendix.html
+                // https://www.postgresql.org/docs/12/errcodes-appendix.html
                 boolean isPSQLRollbackException = psqlException != null
                         && psqlException.getServerErrorMessage().getSQLState().startsWith("40");
 
