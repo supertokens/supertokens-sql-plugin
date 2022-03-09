@@ -221,5 +221,6 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             return;
         }
         getInstance(start).ds.close();
+        getInstance(start).sessionFactory.close();
     }
 }
