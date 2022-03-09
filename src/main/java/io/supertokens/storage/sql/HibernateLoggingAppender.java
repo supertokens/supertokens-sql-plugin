@@ -29,16 +29,15 @@ import io.supertokens.storage.sql.output.Logging;
 
 import java.util.List;
 
-// TODO: sql-plugin -> this file will go away
-public class HikariLoggingAppender implements Appender<ILoggingEvent> {
+public class HibernateLoggingAppender implements Appender<ILoggingEvent> {
 
-    static final String NAME = "io.supertokens.storage.sql.HikariLoggingAppender";
+    static final String NAME = "io.supertokens.storage.sql.HibernateLoggingAppender";
 
     private final Start start;
 
     private Context context;
 
-    HikariLoggingAppender(Start start) {
+    HibernateLoggingAppender(Start start) {
         super();
         this.start = start;
     }

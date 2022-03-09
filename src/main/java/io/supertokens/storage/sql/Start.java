@@ -72,7 +72,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public static boolean silent = false;
     private ResourceDistributor resourceDistributor = new ResourceDistributor();
     private String processId;
-    private HikariLoggingAppender appender = new HikariLoggingAppender(this);
+    private HikariLoggingAppender hikariAppender = new HikariLoggingAppender(this);
+    private HibernateLoggingAppender hibernateAppender = new HibernateLoggingAppender(this);
+    private JBossLoggingAppender jbossAppender = new JBossLoggingAppender(this);
     private static final String APP_ID_KEY_NAME = "app_id";
     private static final String ACCESS_TOKEN_SIGNING_KEY_NAME = "access_token_signing_key";
     private static final String REFRESH_TOKEN_KEY_NAME = "refresh_token_key";
@@ -122,10 +124,23 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
          * anywhere.
          */
         synchronized (appenderLock) {
-            final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
-            if (infoLog.getAppender(HikariLoggingAppender.NAME) == null) {
-                infoLog.setAdditive(false);
-                infoLog.addAppender(appender);
+            // TODO: sql-plugin -> remove the stuff specific to hikari here
+            final Logger hikariInfoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+            if (hikariInfoLog.getAppender(HikariLoggingAppender.NAME) == null) {
+                hikariInfoLog.setAdditive(false);
+                hikariInfoLog.addAppender(hikariAppender);
+            }
+
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) == null) {
+                hibernateInfoLog.setAdditive(false);
+                hibernateInfoLog.addAppender(hibernateAppender);
+            }
+
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) == null) {
+                jbossInfoLog.setAdditive(false);
+                jbossInfoLog.addAppender(jbossAppender);
             }
         }
 
@@ -136,9 +151,20 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Logging.stopLogging(this);
 
         synchronized (appenderLock) {
-            final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
-            if (infoLog.getAppender(HikariLoggingAppender.NAME) != null) {
-                infoLog.detachAppender(HikariLoggingAppender.NAME);
+            // TODO: sql-plugin -> remove the stuff specific to hikari here
+            final Logger hikariInfoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+            if (hikariInfoLog.getAppender(HikariLoggingAppender.NAME) != null) {
+                hikariInfoLog.detachAppender(HikariLoggingAppender.NAME);
+            }
+
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) != null) {
+                hibernateInfoLog.detachAppender(HibernateLoggingAppender.NAME);
+            }
+
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) != null) {
+                jbossInfoLog.detachAppender(JBossLoggingAppender.NAME);
             }
         }
     }
@@ -186,7 +212,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                         : null;
 
                 // PSQL error class 40 is transaction rollback. See:
-                // https://www.postgresql.org/docs/12/errcodes-appendix.html
+                // https://www.sql.org/docs/12/errcodes-appendix.html
                 boolean isPSQLRollbackException = psqlException != null
                         && psqlException.getServerErrorMessage().getSQLState().startsWith("40");
 

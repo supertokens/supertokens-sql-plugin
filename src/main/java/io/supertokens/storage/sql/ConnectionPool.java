@@ -23,7 +23,13 @@ import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.output.Logging;
+import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Environment;
 
+import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
@@ -32,16 +38,16 @@ import java.util.Objects;
 
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
-    private static final String RESOURCE_KEY = "io.supertokens.storage.postgresql.ConnectionPool";
+    private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
     private final HikariDataSource ds;
+    private final SessionFactory sessionFactory;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
             throw new RuntimeException("Connection to refused"); // emulates exception thrown by Hikari
         }
-        HikariConfig config = new HikariConfig();
+
         PostgreSQLConfig userConfig = Config.getConfig(start);
-        config.setDriverClassName("org.postgresql.Driver");
 
         String scheme = userConfig.getConnectionScheme();
 
@@ -61,7 +67,39 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             attributes = "?" + attributes;
         }
 
-        config.setJdbcUrl("jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes);
+        String connectionURI = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
+
+        ///////////////////////////////////////////////////////////////////
+        // Creating Hibernate connection pool..
+        Logging.info(start, "Trying Hibernate connection now...");
+        // TODO: sql-plugin -> there is a way to use hikari with Hibarnate. Should we use that?
+        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+
+        // TODO: sql-plugin -> choose the right driver based on actual config
+        registryBuilder.applySetting(Environment.DRIVER, "org.postgresql.Driver");
+
+        // TODO: sql-plugin -> chose the right dialect based on the db.
+        registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
+
+        registryBuilder.applySetting(Environment.URL, connectionURI);
+        if (userConfig.getUser() != null) {
+            registryBuilder.applySetting(Environment.USER, userConfig.getUser());
+        }
+        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
+            registryBuilder.applySetting(Environment.PASS, userConfig.getPassword());
+        }
+
+        registryBuilder.applySetting(Environment.POOL_SIZE, userConfig.getConnectionPoolSize());
+        // TODO: sql-plugin -> add connection timeout somehow
+
+        sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
+
+        ///////////////////////////////////////////////////////////////////
+        Logging.info(start, "Trying Hikari connection now...");
+        // Creating Hikari connection pool... (TODO: sql-plugin -> this will eventually go away)
+        HikariConfig config = new HikariConfig();
+        config.setDriverClassName("org.postgresql.Driver");
+        config.setJdbcUrl(connectionURI);
 
         if (userConfig.getUser() != null) {
             config.setUsername(userConfig.getUser());
@@ -127,8 +165,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                     start.getResourceDistributor().setResource(RESOURCE_KEY, new ConnectionPool(start));
                     break;
                 } catch (Exception e) {
-                    if (e.getMessage().contains("Connection to") && e.getMessage().contains("refused")
-                            || e.getMessage().contains("the database system is starting up")) {
+                    if (hikariFailedToConnect(e) || hibernateFailedToConnect(e)) {
                         start.handleKillSignalForWhenItHappens();
                         if (System.currentTimeMillis() > maxTryTime) {
                             throw new QuitProgramFromPluginException(errorMessage);
@@ -157,6 +194,16 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } finally {
             start.removeShutdownHook();
         }
+    }
+
+    // TODO: sql-plugin -> remove this function
+    private static boolean hikariFailedToConnect(Exception e) {
+        return e.getMessage().contains("Connection to") && e.getMessage().contains("refused")
+                || e.getMessage().contains("the database system is starting up");
+    }
+
+    private static boolean hibernateFailedToConnect(Exception e) {
+        return Utils.isExceptionCause(ConnectException.class, e);
     }
 
     public static Connection getConnection(Start start) throws SQLException {

@@ -24,7 +24,7 @@ public class ConnectionPoolTestContent extends ResourceDistributor.SingletonReso
 
     public static final String TIME_TO_WAIT_TO_INIT = "timeToWaitToInit";
     public static final String RETRY_INTERVAL_IF_INIT_FAILS = "retryIntervalIfInitFails";
-    private static final String RESOURCE_ID = "io.supertokens.storage.postgresql.ConnectionPoolTestContent";
+    private static final String RESOURCE_ID = "io.supertokens.storage.sql.ConnectionPoolTestContent";
     private Map<String, Object> keyValue = new HashMap<String, Object>();
 
     private ConnectionPoolTestContent() {

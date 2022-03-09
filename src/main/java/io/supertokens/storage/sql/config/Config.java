@@ -29,7 +29,7 @@ import java.io.IOException;
 
 public class Config extends ResourceDistributor.SingletonResource {
 
-    private static final String RESOURCE_KEY = "io.supertokens.storage.postgresql.config.Config";
+    private static final String RESOURCE_KEY = "io.supertokens.storage.sql.config.Config";
     private final PostgreSQLConfig config;
     private final Start start;
 

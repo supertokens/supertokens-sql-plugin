@@ -22,7 +22,7 @@ import java.util.List;
 
 public class ProcessState extends ResourceDistributor.SingletonResource {
 
-    private static final String RESOURCE_KEY = "io.supertokens.storage.postgresql.ProcessState";
+    private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ProcessState";
     private final List<EventAndException> history = new ArrayList<>();
 
     private ProcessState() {
