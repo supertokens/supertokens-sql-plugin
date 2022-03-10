@@ -213,7 +213,7 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
 
-        assertEquals("The connection attempt failed.", e.exception.getCause().getCause().getMessage());
+        assertEquals("Failed to initialize pool: The connection attempt failed.", e.exception.getMessage());
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -450,8 +450,7 @@ public class ConfigTest {
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
 
-            TestCase.assertTrue(
-                    e.exception.getCause().getCause().getMessage().contains("password authentication failed"));
+            TestCase.assertTrue(e.exception.getMessage().contains("password authentication failed"));
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));

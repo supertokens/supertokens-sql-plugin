@@ -72,6 +72,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public static boolean silent = false;
     private ResourceDistributor resourceDistributor = new ResourceDistributor();
     private String processId;
+    private HikariLoggingAppender hikariLoggingAppender = new HikariLoggingAppender(this);
     private HibernateLoggingAppender hibernateAppender = new HibernateLoggingAppender(this);
     private JBossLoggingAppender jbossAppender = new JBossLoggingAppender(this);
     private static final String APP_ID_KEY_NAME = "app_id";
@@ -123,6 +124,12 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
          * anywhere.
          */
         synchronized (appenderLock) {
+            final Logger hikariInfoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+            if (hikariInfoLog.getAppender(HikariLoggingAppender.NAME) == null) {
+                hikariInfoLog.setAdditive(false);
+                hikariInfoLog.addAppender(hikariLoggingAppender);
+            }
+
             final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
             if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) == null) {
                 hibernateInfoLog.setAdditive(false);
@@ -143,6 +150,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Logging.stopLogging(this);
 
         synchronized (appenderLock) {
+            final Logger hikariInfoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+            if (hikariInfoLog.getAppender(HikariLoggingAppender.NAME) != null) {
+                hikariInfoLog.detachAppender(HikariLoggingAppender.NAME);
+            }
+
             final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
             if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) != null) {
                 hibernateInfoLog.detachAppender(HibernateLoggingAppender.NAME);
