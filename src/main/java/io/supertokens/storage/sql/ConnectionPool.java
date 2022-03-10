@@ -74,7 +74,6 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
         ///////////////////////////////////////////////////////////////////
         // Creating Hibernate connection pool..
-        Logging.info(start, "Trying Hibernate connection now...");
         // TODO: sql-plugin -> there is a way to use hikari with Hibarnate. Should we use that?
         StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
 
