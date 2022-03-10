@@ -17,6 +17,8 @@
 
 package io.supertokens.storage.sql;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
@@ -44,10 +46,12 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
     private final SessionFactory sessionFactory;
+    private final HikariDataSource hikariDataSource;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
-            throw new RuntimeException("Connection to refused"); // emulates exception thrown by Hikari
+            throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
+                                                                                       // Hikari
         }
 
         PostgreSQLConfig userConfig = Config.getConfig(start);
@@ -70,32 +74,40 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             attributes = "?" + attributes;
         }
 
-        String connectionURI = "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
-
-        ///////////////////////////////////////////////////////////////////
-        // Creating Hibernate connection pool..
-        // TODO: sql-plugin -> there is a way to use hikari with Hibarnate. Should we use that?
-        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+        HikariConfig config = new HikariConfig();
 
         // TODO: sql-plugin -> choose the right driver based on actual config
-        registryBuilder.applySetting(Environment.DRIVER, "org.postgresql.Driver");
+        config.setDriverClassName("org.postgresql.Driver");
+
+        config.setJdbcUrl("jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes);
+        if (userConfig.getUser() != null) {
+            config.setUsername(userConfig.getUser());
+        }
+
+        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
+            config.setPassword(userConfig.getPassword());
+        }
+        config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
+        config.setConnectionTimeout(5000);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
+        // io.supertokens.storage.postgresql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) |
+        // SuperTokens
+        // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
+        // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
+        config.setPoolName("SuperTokens");
+        hikariDataSource = new HikariDataSource(config);
+
+        // Creating Hibernate sessionFactory
+        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+        registryBuilder.applySetting(Environment.DATASOURCE, hikariDataSource);
 
         // TODO: sql-plugin -> chose the right dialect based on the db.
+        // TODO: sql-plugin -> even if I give MySQLDialect when using postgres, tests still pass. Is this done
+        // correctly?
         registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
-
-        // TODO: sql-plugin -> is this the right type to give? If this is not there, then getSession throws an error
-        registryBuilder.applySetting(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-
-        registryBuilder.applySetting(Environment.URL, connectionURI);
-        if (userConfig.getUser() != null) {
-            registryBuilder.applySetting(Environment.USER, userConfig.getUser());
-        }
-        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
-            registryBuilder.applySetting(Environment.PASS, userConfig.getPassword());
-        }
-
-        registryBuilder.applySetting(Environment.POOL_SIZE, userConfig.getConnectionPoolSize());
-        // TODO: sql-plugin -> add connection timeout somehow
 
         sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
     }
@@ -134,6 +146,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         Logging.info(start, "Setting up PostgreSQL connection pool.");
         boolean longMessagePrinted = false;
         long maxTryTime = System.currentTimeMillis() + getTimeToWaitToInit(start);
+        // TODO: sql-plugin -> Form error message based on db being configured..
         String errorMessage = "Error connecting to PostgreSQL instance. Please make sure that PostgreSQL is running and that "
                 + "you have" + " specified the correct values for ('postgresql_host' and 'postgresql_port') or for "
                 + "'postgresql_connection_uri'";
@@ -252,6 +265,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (getInstance(start) == null) {
             return;
         }
+        getInstance(start).hikariDataSource.close();
         getInstance(start).sessionFactory.close();
     }
 }
