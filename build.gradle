@@ -13,9 +13,6 @@ dependencies {
     testImplementation project(":supertokens-plugin-interface")
     testImplementation project(":supertokens-core")
 
-    // https://mvnrepository.com/artifact/com.zaxxer/HikariCP
-    implementation group: 'com.zaxxer', name: 'HikariCP', version: '3.4.1'
-
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.10'
 
