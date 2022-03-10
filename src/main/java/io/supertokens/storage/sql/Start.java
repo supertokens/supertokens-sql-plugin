@@ -72,7 +72,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public static boolean silent = false;
     private ResourceDistributor resourceDistributor = new ResourceDistributor();
     private String processId;
-    private HikariLoggingAppender appender = new HikariLoggingAppender(this);
+    private HibernateLoggingAppender hibernateAppender = new HibernateLoggingAppender(this);
+    private JBossLoggingAppender jbossAppender = new JBossLoggingAppender(this);
     private static final String APP_ID_KEY_NAME = "app_id";
     private static final String ACCESS_TOKEN_SIGNING_KEY_NAME = "access_token_signing_key";
     private static final String REFRESH_TOKEN_KEY_NAME = "refresh_token_key";
@@ -122,10 +123,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
          * anywhere.
          */
         synchronized (appenderLock) {
-            final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
-            if (infoLog.getAppender(HikariLoggingAppender.NAME) == null) {
-                infoLog.setAdditive(false);
-                infoLog.addAppender(appender);
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) == null) {
+                hibernateInfoLog.setAdditive(false);
+                hibernateInfoLog.addAppender(hibernateAppender);
+            }
+
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) == null) {
+                jbossInfoLog.setAdditive(false);
+                jbossInfoLog.addAppender(jbossAppender);
             }
         }
 
@@ -136,9 +143,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Logging.stopLogging(this);
 
         synchronized (appenderLock) {
-            final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
-            if (infoLog.getAppender(HikariLoggingAppender.NAME) != null) {
-                infoLog.detachAppender(HikariLoggingAppender.NAME);
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) != null) {
+                hibernateInfoLog.detachAppender(HibernateLoggingAppender.NAME);
+            }
+
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) != null) {
+                jbossInfoLog.detachAppender(JBossLoggingAppender.NAME);
             }
         }
     }
@@ -227,46 +239,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     private <T> T startTransactionHelper(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
-        Connection con = null;
-        Integer defaultTransactionIsolation = null;
-        try {
-            con = ConnectionPool.getConnection(this);
-            defaultTransactionIsolation = con.getTransactionIsolation();
-            int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-            switch (isolationLevel) {
-            case SERIALIZABLE:
-                libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-                break;
-            case REPEATABLE_READ:
-                libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                break;
-            case READ_COMMITTED:
-                libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                break;
-            case READ_UNCOMMITTED:
-                libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                break;
-            case NONE:
-                libIsolationLevel = Connection.TRANSACTION_NONE;
-                break;
-            }
-            con.setTransactionIsolation(libIsolationLevel);
-            con.setAutoCommit(false);
-            return logic.mainLogicAndCommit(new TransactionConnection(con));
-        } catch (Exception e) {
-            if (con != null) {
-                con.rollback();
-            }
-            throw e;
-        } finally {
-            if (con != null) {
-                con.setAutoCommit(true);
-                if (defaultTransactionIsolation != null) {
-                    con.setTransactionIsolation(defaultTransactionIsolation);
-                }
-                con.close();
-            }
-        }
+        return ConnectionPool.withConnectionForComplexTransaction(this, isolationLevel,
+                con -> logic.mainLogicAndCommit(new TransactionConnection(con)));
     }
 
     @Override

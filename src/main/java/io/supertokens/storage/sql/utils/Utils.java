@@ -42,4 +42,8 @@ public class Utils {
         constraintName.append('_').append(typeSuffix);
         return constraintName.toString();
     }
+
+    public static boolean isExceptionCause(Class<? extends Throwable> expected, Throwable exc) {
+        return expected.isInstance(exc) || (exc != null && isExceptionCause(expected, exc.getCause()));
+    }
 }

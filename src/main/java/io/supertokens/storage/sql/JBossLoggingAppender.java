@@ -29,15 +29,15 @@ import io.supertokens.storage.sql.output.Logging;
 
 import java.util.List;
 
-public class HikariLoggingAppender implements Appender<ILoggingEvent> {
+public class JBossLoggingAppender implements Appender<ILoggingEvent> {
 
-    static final String NAME = "io.supertokens.storage.postgresql.HikariLoggingAppender";
+    static final String NAME = "io.supertokens.storage.sql.JBossLoggingAppender";
 
     private final Start start;
 
     private Context context;
 
-    HikariLoggingAppender(Start start) {
+    JBossLoggingAppender(Start start) {
         super();
         this.start = start;
     }

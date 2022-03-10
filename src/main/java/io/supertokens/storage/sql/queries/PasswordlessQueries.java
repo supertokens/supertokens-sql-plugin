@@ -336,16 +336,14 @@ public class PasswordlessQueries {
 
     public static PasswordlessDevice getDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
-            String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
-                    + getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ?";
-            return execute(con, QUERY, pst -> pst.setString(1, deviceIdHash), result -> {
-                if (result.next()) {
-                    return PasswordlessDeviceRowMapper.getInstance().mapOrThrow(result);
-                }
-                return null;
-            });
-        }
+        String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
+                + getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, deviceIdHash), result -> {
+            if (result.next()) {
+                return PasswordlessDeviceRowMapper.getInstance().mapOrThrow(result);
+            }
+            return null;
+        });
     }
 
     public static PasswordlessDevice[] getDevicesByEmail(Start start, @Nonnull String email)
@@ -386,10 +384,8 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
-            // We can call the transaction version here because it doesn't lock anything.
-            return PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash);
-        }
+        return ConnectionPool.withConnection(start,
+                con -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash));
     }
 
     public static PasswordlessCode[] getCodesBefore(Start start, long time) throws StorageQueryException, SQLException {
@@ -423,10 +419,8 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
             throws StorageQueryException, SQLException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
-            // We can call the transaction version here because it doesn't lock anything.
-            return PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash);
-        }
+        return ConnectionPool.withConnection(start,
+                con -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash));
     }
 
     public static List<UserInfo> getUsersByIdList(Start start, List<String> ids)

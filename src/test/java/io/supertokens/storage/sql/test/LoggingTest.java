@@ -146,18 +146,45 @@ public class LoggingTest {
     }
 
     @Test
-    public void confirmLoggerClosed() throws Exception {
+    public void confirmHikariLoggerClosed() throws Exception {
         String[] args = { "../" };
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         ch.qos.logback.classic.Logger postgresqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.postgresql.Info." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Info." + process.getProcess().getProcessId());
         ch.qos.logback.classic.Logger postgresqlError = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.postgresql.Error." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Error." + process.getProcess().getProcessId());
 
         ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+
+        assertTrue(postgresqlInfo.iteratorForAppenders().hasNext());
+        assertTrue(postgresqlError.iteratorForAppenders().hasNext());
+        assertTrue(hikariLogger.iteratorForAppenders().hasNext());
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+        assertTrue(
+                !postgresqlInfo.iteratorForAppenders().hasNext() && !postgresqlError.iteratorForAppenders().hasNext());
+        assertFalse(hikariLogger.iteratorForAppenders().hasNext());
+
+    }
+
+    @Test
+    public void confirmHibernateLoggerClosed() throws Exception {
+        String[] args = { "../" };
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        ch.qos.logback.classic.Logger postgresqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.sql.Info." + process.getProcess().getProcessId());
+        ch.qos.logback.classic.Logger postgresqlError = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.sql.Error." + process.getProcess().getProcessId());
+
+        ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("org.hibernate");
 
         assertTrue(postgresqlInfo.iteratorForAppenders().hasNext());
         assertTrue(postgresqlError.iteratorForAppenders().hasNext());

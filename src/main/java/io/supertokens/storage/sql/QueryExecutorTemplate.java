@@ -27,9 +27,7 @@ public interface QueryExecutorTemplate {
 
     static <T> T execute(Start start, String QUERY, PreparedStatementValueSetter setter,
             ResultSetValueExtractor<T> mapper) throws SQLException, StorageQueryException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
-            return execute(con, QUERY, setter, mapper);
-        }
+        return ConnectionPool.withConnection(start, con -> execute(con, QUERY, setter, mapper));
     }
 
     static <T> T execute(Connection con, String QUERY, PreparedStatementValueSetter setter,
@@ -46,9 +44,7 @@ public interface QueryExecutorTemplate {
 
     static int update(Start start, String QUERY, PreparedStatementValueSetter setter)
             throws SQLException, StorageQueryException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
-            return update(con, QUERY, setter);
-        }
+        return ConnectionPool.withConnection(start, con -> update(con, QUERY, setter));
     }
 
     static int update(Connection con, String QUERY, PreparedStatementValueSetter setter)

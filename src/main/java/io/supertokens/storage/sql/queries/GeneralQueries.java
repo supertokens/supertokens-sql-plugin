@@ -246,9 +246,10 @@ public class GeneralQueries {
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
-        try (Connection con = ConnectionPool.getConnection(start)) {
+        ConnectionPool.withConnection(start, con -> {
             setKeyValue_Transaction(start, con, key, info);
-        }
+            return null;
+        });
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {

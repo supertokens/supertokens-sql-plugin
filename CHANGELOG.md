@@ -6,3 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+- Sets up SessionFactory connection and modifies how initial connection retries are done.
+- Sets up logging handlers for hibernate and jboss
+- Adds hibernate dependencies to build.gradle and modifies the implementationDependencies.json file

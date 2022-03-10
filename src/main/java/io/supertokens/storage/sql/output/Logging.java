@@ -29,19 +29,17 @@ import org.slf4j.LoggerFactory;
 
 public class Logging extends ResourceDistributor.SingletonResource {
 
-    private static final String RESOURCE_ID = "io.supertokens.storage.postgresql.output.Logging";
+    private static final String RESOURCE_ID = "io.supertokens.storage.sql.output.Logging";
     private final Logger infoLogger;
     private final Logger errorLogger;
 
     private Logging(Start start, String infoLogPath, String errorLogPath) {
         this.infoLogger = infoLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.postgresql.Info." + start.getProcessId())
-                : createLoggerForFile(start, infoLogPath,
-                        "io.supertokens.storage.postgresql.Info." + start.getProcessId());
+                ? createLoggerForConsole(start, "io.supertokens.storage.sql.Info." + start.getProcessId())
+                : createLoggerForFile(start, infoLogPath, "io.supertokens.storage.sql.Info." + start.getProcessId());
         this.errorLogger = errorLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.postgresql.Error." + start.getProcessId())
-                : createLoggerForFile(start, errorLogPath,
-                        "io.supertokens.storage.postgresql.Error." + start.getProcessId());
+                ? createLoggerForConsole(start, "io.supertokens.storage.sql.Error." + start.getProcessId())
+                : createLoggerForFile(start, errorLogPath, "io.supertokens.storage.sql.Error." + start.getProcessId());
     }
 
     private static Logging getInstance(Start start) {
