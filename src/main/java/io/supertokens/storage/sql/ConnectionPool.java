@@ -45,14 +45,25 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
-    public static final boolean USE_HIBERNATE = false;
-    private SessionFactory sessionFactory = null;
-    private final HikariDataSource hikariDataSource;
+    public static final boolean USE_HIBERNATE = true; // TODO: sql-plugin -> remove the use of this.
+    private static SessionFactory sessionFactory = null;
+    private static HikariDataSource hikariDataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
             throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
                                                                                        // Hikari
+        }
+
+        if (ConnectionPool.hikariDataSource != null) {
+            // This implies that it was already created before and that
+            // there is no need to create Hikari or sessionFactory again.
+
+            // If ConnectionPool.hikariDataSource == null, it implies that
+            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in static
+            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
+            // (applicable only for testing).
+            return;
         }
 
         PostgreSQLConfig userConfig = Config.getConfig(start);
@@ -257,7 +268,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 }
             }
         } else {
-            SessionFactory sessionFactory = getInstance(start).sessionFactory;
+            SessionFactory sessionFactory = ConnectionPool.sessionFactory;
             try (Session session = sessionFactory.openSession()) {
                 Transaction tx = null;
                 try {
@@ -307,9 +318,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (getInstance(start) == null) {
             return;
         }
-        getInstance(start).hikariDataSource.close();
+        ConnectionPool.hikariDataSource.close();
+        ConnectionPool.hikariDataSource = null;
         if (USE_HIBERNATE) {
-            getInstance(start).sessionFactory.close();
+            ConnectionPool.sessionFactory.close();
+            ConnectionPool.sessionFactory = null;
         }
     }
 }

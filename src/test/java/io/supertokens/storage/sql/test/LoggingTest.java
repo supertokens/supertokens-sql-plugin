@@ -54,6 +54,7 @@ public class LoggingTest {
     @Test
     public void defaultLogging() throws Exception {
         String[] args = { "../" };
+        StorageLayer.close();
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -148,6 +149,7 @@ public class LoggingTest {
     @Test
     public void confirmHikariLoggerClosed() throws Exception {
         String[] args = { "../" };
+        StorageLayer.close();
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -175,6 +177,7 @@ public class LoggingTest {
     @Test
     public void confirmHibernateLoggerClosed() throws Exception {
         String[] args = { "../" };
+        StorageLayer.close();
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
