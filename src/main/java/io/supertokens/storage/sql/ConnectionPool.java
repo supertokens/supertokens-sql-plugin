@@ -45,7 +45,8 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
-    private final SessionFactory sessionFactory;
+    public static final boolean USE_HIBERNATE = false;
+    private SessionFactory sessionFactory = null;
     private final HikariDataSource hikariDataSource;
 
     private ConnectionPool(Start start) {
@@ -101,15 +102,17 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         hikariDataSource = new HikariDataSource(config);
 
         // Creating Hibernate sessionFactory
-        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
-        registryBuilder.applySetting(Environment.DATASOURCE, hikariDataSource);
+        if (USE_HIBERNATE) {
+            StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+            registryBuilder.applySetting(Environment.DATASOURCE, hikariDataSource);
 
-        // TODO: sql-plugin -> chose the right dialect based on the db.
-        // TODO: sql-plugin -> even if I give MySQLDialect when using postgres, tests still pass. Is this done
-        // correctly?
-        registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
+            // TODO: sql-plugin -> chose the right dialect based on the db.
+            // TODO: sql-plugin -> even if I give MySQLDialect when using postgres, tests still pass. Is this done
+            // correctly?
+            registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
 
-        sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
+            sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
+        }
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -217,16 +220,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             throw new SQLException("Storage layer disabled");
         }
 
-        SessionFactory sessionFactory = getInstance(start).sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
-            Transaction tx = null;
+        if (!USE_HIBERNATE) {
+            Connection con = getInstance(start).hikariDataSource.getConnection();
             try {
-                tx = session.beginTransaction();
-
-                // we do not use try-with resource for Connection below cause we close
-                // the entire Session itself.
-                Connection con = ((SessionImpl) session.getSession()).connection();
-
                 if (isolationLevel != null) {
                     int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
                     switch (isolationLevel) {
@@ -245,18 +241,64 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                         libIsolationLevel = Connection.TRANSACTION_NONE;
                         break;
                     }
-                    // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore it
-                    // in the connection. But I think that's not needed. Is this correct?
                     con.setTransactionIsolation(libIsolationLevel);
                 }
-                T result = func.op(con);
-                tx.commit();
-                return result;
+                con.setAutoCommit(false);
+                return func.op(con);
             } catch (Exception e) {
-                if (tx != null) {
-                    tx.rollback();
+                if (con != null) {
+                    con.rollback();
                 }
                 throw e;
+            } finally {
+                if (con != null) {
+                    con.setAutoCommit(true);
+                    con.close();
+                }
+            }
+        } else {
+            SessionFactory sessionFactory = getInstance(start).sessionFactory;
+            try (Session session = sessionFactory.openSession()) {
+                Transaction tx = null;
+                try {
+                    tx = session.beginTransaction();
+
+                    // we do not use try-with resource for Connection below cause we close
+                    // the entire Session itself.
+                    Connection con = ((SessionImpl) session.getSession()).connection();
+
+                    if (isolationLevel != null) {
+                        int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
+                        switch (isolationLevel) {
+                        case SERIALIZABLE:
+                            break;
+                        case REPEATABLE_READ:
+                            libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
+                            break;
+                        case READ_COMMITTED:
+                            libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+                            break;
+                        case READ_UNCOMMITTED:
+                            libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
+                            break;
+                        case NONE:
+                            libIsolationLevel = Connection.TRANSACTION_NONE;
+                            break;
+                        }
+                        // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
+                        // it
+                        // in the connection. But I think that's not needed. Is this correct?
+                        con.setTransactionIsolation(libIsolationLevel);
+                    }
+                    T result = func.op(con);
+                    tx.commit();
+                    return result;
+                } catch (Exception e) {
+                    if (tx != null) {
+                        tx.rollback();
+                    }
+                    throw e;
+                }
             }
         }
     }
@@ -266,6 +308,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             return;
         }
         getInstance(start).hikariDataSource.close();
-        getInstance(start).sessionFactory.close();
+        if (USE_HIBERNATE) {
+            getInstance(start).sessionFactory.close();
+        }
     }
 }
