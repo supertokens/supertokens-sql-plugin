@@ -232,7 +232,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         if (!USE_HIBERNATE) {
-            Connection con = getInstance(start).hikariDataSource.getConnection();
+            Connection con = ConnectionPool.hikariDataSource.getConnection();
             try {
                 if (isolationLevel != null) {
                     int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
