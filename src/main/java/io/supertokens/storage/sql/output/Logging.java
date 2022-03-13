@@ -57,7 +57,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         try {
             msg = msg.trim();
             if (getInstance(start) != null) {
-//                getInstance(start).infoLogger.debug(msg);
+                getInstance(start).infoLogger.debug(msg);
             }
         } catch (NullPointerException ignored) {
         }
