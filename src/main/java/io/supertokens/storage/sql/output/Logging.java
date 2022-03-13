@@ -57,7 +57,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         try {
             msg = msg.trim();
             if (getInstance(start) != null) {
-                getInstance(start).infoLogger.debug(msg);
+//                getInstance(start).infoLogger.debug(msg);
             }
         } catch (NullPointerException ignored) {
         }
@@ -138,7 +138,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logger createLoggerForFile(Start start, String file, String name) {
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start);
+        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start.getProcessId());
         ple.setContext(lc);
         ple.start();
         FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
@@ -156,7 +156,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logger createLoggerForConsole(Start start, String name) {
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start);
+        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start.getProcessId());
         ple.setContext(lc);
         ple.start();
         ConsoleAppender<ILoggingEvent> logConsoleAppender = new ConsoleAppender<>();

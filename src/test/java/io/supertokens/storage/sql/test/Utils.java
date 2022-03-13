@@ -105,6 +105,7 @@ abstract class Utils extends Mockito {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.gc();
     }
 
     static void stopLicenseKeyFromUpdatingToLatest(TestingProcessManager.TestingProcess process) {
