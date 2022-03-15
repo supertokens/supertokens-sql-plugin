@@ -54,22 +54,6 @@ public class ConfigTest {
     }
 
     @Test
-    public void testThatDefaultConfigLoadsCorrectly1() throws Exception {
-        String[] args = { "../" };
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-
-        PostgreSQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-
-        checkConfig(config);
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-    }
-
-    @Test
     public void testThatDefaultConfigLoadsCorrectly() throws Exception {
         String[] args = { "../" };
 
