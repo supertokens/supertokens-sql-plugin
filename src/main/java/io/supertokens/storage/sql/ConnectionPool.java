@@ -29,7 +29,6 @@ import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
@@ -50,8 +49,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
-            throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
-                                                                                       // Hikari
+            // emulates exception thrown by Hikari
+            throw new RuntimeException(new ConnectException("Connection to refused"));
         }
 
         PostgreSQLConfig userConfig = Config.getConfig(start);
@@ -199,7 +198,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         T op(Connection con) throws SQLException, StorageQueryException, StorageTransactionLogicException;
     }
 
-    public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
+    public static <T> T withConnectionForTransaction(Start start, WithConnection<T> func)
+            throws SQLException, StorageQueryException {
         try {
             return withConnectionForComplexTransaction(start, null, func::op);
         } catch (StorageTransactionLogicException e) {
@@ -207,9 +207,29 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
-    public static <T> T withConnectionForComplexTransaction(Start start,
-            SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
+    public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
+        try {
+            return withConnectionWithoutTransaction(start, func::op);
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
+        }
+    }
+
+    public static <T> T withConnectionWithoutTransaction(Start start, WithConnectionForComplexTransaction<T> func)
             throws SQLException, StorageTransactionLogicException, StorageQueryException {
+        SessionFactory sessionFactory = getSessionFactory(start);
+
+        try (Session session = sessionFactory.openSession()) {
+            // we do not use try-with resource for Connection below cause we close
+            // the entire Session itself.
+            Connection con = ((SessionImpl) session).connection();
+            T result = func.op(con);
+            return result;
+        }
+
+    }
+
+    private static SessionFactory getSessionFactory(Start start) throws SQLException {
         if (getInstance(start) == null) {
             throw new QuitProgramFromPluginException("Please call initPool before getConnection");
         }
@@ -217,15 +237,22 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             throw new SQLException("Storage layer disabled");
         }
 
-        SessionFactory sessionFactory = getInstance(start).sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
-            Transaction tx = null;
-            try {
-                tx = session.beginTransaction();
+        return getInstance(start).sessionFactory;
+    }
 
+    public static <T> T withConnectionForComplexTransaction(Start start,
+            SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
+            throws SQLException, StorageTransactionLogicException, StorageQueryException {
+
+        SessionFactory sessionFactory = getSessionFactory(start);
+
+        try (Session session = sessionFactory.openSession()) {
+            Connection con = null;
+            try {
                 // we do not use try-with resource for Connection below cause we close
                 // the entire Session itself.
-                Connection con = ((SessionImpl) session.getSession()).connection();
+                con = ((SessionImpl) session).connection();
+                con.setAutoCommit(false);
 
                 if (isolationLevel != null) {
                     int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
@@ -250,11 +277,13 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                     con.setTransactionIsolation(libIsolationLevel);
                 }
                 T result = func.op(con);
-                tx.commit();
+
+                con.commit();
+
                 return result;
             } catch (Exception e) {
-                if (tx != null) {
-                    tx.rollback();
+                if (con != null) {
+                    con.rollback();
                 }
                 throw e;
             }
