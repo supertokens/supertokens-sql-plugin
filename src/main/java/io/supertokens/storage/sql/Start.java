@@ -131,18 +131,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 hikariInfoLog.addAppender(hikariLoggingAppender);
             }
 
-            if (ConnectionPool.USE_HIBERNATE) {
-                final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
-                if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) == null) {
-                    hibernateInfoLog.setAdditive(false);
-                    hibernateInfoLog.addAppender(hibernateAppender);
-                }
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) == null) {
+                hibernateInfoLog.setAdditive(false);
+                hibernateInfoLog.addAppender(hibernateAppender);
+            }
 
-                final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
-                if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) == null) {
-                    jbossInfoLog.setAdditive(false);
-                    jbossInfoLog.addAppender(jbossAppender);
-                }
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) == null) {
+                jbossInfoLog.setAdditive(false);
+                jbossInfoLog.addAppender(jbossAppender);
             }
         }
 
@@ -158,16 +156,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 hikariInfoLog.detachAppender(HikariLoggingAppender.NAME);
             }
 
-            if (ConnectionPool.USE_HIBERNATE) {
-                final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
-                if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) != null) {
-                    hibernateInfoLog.detachAppender(HibernateLoggingAppender.NAME);
-                }
+            final Logger hibernateInfoLog = (Logger) LoggerFactory.getLogger("org.hibernate");
+            if (hibernateInfoLog.getAppender(HibernateLoggingAppender.NAME) != null) {
+                hibernateInfoLog.detachAppender(HibernateLoggingAppender.NAME);
+            }
 
-                final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
-                if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) != null) {
-                    jbossInfoLog.detachAppender(JBossLoggingAppender.NAME);
-                }
+            final Logger jbossInfoLog = (Logger) LoggerFactory.getLogger("org.jboss");
+            if (jbossInfoLog.getAppender(JBossLoggingAppender.NAME) != null) {
+                jbossInfoLog.detachAppender(JBossLoggingAppender.NAME);
             }
         }
     }
