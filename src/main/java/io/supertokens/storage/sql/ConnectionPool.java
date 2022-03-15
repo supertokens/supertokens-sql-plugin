@@ -45,13 +45,24 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
-    private final SessionFactory sessionFactory;
-    private final HikariDataSource hikariDataSource;
+    private static SessionFactory sessionFactory = null;
+    private static HikariDataSource hikariDataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
             throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
                                                                                        // Hikari
+        }
+
+        if (ConnectionPool.hikariDataSource != null) {
+            // This implies that it was already created before and that
+            // there is no need to create Hikari or sessionFactory again.
+
+            // If ConnectionPool.hikariDataSource == null, it implies that
+            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in static
+            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
+            // (applicable only for testing).
+            return;
         }
 
         PostgreSQLConfig userConfig = Config.getConfig(start);
@@ -217,7 +228,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             throw new SQLException("Storage layer disabled");
         }
 
-        SessionFactory sessionFactory = getInstance(start).sessionFactory;
+        SessionFactory sessionFactory = ConnectionPool.sessionFactory;
         try (Session session = sessionFactory.openSession()) {
             Transaction tx = null;
             try {
@@ -245,7 +256,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                         libIsolationLevel = Connection.TRANSACTION_NONE;
                         break;
                     }
-                    // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore it
+                    // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
+                    // it
                     // in the connection. But I think that's not needed. Is this correct?
                     con.setTransactionIsolation(libIsolationLevel);
                 }
@@ -265,7 +277,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (getInstance(start) == null) {
             return;
         }
-        getInstance(start).hikariDataSource.close();
-        getInstance(start).sessionFactory.close();
+        ConnectionPool.hikariDataSource.close();
+        ConnectionPool.hikariDataSource = null;
+        ConnectionPool.sessionFactory.close();
+        ConnectionPool.sessionFactory = null;
     }
 }

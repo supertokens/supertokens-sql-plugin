@@ -93,6 +93,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void constructor(String processId, boolean silent) {
+        mainThread = Thread.currentThread();
         this.processId = processId;
         Start.silent = silent;
     }
