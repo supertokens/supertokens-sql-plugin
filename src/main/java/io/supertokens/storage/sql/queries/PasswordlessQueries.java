@@ -384,7 +384,7 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnection(start,
+        return ConnectionPool.withConnectionForTransaction(start,
                 con -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash));
     }
 
@@ -419,7 +419,7 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnection(start,
+        return ConnectionPool.withConnectionForTransaction(start,
                 con -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash));
     }
 
