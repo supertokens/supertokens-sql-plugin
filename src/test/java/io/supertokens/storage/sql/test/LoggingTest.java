@@ -155,9 +155,9 @@ public class LoggingTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         ch.qos.logback.classic.Logger postgresqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.sql.Info." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Info");
         ch.qos.logback.classic.Logger postgresqlError = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.sql.Error." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Error");
 
         ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
 
@@ -183,9 +183,9 @@ public class LoggingTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         ch.qos.logback.classic.Logger postgresqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.sql.Info." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Info");
         ch.qos.logback.classic.Logger postgresqlError = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.sql.Error." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.sql.Error");
 
         ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("org.hibernate");
 
