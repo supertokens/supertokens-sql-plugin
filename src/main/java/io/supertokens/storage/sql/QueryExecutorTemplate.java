@@ -30,6 +30,10 @@ public interface QueryExecutorTemplate {
         return ConnectionPool.withConnection(start, con -> execute(con, QUERY, setter, mapper));
     }
 
+    /**
+     * This method is primarily meant to be used when you need to share connections between
+     * multiple queries for a transaction
+     */
     static <T> T execute(Connection con, String QUERY, PreparedStatementValueSetter setter,
             ResultSetValueExtractor<T> mapper) throws SQLException, StorageQueryException {
         if (setter == null)
@@ -47,6 +51,10 @@ public interface QueryExecutorTemplate {
         return ConnectionPool.withConnection(start, con -> update(con, QUERY, setter));
     }
 
+    /**
+     * This method is primarily meant to be used when you need to share connections between
+     * multiple *update* queries for a transaction
+     */
     static int update(Connection con, String QUERY, PreparedStatementValueSetter setter)
             throws SQLException, StorageQueryException {
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
