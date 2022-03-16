@@ -50,6 +50,7 @@ import static io.supertokens.storage.sql.queries.JWTSigningQueries.getQueryToCre
 import static io.supertokens.storage.sql.queries.PasswordlessQueries.*;
 import static io.supertokens.storage.sql.queries.SessionQueries.getQueryToCreateAccessTokenSigningKeysTable;
 import static io.supertokens.storage.sql.queries.SessionQueries.getQueryToCreateSessionInfoTable;
+import static io.supertokens.storage.sql.queries.UserMetadataQueries.getQueryToCreateUserMetadataTable;
 
 public class GeneralQueries {
 
@@ -181,6 +182,11 @@ public class GeneralQueries {
                 // index if not exists"
                 // We missed creating this earlier for the codes table, so it may be missing even if the table exists
                 update(start, getQueryToCreateCodeDeviceIdHashIndex(start), NO_OP_SETTER);
+
+                if (!doesTableExists(start, Config.getConfig(start).getUserMetadataTable())) {
+                    getInstance(start).addState(CREATING_NEW_TABLE, null);
+                    update(start, getQueryToCreateUserMetadataTable(start), NO_OP_SETTER);
+                }
             } catch (Exception e) {
                 if (e.getMessage().contains("schema") && e.getMessage().contains("does not exist")
                         && numberOfRetries < 1) {
@@ -224,7 +230,7 @@ public class GeneralQueries {
                     + "," + getConfig(start).getJWTSigningKeysTable() + ","
                     + getConfig(start).getPasswordlessCodesTable() + ","
                     + getConfig(start).getPasswordlessDevicesTable() + ","
-                    + getConfig(start).getPasswordlessUsersTable();
+                    + getConfig(start).getPasswordlessUsersTable() + "," + getConfig(start).getUserMetadataTable();
             update(start, DROP_QUERY, NO_OP_SETTER);
         }
     }
