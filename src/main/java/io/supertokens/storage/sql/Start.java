@@ -53,6 +53,7 @@ import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import org.hibernate.Session;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -253,8 +254,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     private <T> T startTransactionHelper(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
-        return ConnectionPool.withConnectionForComplexTransaction(this, isolationLevel,
-                con -> logic.mainLogicAndCommit(new TransactionConnection(con)));
+        return ConnectionPool.withSessionForComplexTransaction(this, isolationLevel,
+                (session, con) -> logic.mainLogicAndCommit(new TransactionConnection(con, session)));
     }
 
     @Override
@@ -269,24 +270,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo getLegacyAccessTokenSigningKey_Transaction(TransactionConnection con)
-            throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return GeneralQueries.getKeyValue_Transaction(this, sqlCon, ACCESS_TOKEN_SIGNING_KEY_NAME);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public KeyValueInfo getLegacyAccessTokenSigningKey_Transaction(TransactionConnection con) {
+        Session session = (Session) con.getSession();
+        return GeneralQueries.getKeyValue_Transaction(session, ACCESS_TOKEN_SIGNING_KEY_NAME);
     }
 
     @Override
-    public void removeLegacyAccessTokenSigningKey_Transaction(TransactionConnection con) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            GeneralQueries.deleteKeyValue_Transaction(this, sqlCon, ACCESS_TOKEN_SIGNING_KEY_NAME);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public void removeLegacyAccessTokenSigningKey_Transaction(TransactionConnection con) {
+        Session session = (Session) con.getSession();
+        GeneralQueries.deleteKeyValue_Transaction(session, ACCESS_TOKEN_SIGNING_KEY_NAME);
     }
 
     @Override
@@ -321,24 +313,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public KeyValueInfo getRefreshTokenSigningKey_Transaction(TransactionConnection con) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return GeneralQueries.getKeyValue_Transaction(this, sqlCon, REFRESH_TOKEN_KEY_NAME);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public KeyValueInfo getRefreshTokenSigningKey_Transaction(TransactionConnection con) {
+        Session session = (Session) con.getSession();
+        return GeneralQueries.getKeyValue_Transaction(session, REFRESH_TOKEN_KEY_NAME);
     }
 
     @Override
-    public void setRefreshTokenSigningKey_Transaction(TransactionConnection con, KeyValueInfo info)
-            throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            GeneralQueries.setKeyValue_Transaction(this, sqlCon, REFRESH_TOKEN_KEY_NAME, info);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public void setRefreshTokenSigningKey_Transaction(TransactionConnection con, KeyValueInfo info) {
+        Session session = (Session) con.getSession();
+        GeneralQueries.setKeyValue_Transaction(session, REFRESH_TOKEN_KEY_NAME, info);
     }
 
     @TestOnly
@@ -478,24 +461,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void setKeyValue_Transaction(TransactionConnection con, String key, KeyValueInfo info)
-            throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            GeneralQueries.setKeyValue_Transaction(this, sqlCon, key, info);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public void setKeyValue_Transaction(TransactionConnection con, String key, KeyValueInfo info) {
+        Session session = (Session) con.getSession();
+        GeneralQueries.setKeyValue_Transaction(session, key, info);
     }
 
     @Override
-    public KeyValueInfo getKeyValue_Transaction(TransactionConnection con, String key) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return GeneralQueries.getKeyValue_Transaction(this, sqlCon, key);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+    public KeyValueInfo getKeyValue_Transaction(TransactionConnection con, String key) {
+        Session session = (Session) con.getSession();
+        return GeneralQueries.getKeyValue_Transaction(session, key);
     }
 
     void removeShutdownHook() {

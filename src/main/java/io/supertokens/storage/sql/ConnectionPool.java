@@ -210,27 +210,68 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     }
 
     // TODO: sql-plugin -> remove this
-    public interface WithConnectionForComplexTransaction<T> {
-        T op(Connection con) throws SQLException, StorageQueryException, StorageTransactionLogicException;
-    }
-
-    // TODO: sql-plugin -> remove this
     public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
         try {
-            return withConnectionForComplexTransaction(start, null, func::op);
+            return withSessionForComplexTransaction(start, null, (session, con) -> func.op(con));
         } catch (StorageTransactionLogicException e) {
             throw new SQLException("Should never come here");
         }
     }
 
-    // TODO: sql-plugin -> remove this
-    public static <T> T withConnectionForComplexTransaction(Start start,
-            SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
-            throws SQLException, StorageTransactionLogicException, StorageQueryException {
-        return withSessionForComplexTransaction(start, session -> {
+    public interface WithSession<T> {
+        T op(Session session) throws SQLException, StorageQueryException;
+    }
+
+    public interface WithSessionForComplexTransaction<T> {
+        T op(Session session, Connection con)
+                throws SQLException, StorageQueryException, StorageTransactionLogicException;
+
+    }
+
+    public static <T> T withSession(Start start, WithSession<T> func, boolean beginTransaction)
+            throws SQLException, StorageQueryException {
+        if (getInstance(start) == null) {
+            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+        }
+        if (!start.enabled) {
+            throw new SQLException("Should never come here");
+        }
+
+        if (beginTransaction) {
+            // for non-SELECT query
+            try {
+                return withSessionForComplexTransaction(start, null, (session, con) -> func.op(session));
+            } catch (StorageTransactionLogicException e) {
+                throw new SQLException("Should never come here");
+            }
+        } else {
+            // for SELECT queries
+            SessionFactory sessionFactory = ConnectionPool.sessionFactory;
+            try (Session session = sessionFactory.openSession()) {
+                return func.op(session);
+            }
+        }
+    }
+
+    public static <T> T withSessionForComplexTransaction(Start start,
+            SQLStorage.TransactionIsolationLevel isolationLevel, WithSessionForComplexTransaction<T> func)
+            throws SQLException, StorageQueryException, StorageTransactionLogicException {
+        if (getInstance(start) == null) {
+            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+        }
+        if (!start.enabled) {
+            throw new SQLException("Storage layer disabled");
+        }
+
+        SessionFactory sessionFactory = ConnectionPool.sessionFactory;
+        try (Session session = sessionFactory.openSession()) {
+            // we assume that these queries will always have a non-SELECT part in them
+            // so that's why we always begin a transaction.
+            Transaction tx = null;
+
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
-            Connection con = ((SessionImpl) session.getSession()).connection();
+            Connection con = ((SessionImpl) session).connection();
 
             if (isolationLevel != null) {
                 int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
@@ -255,60 +296,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 // in the connection. But I think that's not needed. Is this correct?
                 con.setTransactionIsolation(libIsolationLevel);
             }
-            return func.op(con);
-        });
-    }
-
-    public interface WithSession<T> {
-        T op(Session session) throws SQLException, StorageQueryException;
-    }
-
-    public interface WithSessionForComplexTransaction<T> {
-        T op(Session session) throws SQLException, StorageQueryException, StorageTransactionLogicException;
-    }
-
-    public static <T> T withSession(Start start, WithSession<T> func, boolean beginTransaction)
-            throws SQLException, StorageQueryException {
-        if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
-        }
-        if (!start.enabled) {
-            throw new SQLException("Should never come here");
-        }
-
-        if (beginTransaction) {
-            // for non-SELECT query
-            try {
-                return withSessionForComplexTransaction(start, func::op);
-            } catch (StorageTransactionLogicException e) {
-                throw new SQLException("Should never come here");
-            }
-        } else {
-            // for SELECT queries
-            SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-            try (Session session = sessionFactory.openSession()) {
-                return func.op(session);
-            }
-        }
-    }
-
-    public static <T> T withSessionForComplexTransaction(Start start, WithSessionForComplexTransaction<T> func)
-            throws SQLException, StorageQueryException, StorageTransactionLogicException {
-        if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
-        }
-        if (!start.enabled) {
-            throw new SQLException("Storage layer disabled");
-        }
-
-        SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
-            // we assume that these queries will always have a non-SELECT part in them
-            // so that's why we always begin a transaction.
-            Transaction tx = null;
             try {
                 tx = session.beginTransaction();
-                T result = func.op(session);
+                T result = func.op(session, con);
                 tx.commit();
                 return result;
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
