@@ -253,8 +253,12 @@ public class GeneralQueries {
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
-        ConnectionPool.withConnection(start, con -> {
-            setKeyValue_Transaction(start, con, key, info);
+        ConnectionPool.withSession(start, session -> {
+            KeyValueDO toInsert = new KeyValueDO();
+            toInsert.setName(key);
+            toInsert.setValue(info.value);
+            toInsert.setCreated_at_time(info.createdAtTime);
+            session.save(toInsert);
             return null;
         });
     }

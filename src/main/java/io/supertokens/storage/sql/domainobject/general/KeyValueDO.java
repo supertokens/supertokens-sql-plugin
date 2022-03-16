@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.domainobject.general;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -36,13 +37,10 @@ See mapping of SQL column types to hiberate types here: https://docs.jboss.org/h
 // TODO: sql-plugin: Name of the table and constraint should be based on user's config.
 @Getter
 @Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "key_value", uniqueConstraints = @UniqueConstraint(name = "key_value_pkey", columnNames = { "name" }))
 public class KeyValueDO {
-
-    protected KeyValueDO() {
-        // required by Hibernate
-    }
 
     @Id
     @Column(length = 128)

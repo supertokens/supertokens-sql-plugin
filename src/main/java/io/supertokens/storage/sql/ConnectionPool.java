@@ -223,54 +223,35 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     public static <T> T withConnectionForComplexTransaction(Start start,
             SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
             throws SQLException, StorageTransactionLogicException, StorageQueryException {
-        if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
-        }
-        if (!start.enabled) {
-            throw new SQLException("Storage layer disabled");
-        }
-
         return withSessionForComplexTransaction(start, session -> {
-            Transaction tx = null;
-            try {
-                tx = session.beginTransaction();
+            // we do not use try-with resource for Connection below cause we close
+            // the entire Session itself.
+            Connection con = ((SessionImpl) session.getSession()).connection();
 
-                // we do not use try-with resource for Connection below cause we close
-                // the entire Session itself.
-                Connection con = ((SessionImpl) session.getSession()).connection();
-
-                if (isolationLevel != null) {
-                    int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-                    switch (isolationLevel) {
-                    case SERIALIZABLE:
-                        break;
-                    case REPEATABLE_READ:
-                        libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                        break;
-                    case READ_COMMITTED:
-                        libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                        break;
-                    case READ_UNCOMMITTED:
-                        libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                        break;
-                    case NONE:
-                        libIsolationLevel = Connection.TRANSACTION_NONE;
-                        break;
-                    }
-                    // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
-                    // it
-                    // in the connection. But I think that's not needed. Is this correct?
-                    con.setTransactionIsolation(libIsolationLevel);
+            if (isolationLevel != null) {
+                int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
+                switch (isolationLevel) {
+                case SERIALIZABLE:
+                    break;
+                case REPEATABLE_READ:
+                    libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
+                    break;
+                case READ_COMMITTED:
+                    libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+                    break;
+                case READ_UNCOMMITTED:
+                    libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
+                    break;
+                case NONE:
+                    libIsolationLevel = Connection.TRANSACTION_NONE;
+                    break;
                 }
-                T result = func.op(con);
-                tx.commit();
-                return result;
-            } catch (Exception e) {
-                if (tx != null) {
-                    tx.rollback();
-                }
-                throw e;
+                // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
+                // it
+                // in the connection. But I think that's not needed. Is this correct?
+                con.setTransactionIsolation(libIsolationLevel);
             }
+            return func.op(con);
         });
     }
 
@@ -301,7 +282,18 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
         try (Session session = sessionFactory.openSession()) {
-            return func.op(session);
+            Transaction tx = null;
+            try {
+                tx = session.beginTransaction();
+                T result = func.op(session);
+                tx.commit();
+                return result;
+            } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
+                if (tx != null) {
+                    tx.rollback();
+                }
+                throw e;
+            }
         }
     }
 
