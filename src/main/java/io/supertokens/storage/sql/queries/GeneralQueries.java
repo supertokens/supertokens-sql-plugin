@@ -260,7 +260,7 @@ public class GeneralQueries {
             toInsert.setCreated_at_time(info.createdAtTime);
             session.save(toInsert);
             return null;
-        });
+        }, true);
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {
@@ -270,7 +270,7 @@ public class GeneralQueries {
                 return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
             }
             return null;
-        });
+        }, false);
     }
 
     public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key)
