@@ -204,14 +204,17 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return Utils.isExceptionCause(ConnectException.class, e);
     }
 
+    // TODO: sql-plugin -> remove this
     public interface WithConnection<T> {
         T op(Connection con) throws SQLException, StorageQueryException;
     }
 
+    // TODO: sql-plugin -> remove this
     public interface WithConnectionForComplexTransaction<T> {
         T op(Connection con) throws SQLException, StorageQueryException, StorageTransactionLogicException;
     }
 
+    // TODO: sql-plugin -> remove this
     public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
         try {
             return withConnectionForComplexTransaction(start, null, func::op);
@@ -220,6 +223,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
+    // TODO: sql-plugin -> remove this
     public static <T> T withConnectionForComplexTransaction(Start start,
             SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
             throws SQLException, StorageTransactionLogicException, StorageQueryException {
@@ -252,7 +256,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 con.setTransactionIsolation(libIsolationLevel);
             }
             return func.op(con);
-        }, true);
+        });
     }
 
     public interface WithSession<T> {
@@ -265,15 +269,29 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     public static <T> T withSession(Start start, WithSession<T> func, boolean beginTransaction)
             throws SQLException, StorageQueryException {
-        try {
-            return withSessionForComplexTransaction(start, func::op, beginTransaction);
-        } catch (StorageTransactionLogicException e) {
+        if (getInstance(start) == null) {
+            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+        }
+        if (!start.enabled) {
             throw new SQLException("Should never come here");
+        }
+
+        if (beginTransaction) {
+            try {
+                return withSessionForComplexTransaction(start, func::op);
+            } catch (StorageTransactionLogicException e) {
+                throw new SQLException("Should never come here");
+            }
+        } else {
+            SessionFactory sessionFactory = ConnectionPool.sessionFactory;
+            try (Session session = sessionFactory.openSession()) {
+                return func.op(session);
+            }
         }
     }
 
-    public static <T> T withSessionForComplexTransaction(Start start, WithSessionForComplexTransaction<T> func,
-            boolean beginTransaction) throws SQLException, StorageQueryException, StorageTransactionLogicException {
+    public static <T> T withSessionForComplexTransaction(Start start, WithSessionForComplexTransaction<T> func)
+            throws SQLException, StorageQueryException, StorageTransactionLogicException {
         if (getInstance(start) == null) {
             throw new QuitProgramFromPluginException("Please call initPool before getConnection");
         }
@@ -285,14 +303,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         try (Session session = sessionFactory.openSession()) {
             Transaction tx = null;
             try {
-                if (beginTransaction) {
-                    // this should be true for non SELECT queries.
-                    tx = session.beginTransaction();
-                }
+                tx = session.beginTransaction();
                 T result = func.op(session);
-                if (tx != null) {
-                    tx.commit();
-                }
+                tx.commit();
                 return result;
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 if (tx != null) {
