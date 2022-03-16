@@ -261,7 +261,7 @@ public class GeneralQueries {
          * by hibernate itself (what about complex object merging?). But I think merge only works if the row
          * already existed in the db..
          *
-         * Which method to use?
+         * Which method to use? (This also applies to deleteKeyValue_Transaction)
          */
 
         KeyValueDO toInsertOrUpdate = new KeyValueDO();
@@ -298,7 +298,11 @@ public class GeneralQueries {
     }
 
     public static void deleteKeyValue_Transaction(Session session, String key) {
-        KeyValueDO toDelete = new KeyValueDO();
+        KeyValueDO toDelete = session.get(KeyValueDO.class, key);
+        if (toDelete == null) {
+            toDelete = new KeyValueDO();
+            toDelete.setName(key);
+        }
         toDelete.setName(key);
         session.delete(toDelete);
     }
