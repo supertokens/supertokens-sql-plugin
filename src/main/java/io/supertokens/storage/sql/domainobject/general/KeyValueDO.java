@@ -16,11 +16,10 @@
 
 package io.supertokens.storage.sql.domainobject.general;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import java.math.BigInteger;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.*;
 
 /*
 CREATE TABLE key_value (
@@ -29,19 +28,28 @@ CREATE TABLE key_value (
     created_at_time BIGINT,
     CONSTRAINT key_value_pkey PRIMARY KEY(name)
 );
+
+See mapping of SQL column types to hiberate types here: https://docs.jboss.org/hibernate/orm/5
+.0/mappingGuide/en-US/html_single/#d5e555 (Section 3.1)
 */
 
 // TODO: sql-plugin: Name of the table and constraint should be based on user's config.
+@Getter
+@Setter
+@Entity
 @Table(name = "key_value", uniqueConstraints = @UniqueConstraint(name = "key_value_pkey", columnNames = { "name" }))
 public class KeyValueDO {
 
+    protected KeyValueDO() {
+        // required by Hibernate
+    }
+
     @Id
-    @Column(columnDefinition = "CHAR", length = 128)
+    @Column(length = 128)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String value;
 
-    @Column(columnDefinition = "BIGINT")
-    private BigInteger created_at_time;
+    private long created_at_time;
 }

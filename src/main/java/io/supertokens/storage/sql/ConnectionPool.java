@@ -25,6 +25,7 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.Session;
@@ -51,7 +52,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     private ConnectionPool(Start start) {
         if (!start.enabled) {
             throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
-                                                                                       // Hikari
+            // Hikari
         }
 
         if (ConnectionPool.hikariDataSource != null) {
@@ -120,7 +121,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         // correctly?
         registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
 
-        sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
+        sessionFactory = new MetadataSources(registryBuilder.build()).addAnnotatedClass(KeyValueDO.class)
+                .buildMetadata().buildSessionFactory();
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -228,8 +230,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             throw new SQLException("Storage layer disabled");
         }
 
-        SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
+        return withSessionForComplexTransaction(start, session -> {
             Transaction tx = null;
             try {
                 tx = session.beginTransaction();
@@ -270,6 +271,37 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 }
                 throw e;
             }
+        });
+    }
+
+    public interface WithSession<T> {
+        T op(Session session) throws SQLException, StorageQueryException;
+    }
+
+    public interface WithSessionForComplexTransaction<T> {
+        T op(Session session) throws SQLException, StorageQueryException, StorageTransactionLogicException;
+    }
+
+    public static <T> T withSession(Start start, WithSession<T> func) throws SQLException, StorageQueryException {
+        try {
+            return withSessionForComplexTransaction(start, func::op);
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
+        }
+    }
+
+    public static <T> T withSessionForComplexTransaction(Start start, WithSessionForComplexTransaction<T> func)
+            throws SQLException, StorageQueryException, StorageTransactionLogicException {
+        if (getInstance(start) == null) {
+            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+        }
+        if (!start.enabled) {
+            throw new SQLException("Storage layer disabled");
+        }
+
+        SessionFactory sessionFactory = ConnectionPool.sessionFactory;
+        try (Session session = sessionFactory.openSession()) {
+            return func.op(session);
         }
     }
 

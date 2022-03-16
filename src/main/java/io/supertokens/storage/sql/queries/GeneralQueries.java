@@ -24,6 +24,7 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,11 +260,10 @@ public class GeneralQueries {
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT value, created_at_time FROM " + getConfig(start).getKeyValueTable() + " WHERE name = ?";
-
-        return execute(start, QUERY, pst -> pst.setString(1, key), result -> {
-            if (result.next()) {
-                return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
+        return ConnectionPool.withSession(start, session -> {
+            KeyValueDO result = session.get(KeyValueDO.class, key);
+            if (result != null) {
+                return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
             }
             return null;
         });
