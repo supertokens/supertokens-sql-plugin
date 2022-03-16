@@ -277,12 +277,14 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         if (beginTransaction) {
+            // for non-SELECT query
             try {
                 return withSessionForComplexTransaction(start, func::op);
             } catch (StorageTransactionLogicException e) {
                 throw new SQLException("Should never come here");
             }
         } else {
+            // for SELECT queries
             SessionFactory sessionFactory = ConnectionPool.sessionFactory;
             try (Session session = sessionFactory.openSession()) {
                 return func.op(session);
@@ -301,6 +303,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
         try (Session session = sessionFactory.openSession()) {
+            // we assume that these queries will always have a non-SELECT part in them
+            // so that's why we always begin a transaction.
             Transaction tx = null;
             try {
                 tx = session.beginTransaction();
