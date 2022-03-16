@@ -204,22 +204,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return Utils.isExceptionCause(ConnectException.class, e);
     }
 
-    // TODO: sql-plugin -> remove this
-    public interface WithConnection<T> {
-        T op(Connection con) throws SQLException, StorageQueryException;
-    }
-
-    // TODO: sql-plugin -> remove this
-    public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
-        try {
-            return withSessionForComplexTransaction(start, null, (session, con) -> func.op(con));
-        } catch (StorageTransactionLogicException e) {
-            throw new SQLException("Should never come here");
-        }
-    }
-
     public interface WithSession<T> {
-        T op(Session session) throws SQLException, StorageQueryException;
+        T op(Session session, Connection con) throws SQLException, StorageQueryException;
     }
 
     public interface WithSessionForComplexTransaction<T> {
@@ -240,7 +226,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (beginTransaction) {
             // for non-SELECT query
             try {
-                return withSessionForComplexTransaction(start, null, (session, con) -> func.op(session));
+                return withSessionForComplexTransaction(start, null, func::op);
             } catch (StorageTransactionLogicException e) {
                 throw new SQLException("Should never come here");
             }
@@ -248,7 +234,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             // for SELECT queries
             SessionFactory sessionFactory = ConnectionPool.sessionFactory;
             try (Session session = sessionFactory.openSession()) {
-                return func.op(session);
+                Connection con = ((SessionImpl) session).connection();
+                return func.op(session, con);
             }
         }
     }
@@ -299,10 +286,15 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             try {
                 tx = session.beginTransaction();
                 T result = func.op(session, con);
-                tx.commit();
+                if (tx.isActive()) {
+                    // maybe the user has already commited the transaction manually.
+                    tx.commit();
+                }
                 return result;
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 if (tx != null) {
+                    // the user can't rollback a transaction. So we can do this
+                    // without checking for tx.isActive()
                     tx.rollback();
                 }
                 throw e;

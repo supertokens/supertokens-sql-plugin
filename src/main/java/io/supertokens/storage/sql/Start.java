@@ -54,6 +54,7 @@ import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.Session;
+import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -62,6 +63,7 @@ import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.persistence.OptimisticLockException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
@@ -194,12 +196,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             tries++;
             try {
                 return startTransactionHelper(logic, isolationLevel);
-            } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
+            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException
+                    | StorageTransactionLogicException e) {
                 Throwable actualException = e;
                 if (e instanceof StorageQueryException) {
                     actualException = e.getCause();
                 } else if (e instanceof StorageTransactionLogicException) {
                     actualException = ((StorageTransactionLogicException) e).actualException;
+                } else if (e instanceof LockAcquisitionException) {
+                    // LockAcquisitionException -> PSQLException
+                    actualException = e.getCause();
+                } else if (e instanceof OptimisticLockException) {
+                    // OptimisticLockException -> LockAcquisitionException -> PSQLException
+                    actualException = e.getCause().getCause();
                 }
                 String exceptionMessage = actualException.getMessage();
                 if (exceptionMessage == null) {
@@ -260,11 +269,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void commitTransaction(TransactionConnection con) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            sqlCon.commit();
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
+        Object session = con.getSession();
+        if (session != null && ((Session) session).isJoinedToTransaction()) {
+            ((Session) session).getTransaction().commit();
+        } else {
+            Connection sqlCon = (Connection) con.getConnection();
+            try {
+                sqlCon.commit();
+            } catch (SQLException e) {
+                throw new StorageQueryException(e);
+            }
         }
 
     }
