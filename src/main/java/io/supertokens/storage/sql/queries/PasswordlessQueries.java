@@ -384,8 +384,12 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnectionForTransaction(start,
-                con -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash));
+        try {
+            return ConnectionPool.withConnectionForTransaction(start, null,
+                    con -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash));
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
+        }
     }
 
     public static PasswordlessCode[] getCodesBefore(Start start, long time) throws StorageQueryException, SQLException {
@@ -419,8 +423,12 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnectionForTransaction(start,
-                con -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash));
+        try {
+            return ConnectionPool.withConnectionForTransaction(start, null,
+                    con -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash));
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
+        }
     }
 
     public static List<UserInfo> getUsersByIdList(Start start, List<String> ids)

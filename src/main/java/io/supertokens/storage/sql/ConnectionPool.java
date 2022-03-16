@@ -202,42 +202,21 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     }
 
     public interface WithConnection<T> {
-        T op(Connection con) throws SQLException, StorageQueryException;
-    }
-
-    public interface WithConnectionForComplexTransaction<T> {
         T op(Connection con) throws SQLException, StorageQueryException, StorageTransactionLogicException;
     }
 
-    public static <T> T withConnectionForTransaction(Start start, WithConnection<T> func)
+    public static <T> T withConnectionWithoutTransaction(Start start, WithConnection<T> func)
             throws SQLException, StorageQueryException {
-        try {
-            return withConnectionForComplexTransaction(start, null, func::op);
-        } catch (StorageTransactionLogicException e) {
-            throw new SQLException("Should never come here");
-        }
-    }
-
-    public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
-        try {
-            return withConnectionWithoutTransaction(start, func::op);
-        } catch (StorageTransactionLogicException e) {
-            throw new SQLException("Should never come here");
-        }
-    }
-
-    public static <T> T withConnectionWithoutTransaction(Start start, WithConnectionForComplexTransaction<T> func)
-            throws SQLException, StorageTransactionLogicException, StorageQueryException {
         SessionFactory sessionFactory = getSessionFactory(start);
 
         try (Session session = sessionFactory.openSession()) {
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
             Connection con = ((SessionImpl) session).connection();
-            T result = func.op(con);
-            return result;
+            return func.op(con);
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
         }
-
     }
 
     private static SessionFactory getSessionFactory(Start start) throws SQLException {
@@ -247,13 +226,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (!start.enabled) {
             throw new SQLException("Storage layer disabled");
         }
-
-        return getInstance(start).sessionFactory;
+        return ConnectionPool.sessionFactory;
     }
 
-    public static <T> T withConnectionForComplexTransaction(Start start,
-            SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
-            throws SQLException, StorageTransactionLogicException, StorageQueryException {
+    public static <T> T withConnectionForTransaction(Start start, SQLStorage.TransactionIsolationLevel isolationLevel,
+            WithConnection<T> func) throws SQLException, StorageTransactionLogicException, StorageQueryException {
 
         SessionFactory sessionFactory = getSessionFactory(start);
 

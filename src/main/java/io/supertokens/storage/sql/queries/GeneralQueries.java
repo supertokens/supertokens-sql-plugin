@@ -21,6 +21,7 @@ import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
@@ -252,10 +253,14 @@ public class GeneralQueries {
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
-        ConnectionPool.withConnectionForTransaction(start, con -> {
-            setKeyValue_Transaction(start, con, key, info);
-            return null;
-        });
+        try {
+            ConnectionPool.withConnectionForTransaction(start, null, con -> {
+                setKeyValue_Transaction(start, con, key, info);
+                return null;
+            });
+        } catch (StorageTransactionLogicException e) {
+            throw new SQLException("Should never come here");
+        }
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {

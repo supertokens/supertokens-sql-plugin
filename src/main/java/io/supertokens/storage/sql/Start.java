@@ -253,7 +253,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     private <T> T startTransactionHelper(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
-        return ConnectionPool.withConnectionForComplexTransaction(this, isolationLevel,
+        return ConnectionPool.withConnectionForTransaction(this, isolationLevel,
                 con -> logic.mainLogicAndCommit(new TransactionConnection(con)));
     }
 
