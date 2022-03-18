@@ -248,12 +248,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 if (e instanceof StorageQueryException) {
                     throw (StorageQueryException) e;
                 } else if (e instanceof StorageTransactionLogicException) {
-                    Logging.debug(this,
-                            "Number of retries: " + tries + ". Actual exception message: " + actualException);
-                    if (psqlException != null) {
-                        Logging.debug(this,
-                                "PSQL error status code: " + psqlException.getServerErrorMessage().getSQLState());
-                    }
                     throw (StorageTransactionLogicException) e;
                 }
                 throw new StorageQueryException(e);
