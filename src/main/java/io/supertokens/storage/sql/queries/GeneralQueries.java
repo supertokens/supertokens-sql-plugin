@@ -236,39 +236,18 @@ public class GeneralQueries {
     }
 
     public static void setKeyValue_Transaction(Session session, String key, KeyValueInfo info) {
-        /*
-         * TODO: sql-plugin -> different possibilities here, so which one should we use?
-         *
-         * 1) What we have done below. When we call session.get, if the KeyValueDO already existed for this session,
-         * it won't fetch it from the db again (which is as expected). But if it doesn't, then it will fetch it from
-         * the db in which case it will get an empty row or the result from the db. In this specific case,
-         * we expect it to always get an empty row cause we expect that the user has called getKeyValue_Transaction
-         * before, and this is already happening in a transaction so the db's view is consistent. However, if the
-         * user has NOT called getKeyValue_Transaction before, then it may return that row. In this case, do we want
-         * to add LockMode.PESSIMISTIC_WRITE to the get query below?
-         *
-         * KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key);
-         * if (toInsertOrUpdate == null) {
-         * toInsertOrUpdate = new KeyValueDO();
-         * toInsertOrUpdate.setName(key);
-         * }
-         * toInsertOrUpdate.setValue(info.value);
-         * toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
-         * session.saveOrUpdate(toInsertOrUpdate);
-         *
-         * 2) We don't use saveOrUpdate, and instead,we use .merge. Using that, we don't have to first get the object
-         * from the session and can create a new instance of KeyValueDO. The merging of that will be figured out
-         * by hibernate itself (what about complex object merging?). But I think merge only works if the row
-         * already existed in the db..
-         *
-         * Which method to use? (This also applies to deleteKeyValue_Transaction)
-         */
-
-        KeyValueDO toInsertOrUpdate = new KeyValueDO();
-        toInsertOrUpdate.setName(key);
+        // we get the previously fetched KeyValueDO from the session since saveOrUpdate
+        // requires the exact same instance. If previously we had not fetched it, or
+        // if we tried to fetch but not get any result, then it will try and fetch once again
+        // with a PESSIMISTIC_WRITE lock.
+        KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
+        if (toInsertOrUpdate == null) {
+            toInsertOrUpdate = new KeyValueDO();
+            toInsertOrUpdate.setName(key);
+        }
         toInsertOrUpdate.setValue(info.value);
         toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
-        session.merge(toInsertOrUpdate);
+        session.saveOrUpdate(toInsertOrUpdate);
     }
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)
@@ -298,7 +277,7 @@ public class GeneralQueries {
     }
 
     public static void deleteKeyValue_Transaction(Session session, String key) {
-        KeyValueDO toDelete = session.get(KeyValueDO.class, key);
+        KeyValueDO toDelete = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
         if (toDelete == null) {
             toDelete = new KeyValueDO();
             toDelete.setName(key);
