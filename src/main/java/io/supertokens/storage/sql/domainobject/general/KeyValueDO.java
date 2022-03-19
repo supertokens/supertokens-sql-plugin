@@ -35,6 +35,7 @@ See mapping of SQL column types to hiberate types here: https://docs.jboss.org/h
 */
 
 // TODO: sql-plugin: Name of the table and constraint should be based on user's config.
+// TODO: sql-plugin: Is using @UniqueConstraint correct?
 @Getter
 @Setter
 @NoArgsConstructor
