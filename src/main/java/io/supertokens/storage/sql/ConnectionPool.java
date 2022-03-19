@@ -17,23 +17,18 @@
 
 package io.supertokens.storage.sql;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
-import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Environment;
 import org.hibernate.internal.SessionImpl;
 
 import java.net.ConnectException;
@@ -47,7 +42,6 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
     private static SessionFactory sessionFactory = null;
-    private static HikariDataSource hikariDataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
@@ -55,74 +49,19 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             // Hikari
         }
 
-        if (ConnectionPool.hikariDataSource != null) {
-            // This implies that it was already created before and that
-            // there is no need to create Hikari or sessionFactory again.
-
-            // If ConnectionPool.hikariDataSource == null, it implies that
-            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in static
-            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
-            // (applicable only for testing).
-            return;
-        }
-
-        PostgreSQLConfig userConfig = Config.getConfig(start);
-
-        String scheme = userConfig.getConnectionScheme();
-
-        String hostName = userConfig.getHostName();
-
-        String port = userConfig.getPort() + "";
-        if (!port.equals("-1")) {
-            port = ":" + port;
-        } else {
-            port = "";
-        }
-
-        String databaseName = userConfig.getDatabaseName();
-
-        String attributes = userConfig.getConnectionAttributes();
-        if (!attributes.equals("")) {
-            attributes = "?" + attributes;
-        }
-
-        HikariConfig config = new HikariConfig();
-
-        // TODO: sql-plugin -> choose the right driver based on actual config
-        config.setDriverClassName("org.postgresql.Driver");
-
-        config.setJdbcUrl("jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes);
-        if (userConfig.getUser() != null) {
-            config.setUsername(userConfig.getUser());
-        }
-
-        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
-            config.setPassword(userConfig.getPassword());
-        }
-        config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
-        config.setConnectionTimeout(5000);
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
-        // io.supertokens.storage.postgresql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) |
-        // SuperTokens
-        // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
-        // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
-        config.setPoolName("SuperTokens");
-        hikariDataSource = new HikariDataSource(config);
-
-        // Creating Hibernate sessionFactory
-        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
-        registryBuilder.applySetting(Environment.DATASOURCE, hikariDataSource);
-
-        // TODO: sql-plugin -> chose the right dialect based on the db.
-        // TODO: sql-plugin -> even if I give MySQLDialect when using postgres, tests still pass. Is this done
-        // correctly?
-        registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
-
-        sessionFactory = new MetadataSources(registryBuilder.build()).addAnnotatedClass(KeyValueDO.class)
-                .buildMetadata().buildSessionFactory();
+//        if (ConnectionPool.hikariDataSource != null) {
+//            // This implies that it was already created before and that
+//            // there is no need to create Hikari or sessionFactory again.
+//
+//            // If ConnectionPool.hikariDataSource == null, it implies that
+//            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in
+//            static
+//            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
+//            // (applicable only for testing).
+//            return;
+//        }
+        final PostgreSQLConfig config = Config.getConfig(start);
+        sessionFactory = HibernateUtils.sessionFactory(config);
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -198,6 +137,14 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } finally {
             start.removeShutdownHook();
         }
+    }
+
+    static void close(Start start) {
+        if (getInstance(start) == null) {
+            return;
+        }
+        HibernateUtils.close();
+        ConnectionPool.sessionFactory = null;
     }
 
     private static boolean hibernateFailedToConnect(Exception e) {
@@ -302,13 +249,4 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
-    static void close(Start start) {
-        if (getInstance(start) == null) {
-            return;
-        }
-        ConnectionPool.hikariDataSource.close();
-        ConnectionPool.hikariDataSource = null;
-        ConnectionPool.sessionFactory.close();
-        ConnectionPool.sessionFactory = null;
-    }
 }
