@@ -24,7 +24,7 @@ import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import java.net.URI;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PostgreSQLConfig {
+public class PostgreSQLConfig implements DatabaseConfig {
 
     @JsonProperty
     private int postgresql_config_version = -1;
@@ -77,14 +77,17 @@ public class PostgreSQLConfig {
     @JsonProperty
     private String postgresql_connection_uri = null;
 
+    @Override
     public String getTableSchema() {
         return postgresql_table_schema;
     }
 
+    @Override
     public int getConnectionPoolSize() {
         return postgresql_connection_pool_size;
     }
 
+    @Override
     public String getConnectionScheme() {
         if (postgresql_connection_uri != null) {
             URI uri = URI.create(postgresql_connection_uri);
@@ -99,6 +102,7 @@ public class PostgreSQLConfig {
         return "postgresql";
     }
 
+    @Override
     public String getConnectionAttributes() {
         if (postgresql_connection_uri != null) {
             URI uri = URI.create(postgresql_connection_uri);
@@ -114,6 +118,7 @@ public class PostgreSQLConfig {
         return "allowPublicKeyRetrieval=true";
     }
 
+    @Override
     public String getHostName() {
         if (postgresql_host == null) {
             if (postgresql_connection_uri != null) {
@@ -127,6 +132,7 @@ public class PostgreSQLConfig {
         return postgresql_host;
     }
 
+    @Override
     public int getPort() {
         if (postgresql_port == -1) {
             if (postgresql_connection_uri != null) {
@@ -138,6 +144,7 @@ public class PostgreSQLConfig {
         return postgresql_port;
     }
 
+    @Override
     public String getUser() {
         if (postgresql_user == null) {
             if (postgresql_connection_uri != null) {
@@ -155,6 +162,7 @@ public class PostgreSQLConfig {
         return postgresql_user;
     }
 
+    @Override
     public String getPassword() {
         if (postgresql_password == null) {
             if (postgresql_connection_uri != null) {
@@ -172,6 +180,7 @@ public class PostgreSQLConfig {
         return postgresql_password;
     }
 
+    @Override
     public String getDatabaseName() {
         if (postgresql_database_name == null) {
             if (postgresql_connection_uri != null) {
@@ -189,14 +198,17 @@ public class PostgreSQLConfig {
         return postgresql_database_name;
     }
 
+    @Override
     public String getConnectionURI() {
         return postgresql_connection_uri;
     }
 
+    @Override
     public String getUsersTable() {
         return addSchemaAndPrefixToTableName("all_auth_recipe_users");
     }
 
+    @Override
     public String getKeyValueTable() {
         String tableName = "key_value";
         if (postgresql_key_value_table_name != null) {
@@ -205,10 +217,12 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getAccessTokenSigningKeysTable() {
         return addSchemaAndPrefixToTableName("session_access_token_signing_keys");
     }
 
+    @Override
     public String getSessionInfoTable() {
         String tableName = "session_info";
         if (postgresql_session_info_table_name != null) {
@@ -217,6 +231,7 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getEmailPasswordUsersTable() {
         String tableName = "emailpassword_users";
         if (postgresql_emailpassword_users_table_name != null) {
@@ -225,6 +240,7 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getPasswordResetTokensTable() {
         String tableName = "emailpassword_pswd_reset_tokens";
         if (postgresql_emailpassword_pswd_reset_tokens_table_name != null) {
@@ -233,6 +249,7 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getEmailVerificationTokensTable() {
         String tableName = "emailverification_tokens";
         if (postgresql_emailverification_tokens_table_name != null) {
@@ -241,6 +258,7 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getEmailVerificationTable() {
         String tableName = "emailverification_verified_emails";
         if (postgresql_emailverification_verified_emails_table_name != null) {
@@ -249,6 +267,7 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getThirdPartyUsersTable() {
         String tableName = "thirdparty_users";
         if (postgresql_thirdparty_users_table_name != null) {
@@ -257,26 +276,31 @@ public class PostgreSQLConfig {
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getPasswordlessUsersTable() {
         String tableName = "passwordless_users";
         return addSchemaAndPrefixToTableName(tableName);
 
     }
 
+    @Override
     public String getPasswordlessDevicesTable() {
         String tableName = "passwordless_devices";
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getPasswordlessCodesTable() {
         String tableName = "passwordless_codes";
         return addSchemaAndPrefixToTableName(tableName);
     }
 
+    @Override
     public String getJWTSigningKeysTable() {
         return addSchemaAndPrefixToTableName("jwt_signing_keys");
     }
 
+    @Override
     public String getUserMetadataTable() {
         return addSchemaAndPrefixToTableName("user_metadata");
     }
@@ -297,7 +321,8 @@ public class PostgreSQLConfig {
         return name;
     }
 
-    void validateAndInitialise() {
+    @Override
+    public void validateAndInitialise() {
         if (postgresql_connection_uri != null) {
             try {
                 URI ignored = URI.create(postgresql_connection_uri);
@@ -318,6 +343,21 @@ public class PostgreSQLConfig {
             throw new QuitProgramFromPluginException(
                     "'postgresql_connection_pool_size' in the config.yaml file must be > 0");
         }
+    }
+
+    @Override
+    public String getDialect() {
+        return "org.hibernate.dialect.PostgreSQLDialect";
+    }
+
+    @Override
+    public String getDriverClassName() {
+        return "org.postgresql.Driver";
+    }
+
+    @Override
+    public String getTableNamePrefix() {
+        return "";
     }
 
 }
