@@ -6,6 +6,10 @@ on:
         description: 'supertokens-core repo owner name'
         default: supertokens 
         required: true
+      coreRepoBranch:
+        description: 'supertokens-core repos branch name'
+        default: master 
+        required: true
       pluginRepoOwnerName:
         description: 'supertokens-plugin-interface repo owner name'
         default: supertokens 
@@ -14,16 +18,31 @@ on:
         description: 'supertokens-plugin-interface repos branch name'
         default: master 
         required: true
-      coreRepoBranch:
-        description: 'supertokens-core repos branch name'
-        default: master 
-        required: true
 
 jobs:
   test_job:
     name: Run tests
     runs-on: ubuntu-latest
     container: rishabhpoddar/supertokens_core_testing
+    
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:latest
+        # Provide the password for postgres
+        env:
+          POSTGRES_DB: supertokens
+          POSTGRES_PASSWORD: root
+          POSTGRES_USER: root
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - uses: actions/checkout@v2
       - name: Cloning supertokens-root
@@ -37,4 +56,8 @@ jobs:
       - name: Contents of modules.txt
         run: cat ../supertokens-root/modules.txt
       - name: Running loadModules in supertokens-root
-        run: cd ../supertokens-root && ./loadModules && ./gitStatus
+        run: cd ../supertokens-root && ./loadModules
+      - name: Copying current supertokens-sql-plugin branch into supertokens-root
+        run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
+      - name: Building and running tests
+        run: cd ../supertokens-root && ./startTestingEnv
