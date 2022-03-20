@@ -14,7 +14,7 @@ postgresql_config_version: 0
 # - "192.168.0.1"
 # - "<IP to cloud instance>"
 # - "example.com"
-# postgresql_host:
+postgresql_host: "postgres"
 
 # (OPTIONAL | Default: 5432) integer value. Specify the port to use when connecting to PostgreSQL instance.
 # postgresql_port:
