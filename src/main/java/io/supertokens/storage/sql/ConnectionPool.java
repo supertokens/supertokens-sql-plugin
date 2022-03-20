@@ -49,17 +49,17 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             // Hikari
         }
 
-//        if (ConnectionPool.hikariDataSource != null) {
-//            // This implies that it was already created before and that
-//            // there is no need to create Hikari or sessionFactory again.
-//
-//            // If ConnectionPool.hikariDataSource == null, it implies that
-//            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in
-//            static
-//            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
-//            // (applicable only for testing).
-//            return;
-//        }
+        if (ConnectionPool.sessionFactory != null) {
+            // This implies that it was already created before and that
+            // there is no need to create sessionFactory again.
+
+            // If ConnectionPool.sessionFactory == null, it implies that
+            // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in static
+            // variables to be set to null), or it means that this is the first time we are trying to connect to a db
+            // (applicable only for testing).
+            return;
+        }
+
         final PostgreSQLConfig config = Config.getConfig(start);
         sessionFactory = HibernateUtils.sessionFactory(config);
     }
