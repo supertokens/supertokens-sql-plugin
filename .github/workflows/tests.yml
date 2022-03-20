@@ -45,6 +45,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
+      - name: Adds postgres host to devConfig.yaml
+        run: "echo \"postgresql_host: postgres\" >> devConfig.yaml"
       - name: Cloning supertokens-root
         run: cd ../ && git clone https://github.com/supertokens/supertokens-root.git
       - name: Update Java 1

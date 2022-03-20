@@ -122,7 +122,7 @@ public class PostgreSQLConfig {
                     return uri.getHost();
                 }
             }
-            return "postgres";
+            return "localhost";
         }
         return postgresql_host;
     }
