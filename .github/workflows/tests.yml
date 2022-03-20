@@ -46,6 +46,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: apt update && apt install sudo
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Adds postgres host to devConfig.yaml
         run: "echo \"postgresql_host: postgres\" >> devConfig.yaml"
       - name: Cloning supertokens-root
@@ -62,7 +64,5 @@ jobs:
         run: cd ../supertokens-root && ./loadModules
       - name: Copying current supertokens-sql-plugin branch into supertokens-root
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Building and running tests
         run: cd ../supertokens-root && ./startTestingEnv
