@@ -45,6 +45,10 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          sudo: false
       - name: Adds postgres host to devConfig.yaml
         run: "echo \"postgresql_host: postgres\" >> devConfig.yaml"
       - name: Cloning supertokens-root
