@@ -21,17 +21,17 @@ import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
-public class SupertokensNamingStrategy extends PhysicalNamingStrategyStandardImpl {
+public class CustomNamingStrategy extends PhysicalNamingStrategyStandardImpl {
 
     private final DatabaseConfig databaseConfig;
 
-    public SupertokensNamingStrategy(DatabaseConfig databaseConfig) {
+    public CustomNamingStrategy(DatabaseConfig databaseConfig) {
         this.databaseConfig = databaseConfig;
     }
 
     @Override
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment context) {
-        String legacyTableName = tableName(name.getText());
+        String legacyTableName = legacyTableName(name.getText());
 
         if (legacyTableName != null) {
             return Identifier.toIdentifier(legacyTableName);
@@ -44,7 +44,7 @@ public class SupertokensNamingStrategy extends PhysicalNamingStrategyStandardImp
     /**
      * Following private methods help with legacy table renaming conventions
      */
-    private String tableName(String name) {
+    private String legacyTableName(String name) {
         return switch (name) {
         case "key_value" -> databaseConfig.getKeyValueTable();
         case "session_info" -> databaseConfig.getSessionInfoTable();

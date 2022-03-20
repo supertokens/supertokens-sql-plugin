@@ -74,7 +74,7 @@ public class HibernateUtils {
 
     @NotNull
     private static PhysicalNamingStrategy physicalNamingStrategy(DatabaseConfig databaseConfig) {
-        return new SupertokensNamingStrategy(databaseConfig);
+        return new CustomNamingStrategy(databaseConfig);
     }
 
     private static Properties properties(DatabaseConfig databaseConfig) {
