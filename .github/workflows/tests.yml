@@ -50,7 +50,8 @@ jobs:
         with:
           sudo: false
       - name: Adds postgres host to devConfig.yaml
-        run: "echo \"postgresql_host: postgres\" >> devConfig.yaml"
+        run: "sed -i 's/# postgresql_host:/postgresql_host: postgres/g' ./devConfig.yaml"
+      - run: cat ./devConfig.yaml
       - name: Cloning supertokens-root
         run: cd ../ && git clone https://github.com/supertokens/supertokens-root.git
       - name: Update Java 1
