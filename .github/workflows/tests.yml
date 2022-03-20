@@ -35,7 +35,7 @@ jobs:
         env:
           POSTGRES_DB: supertokens
           POSTGRES_PASSWORD: root
-          POSTGRES_USER: root
+          POSTGRES_USER: rootg
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -46,8 +46,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: apt update && apt install sudo
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: Cloning supertokens-root
         run: cd ../ && git clone https://github.com/supertokens/supertokens-root.git
       - name: Update Java 1
