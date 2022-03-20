@@ -61,9 +61,5 @@ jobs:
         run: cd ../supertokens-root && ./loadModules
       - name: Copying current supertokens-sql-plugin branch into supertokens-root
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          sudo: false
       - name: Building and running tests
         run: cd ../supertokens-root && ./startTestingEnv
