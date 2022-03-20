@@ -22,6 +22,7 @@ on:
 jobs:
   test_job:
     name: Run tests
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     container: rishabhpoddar/supertokens_core_testing
     
