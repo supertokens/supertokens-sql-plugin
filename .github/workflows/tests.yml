@@ -36,6 +36,8 @@ jobs:
           POSTGRES_DB: supertokens
           POSTGRES_PASSWORD: root
           POSTGRES_USER: root
+        ports:
+          - 5432:5432
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -45,8 +47,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v2
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Cloning supertokens-root
         run: cd ../ && git clone https://github.com/supertokens/supertokens-root.git
       - name: Update Java 1
