@@ -61,7 +61,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         final PostgreSQLConfig config = Config.getConfig(start);
-        sessionFactory = HibernateUtils.sessionFactory(config);
+        sessionFactory = HibernateUtils.initSessionFactory(config);
     }
 
     private static int getTimeToWaitToInit(Start start) {

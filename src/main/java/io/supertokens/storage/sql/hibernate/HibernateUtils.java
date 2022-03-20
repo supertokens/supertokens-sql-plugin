@@ -41,16 +41,7 @@ public class HibernateUtils {
 
     private static final List<Closeable> CLOSEABLES = new ArrayList<>();
 
-    public static SessionFactory sessionFactory(DatabaseConfig databaseConfig) {
-        return newSessionFactory(databaseConfig);
-    }
-
-    private static Class<?>[] entities() {
-        return new Class[] { KeyValueDO.class };
-    }
-
-    private static SessionFactory newSessionFactory(DatabaseConfig databaseConfig) {
-
+    public static SessionFactory initSessionFactory(DatabaseConfig databaseConfig) {
         final StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                 .applySettings(properties(databaseConfig)).build();
 
@@ -70,6 +61,10 @@ public class HibernateUtils {
         CLOSEABLES.add(sessionFactory);
 
         return sessionFactory;
+    }
+
+    private static Class<?>[] entities() {
+        return new Class[] { KeyValueDO.class };
     }
 
     @NotNull
