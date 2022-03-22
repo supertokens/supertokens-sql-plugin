@@ -66,11 +66,12 @@ public interface DatabaseConfig {
 
     String getUserMetadataTable();
 
+    String addSchemaAndPrefixToTableName(String tableName);
+
     void validateAndInitialise();
 
     String getDialect();
 
     String getDriverClassName();
 
-    String getTableNamePrefix();
 }

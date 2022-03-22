@@ -31,20 +31,20 @@ public class CustomNamingStrategy extends PhysicalNamingStrategyStandardImpl {
 
     @Override
     public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment context) {
-        String legacyTableName = legacyTableName(name.getText());
+        String tableNameWithSchemaAndPrefixLegacySupport = tableNameWithSchemaAndPrefixLegacySupport(name.getText());
 
-        if (legacyTableName != null) {
-            return Identifier.toIdentifier(legacyTableName);
+        if (tableNameWithSchemaAndPrefixLegacySupport != null) {
+            return Identifier.toIdentifier(tableNameWithSchemaAndPrefixLegacySupport);
         }
 
-        final String PREFIX = databaseConfig.getTableNamePrefix();
-        return Identifier.toIdentifier(PREFIX + name.getText());
+        return Identifier.toIdentifier(databaseConfig.addSchemaAndPrefixToTableName(name.getText()));
     }
 
     /**
      * Following private methods help with legacy table renaming conventions
+     * If there exists no mapping for a legacy table name then the default case returns a NULL value
      */
-    private String legacyTableName(String name) {
+    private String tableNameWithSchemaAndPrefixLegacySupport(String name) {
         return switch (name) {
         case "key_value" -> databaseConfig.getKeyValueTable();
         case "session_info" -> databaseConfig.getSessionInfoTable();

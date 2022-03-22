@@ -305,7 +305,8 @@ public class PostgreSQLConfig implements DatabaseConfig {
         return addSchemaAndPrefixToTableName("user_metadata");
     }
 
-    private String addSchemaAndPrefixToTableName(String tableName) {
+    @Override
+    public String addSchemaAndPrefixToTableName(String tableName) {
         String name = tableName;
         if (!postgresql_table_names_prefix.trim().equals("")) {
             name = postgresql_table_names_prefix.trim() + "_" + name;
@@ -353,11 +354,6 @@ public class PostgreSQLConfig implements DatabaseConfig {
     @Override
     public String getDriverClassName() {
         return "org.postgresql.Driver";
-    }
-
-    @Override
-    public String getTableNamePrefix() {
-        return postgresql_table_names_prefix;
     }
 
 }
