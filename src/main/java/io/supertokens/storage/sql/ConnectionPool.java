@@ -17,11 +17,14 @@
 
 package io.supertokens.storage.sql;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.config.DatabaseConfig;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
@@ -30,7 +33,9 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.internal.SessionImpl;
+import org.jetbrains.annotations.NotNull;
 
+import javax.sql.DataSource;
 import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -42,6 +47,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
     private static SessionFactory sessionFactory = null;
+    private static HikariDataSource dataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
@@ -61,7 +67,70 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         final PostgreSQLConfig config = Config.getConfig(start);
-        sessionFactory = HibernateUtils.initSessionFactory(config);
+        dataSource = (HikariDataSource) dataSource(config);
+        sessionFactory = HibernateUtils.initSessionFactory(config, dataSource);
+    }
+
+    private static DataSource dataSource(DatabaseConfig databaseConfig) {
+        return new HikariDataSource(hikariConfig(databaseConfig));
+    }
+
+    @NotNull
+    private static HikariConfig hikariConfig(DatabaseConfig databaseConfig) {
+
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(getJdbcUrl(databaseConfig));
+
+        // TODO: sql-plugin -> choose the right driver based on actual config
+        // TODO: sql-plugin: do we need a validate function to check if the dialect passed exists or not
+        // like invoke a Class.forName() and if it throws an exception we do a quit program exception,
+        // or do we let hibernate handle if a dialect does not exist ?
+        // this basically might be a measure against spelling mistakes or such
+        hikariConfig.setDriverClassName(databaseConfig.getDriverClassName());
+
+        if (databaseConfig.getUser() != null) {
+            hikariConfig.setUsername(databaseConfig.getUser());
+        }
+
+        if (databaseConfig.getPassword() != null && !databaseConfig.getPassword().equals("")) {
+            hikariConfig.setPassword(databaseConfig.getPassword());
+        }
+        hikariConfig.setMaximumPoolSize(databaseConfig.getConnectionPoolSize());
+        hikariConfig.setConnectionTimeout(5000);
+        hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
+        // io.supertokens.storage.postgresql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) |
+        // SuperTokens
+        // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
+        // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
+        hikariConfig.setPoolName("SuperTokens");
+
+        return hikariConfig;
+    }
+
+    @NotNull
+    private static String getJdbcUrl(DatabaseConfig userConfig) {
+        String scheme = userConfig.getConnectionScheme();
+
+        String hostName = userConfig.getHostName();
+
+        String port = userConfig.getPort() + "";
+        if (!port.equals("-1")) {
+            port = ":" + port;
+        } else {
+            port = "";
+        }
+
+        String databaseName = userConfig.getDatabaseName();
+
+        String attributes = userConfig.getConnectionAttributes();
+        if (!attributes.equals("")) {
+            attributes = "?" + attributes;
+        }
+
+        return "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -143,8 +212,10 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (getInstance(start) == null) {
             return;
         }
-        HibernateUtils.close();
+        ConnectionPool.sessionFactory.close();
         ConnectionPool.sessionFactory = null;
+        ConnectionPool.dataSource.close();
+        ConnectionPool.dataSource = null;
     }
 
     private static boolean hibernateFailedToConnect(Exception e) {

@@ -357,7 +357,7 @@ public class PostgreSQLConfig implements DatabaseConfig {
 
     @Override
     public String getTableNamePrefix() {
-        return "";
+        return postgresql_table_names_prefix;
     }
 
 }
