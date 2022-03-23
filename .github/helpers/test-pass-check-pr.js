@@ -35,6 +35,8 @@ function doJob() {
       let data = result.data;
       let currentSHA = undefined;
 
+      console.log(JSON.stringify(data));
+
       data.workflow_runs.forEach((run) => {
         if (run.id + "" === thisRunId) {
           currentSHA = run.head_sha;
