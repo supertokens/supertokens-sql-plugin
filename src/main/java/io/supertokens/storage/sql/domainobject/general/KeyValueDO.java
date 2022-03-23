@@ -40,7 +40,7 @@ See mapping of SQL column types to hiberate types here: https://docs.jboss.org/h
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "key_value", uniqueConstraints = @UniqueConstraint(name = "key_value_pkey", columnNames = { "name" }))
+@Table(name = "key_value")
 public class KeyValueDO {
 
     @Id
