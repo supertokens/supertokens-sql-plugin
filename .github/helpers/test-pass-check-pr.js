@@ -14,7 +14,7 @@ let startTime = Date.now();
 
 function doJob() {
   console.log("Checking job status...");
-  console.log(JSON.stringify(process.env.GITHUB_ACTOR));
+  console.log(JSON.stringify(process.env.OWNER));
   axios
     .get(
       `https://api.github.com/repos/${process.env.REPO}/actions/runs?branch=${process.env.BRANCH}`,
