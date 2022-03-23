@@ -12,6 +12,7 @@ thisRunId = thisRunId.trim();
 let startTime = Date.now();
 
 function doJob() {
+    console.log("REPO NAME", process.env.REPO);
     console.log("Checking job status...");
     axios.get(`https://api.github.com/repos/${process.env.REPO}/actions/runs?branch=${process.env.BRANCH}`, {
         headers: {
