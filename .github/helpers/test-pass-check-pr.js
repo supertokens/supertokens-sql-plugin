@@ -14,10 +14,9 @@ let startTime = Date.now();
 
 function doJob() {
   console.log("Checking job status...");
-  console.log(JSON.stringify(process.env.OWNER));
 
   const currentOwnerAndRepoString = process.env.REPO;
-  const sourceRepoWithOwnerString = `${process.env.OWNER}/${
+  const sourceRepoWithOwnerString = `${process.env.SOURCE_OWNER}/${
     currentOwnerAndRepoString.split("/")[1]
   }`;
 
