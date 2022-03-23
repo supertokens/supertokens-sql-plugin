@@ -66,7 +66,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             return;
         }
 
-        final PostgreSQLConfig config = Config.getConfig(start);
+        final DatabaseConfig config = Config.getConfig(start);
         dataSource = (HikariDataSource) dataSource(config);
         sessionFactory = HibernateUtils.initSessionFactory(config, dataSource);
     }
