@@ -15,9 +15,17 @@ let startTime = Date.now();
 function doJob() {
   console.log("Checking job status...");
   console.log(JSON.stringify(process.env.OWNER));
+
+  const currentOwnerAndRepoString = process.env.REPO;
+  const sourceRepoWithOwnerString = `${process.env.OWNER}/${
+    currentOwnerAndRepoString.split("/")[1]
+  }`;
+
+  console.log("SOURCE REPO", sourceRepoWithOwnerString);
+
   axios
     .get(
-      `https://api.github.com/repos/${process.env.REPO}/actions/runs?branch=${process.env.BRANCH}`,
+      `https://api.github.com/repos/${sourceRepoWithOwnerString}/actions/runs?branch=${process.env.BRANCH}`,
       {
         headers: {
           Authorization: `token ${gitHubToken}`,
