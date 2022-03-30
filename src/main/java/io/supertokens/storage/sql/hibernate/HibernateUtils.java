@@ -16,8 +16,6 @@
 
 package io.supertokens.storage.sql.hibernate;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import io.supertokens.storage.sql.config.DatabaseConfig;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import org.hibernate.SessionFactory;
@@ -31,11 +29,6 @@ import org.hibernate.cfg.Environment;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
-import javax.xml.crypto.Data;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 public class HibernateUtils {
@@ -85,6 +78,10 @@ public class HibernateUtils {
 
         // data source settings
         properties.put(Environment.DATASOURCE, dataSource);
+
+        // Uncomment the below if you want to see SQL queries
+//        properties.put(Environment.SHOW_SQL, true);
+//        properties.put(Environment.FORMAT_SQL, true);
 
         return properties;
     }
