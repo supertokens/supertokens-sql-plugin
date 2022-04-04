@@ -250,9 +250,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } else {
             // for SELECT queries
             SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-            Session session = new CustomSessionWrapper(sessionFactory.openSession());
-            try (session) {
-                Connection con = (((CustomSessionWrapper) session).getSessionImpl()).connection();
+            try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
+                Connection con = session.getSessionImpl().connection();
                 return func.op(session, con);
             }
         }
@@ -269,15 +268,14 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        Session session = new CustomSessionWrapper(sessionFactory.openSession());
-        try (session) {
+        try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
             // we assume that these queries will always have a non-SELECT part in them
             // so that's why we always begin a transaction.
             Transaction tx = null;
 
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
-            Connection con = (((CustomSessionWrapper) session).getSessionImpl()).connection();
+            Connection con = session.getSessionImpl().connection();
 
             if (isolationLevel != null) {
                 int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
