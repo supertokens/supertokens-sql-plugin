@@ -25,14 +25,13 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.DatabaseConfig;
-import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.internal.SessionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
@@ -251,8 +250,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } else {
             // for SELECT queries
             SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-            try (Session session = sessionFactory.openSession()) {
-                Connection con = ((SessionImpl) session).connection();
+            Session session = new CustomSessionWrapper(sessionFactory.openSession());
+            try (session) {
+                Connection con = (((CustomSessionWrapper) session).getSessionImpl()).connection();
                 return func.op(session, con);
             }
         }
@@ -269,14 +269,15 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
+        Session session = new CustomSessionWrapper(sessionFactory.openSession());
+        try (session) {
             // we assume that these queries will always have a non-SELECT part in them
             // so that's why we always begin a transaction.
             Transaction tx = null;
 
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
-            Connection con = ((SessionImpl) session).connection();
+            Connection con = (((CustomSessionWrapper) session).getSessionImpl()).connection();
 
             if (isolationLevel != null) {
                 int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
