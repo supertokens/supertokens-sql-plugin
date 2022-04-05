@@ -282,16 +282,13 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void delete(Object object) {
-        throw new UnsupportedOperationException(
-                "Please use createQuery and provide a HQL query to it. The reason for this is that calling session"
-                        + ".delete does a select too if the entity is not already fetched");
+        this.nullEntityCache = new HashMap<>();
+        this.session.delete(object);
     }
 
     @Override
     public void delete(String entityName, Object object) {
-        throw new UnsupportedOperationException(
-                "Please use createQuery and provide a HQL query to it. The reason for this is that calling session"
-                        + ".delete does a select too if the entity is not already fetched");
+        throw new UnsupportedOperationException("Please use delete(Object)");
     }
 
     @Override
@@ -601,22 +598,24 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
-        if (queryString.toLowerCase().trim().startsWith("select")) {
-            // we ask to use the gte function cause that utilises our null value cache
-            throw new UnsupportedOperationException("Please use session.get instead");
-        }
-        this.nullEntityCache = new HashMap<>();
-        return this.session.createQuery(queryString, resultType);
+        throw new UnsupportedOperationException();
+//        if (queryString.toLowerCase().trim().startsWith("select")) {
+//            // we ask to use the gte function cause that utilises our null value cache
+//            throw new UnsupportedOperationException("Please use session.get instead");
+//        }
+//        this.nullEntityCache = new HashMap<>();
+//        return this.session.createQuery(queryString, resultType);
     }
 
     @Override
     public org.hibernate.query.Query createQuery(String queryString) {
-        if (queryString.toLowerCase().trim().startsWith("select")) {
-            // we ask to use the gte function cause that utilises our null value cache
-            throw new UnsupportedOperationException("Please use session.get instead");
-        }
-        this.nullEntityCache = new HashMap<>();
-        return this.session.createQuery(queryString);
+        throw new UnsupportedOperationException();
+//        if (queryString.toLowerCase().trim().startsWith("select")) {
+//            // we ask to use the gte function cause that utilises our null value cache
+//            throw new UnsupportedOperationException("Please use session.get instead");
+//        }
+//        this.nullEntityCache = new HashMap<>();
+//        return this.session.createQuery(queryString);
     }
 
     @Override

@@ -190,7 +190,102 @@ public class HibernateTest {
     }
 
     @Test
-    public void noSelectFromDbDuringDelete()
+    public void selectOnceFromDbDuringDelete()
+            throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
+        {
+            String[] args = { "../" };
+            Start.printSQL = true;
+            StorageLayer.close();
+            Interceptor printInterceptor = new Interceptor();
+            System.setOut(printInterceptor);
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+            Storage storage = StorageLayer.getStorage(process.getProcess());
+
+            printInterceptor.start = true;
+
+            SessionSQLStorage sqlStorage = (SessionSQLStorage) storage;
+            sqlStorage.startTransaction(con -> {
+                sqlStorage.removeLegacyAccessTokenSigningKey_Transaction(con);
+                sqlStorage.commitTransaction(con);
+                return null;
+            });
+
+            // We do -1 cause if there is one occurrence of this, it will split the string into 2 parts
+
+            // this will be twice because we first select when we do session.get inside
+            // removeLegacyAccessTokenSigningKey_Transaction, and then in there we do session.delete again
+            // which will do a select once again (since they row is missing in the db).
+            assert (printInterceptor.s.split("Hibernate: select").length - 1 == 2);
+            assert (sqlStorage.getKeyValue("access_token_signing_key") == null);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            String[] args = { "../" };
+            Start.printSQL = true;
+            StorageLayer.close();
+            Interceptor printInterceptor = new Interceptor();
+            System.setOut(printInterceptor);
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+            Storage storage = StorageLayer.getStorage(process.getProcess());
+
+            printInterceptor.start = true;
+
+            SessionSQLStorage sqlStorage = (SessionSQLStorage) storage;
+            sqlStorage.startTransaction(con -> {
+                sqlStorage.setKeyValue_Transaction(con, "access_token_signing_key", new KeyValueInfo("Value"));
+                sqlStorage.removeLegacyAccessTokenSigningKey_Transaction(con);
+                sqlStorage.commitTransaction(con);
+                return null;
+            });
+
+            // We do -1 cause if there is one occurrence of this, it will split the string into 2 parts
+            assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
+            assert (sqlStorage.getKeyValue("access_token_signing_key") == null);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            String[] args = { "../" };
+            Start.printSQL = true;
+            StorageLayer.close();
+            Interceptor printInterceptor = new Interceptor();
+            System.setOut(printInterceptor);
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+            Storage storage = StorageLayer.getStorage(process.getProcess());
+
+            printInterceptor.start = true;
+
+            SessionSQLStorage sqlStorage = (SessionSQLStorage) storage;
+            sqlStorage.startTransaction(con -> {
+                sqlStorage.getKeyValue_Transaction(con, "access_token_signing_key");
+                sqlStorage.setKeyValue_Transaction(con, "access_token_signing_key", new KeyValueInfo("Value"));
+                sqlStorage.removeLegacyAccessTokenSigningKey_Transaction(con);
+                sqlStorage.commitTransaction(con);
+                return null;
+            });
+
+            // We do -1 cause if there is one occurrence of this, it will split the string into 2 parts
+            assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
+            assert (sqlStorage.getKeyValue("access_token_signing_key") == null);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+    }
+
+    @Test
+    public void selectThenDeleteThenSet()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
         Start.printSQL = true;
@@ -206,14 +301,18 @@ public class HibernateTest {
 
         SessionSQLStorage sqlStorage = (SessionSQLStorage) storage;
         sqlStorage.startTransaction(con -> {
+            sqlStorage.getKeyValue_Transaction(con, "access_token_signing_key");
+            sqlStorage.getKeyValue_Transaction(con, "access_token_signing_key");
+            sqlStorage.setKeyValue_Transaction(con, "access_token_signing_key", new KeyValueInfo("Value2"));
             sqlStorage.removeLegacyAccessTokenSigningKey_Transaction(con);
+            sqlStorage.setKeyValue_Transaction(con, "access_token_signing_key", new KeyValueInfo("Value2"));
             sqlStorage.commitTransaction(con);
             return null;
         });
 
         // We do -1 cause if there is one occurrence of this, it will split the string into 2 parts
-        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
-        assert (sqlStorage.getKeyValue("access_token_signing_key") == null);
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
+        assert (sqlStorage.getKeyValue("access_token_signing_key").value.equals("Value2"));
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -229,6 +328,9 @@ public class HibernateTest {
 
         @Override
         public void print(String s) {// do what ever you like
+            if (s == null) {
+                return;
+            }
             if (start) {
                 this.s = this.s + s;
             }
