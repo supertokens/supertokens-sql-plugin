@@ -24,6 +24,7 @@ import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
@@ -281,18 +282,9 @@ public class GeneralQueries {
     }
 
     public static void deleteKeyValue_Transaction(Session session, String key) {
-        KeyValueDO toDelete = session.get(KeyValueDO.class, key);
-        if (toDelete == null) {
-            toDelete = new KeyValueDO();
-            toDelete.setName(key);
-        }
-        // if we have created a new KeyValueDO above, the below will do a select first, and then
-        // a delete. But if it was already present in the session, it will only do a delete.
-        // We can fix this by running a HQL query directly using session.createQuery,
-        // but then that may leave entities in the session cache in an inconsistent state. They
-        // might have been deleted from the db, but may still exist in session l1 cache causing things
-        // to fail. So to be safe, we do a delete as shown below even if it means to do an extra query.
-        session.delete(toDelete);
+        KeyValueDO toDelete = new KeyValueDO();
+        toDelete.setName(key);
+        ((CustomSessionWrapper) session).delete(KeyValueDO.class, key, toDelete);
     }
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)

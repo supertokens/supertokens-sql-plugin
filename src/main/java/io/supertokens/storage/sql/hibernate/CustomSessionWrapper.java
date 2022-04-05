@@ -50,7 +50,12 @@ public class CustomSessionWrapper implements Session {
 
     // Example entry "KeyValueDO" -> {name1, name2, ..}
     private Map<String, Set<Serializable>> nullEntityCache = new HashMap<>();
+    private Set<Object> entitySet = new HashSet<>();
     SQLStorage.TransactionIsolationLevel currentIsolationLevel = null;
+
+    private void clearNullEntityCache() {
+        this.nullEntityCache = new HashMap<>();
+    }
 
     public CustomSessionWrapper(Session session) {
         this.session = session;
@@ -198,7 +203,8 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public Serializable save(Object object) {
-        this.nullEntityCache = new HashMap<>();
+        this.clearNullEntityCache();
+        this.entitySet.add(object);
         return this.session.save(object);
     }
 
@@ -220,7 +226,8 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void update(Object object) {
-        this.nullEntityCache = new HashMap<>();
+        this.clearNullEntityCache();
+        this.entitySet.add(object);
         this.session.update(object);
     }
 
@@ -282,7 +289,17 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void delete(Object object) {
-        this.nullEntityCache = new HashMap<>();
+        throw new UnsupportedOperationException("Use session.delete(Class, Serializable, Object)");
+    }
+
+    public <T> void delete(Class<T> theClass, Serializable id, Object object) {
+        if (this.contains(object)) {
+            // if it comes here, it means that the entity is already loaded up in our entity memory or
+            // in hibernate's session memory.
+            object = this.get(theClass, id);
+        }
+        this.clearNullEntityCache();
+        this.entitySet.remove(object);
         this.session.delete(object);
     }
 
@@ -368,7 +385,10 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public boolean contains(Object entity) {
-        throw new UnsupportedOperationException();
+        if (this.entitySet.contains(entity)) {
+            return true;
+        }
+        return this.session.contains(entity);
     }
 
     @Override
@@ -401,7 +421,7 @@ public class CustomSessionWrapper implements Session {
         }
     }
 
-    public void updateNullEntityCache(Object toSave, String entityName, Serializable id) {
+    public void updateCache(Object toSave, String entityName, Serializable id) {
         if (this.currentIsolationLevel == SERIALIZABLE
                 || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
             Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
@@ -412,10 +432,14 @@ public class CustomSessionWrapper implements Session {
                 // we add this ID so that future queries with this ID
                 // don't need to query the db
                 cacheForEntity.add(id);
-            } else if (cacheForEntity != null) {
-                // we remove this ID so that future queries for this ID
-                // check the Hibernate session.
-                cacheForEntity.remove(id);
+                // TODO: sql-plugin -> should we remove from entitySet?
+            } else {
+                if (cacheForEntity != null) {
+                    // we remove this ID so that future queries for this ID
+                    // check the Hibernate session.
+                    cacheForEntity.remove(id);
+                }
+                this.entitySet.add(toSave);
             }
             if (cacheForEntity != null) {
                 this.nullEntityCache.put(entityName, cacheForEntity);
@@ -430,7 +454,7 @@ public class CustomSessionWrapper implements Session {
             return null;
         }
         T result = this.session.get(entityType, id);
-        updateNullEntityCache(result, entityType.getName(), id);
+        updateCache(result, entityType.getName(), id);
         return result;
     }
 
@@ -441,7 +465,7 @@ public class CustomSessionWrapper implements Session {
             return null;
         }
         T result = this.session.get(entityType, id, lockMode);
-        updateNullEntityCache(result, entityType.getName(), id);
+        updateCache(result, entityType.getName(), id);
         return result;
 
     }
@@ -603,7 +627,7 @@ public class CustomSessionWrapper implements Session {
 //            // we ask to use the gte function cause that utilises our null value cache
 //            throw new UnsupportedOperationException("Please use session.get instead");
 //        }
-//        this.nullEntityCache = new HashMap<>();
+//        this.clearCustomCache();
 //        return this.session.createQuery(queryString, resultType);
     }
 
@@ -614,7 +638,7 @@ public class CustomSessionWrapper implements Session {
 //            // we ask to use the gte function cause that utilises our null value cache
 //            throw new UnsupportedOperationException("Please use session.get instead");
 //        }
-//        this.nullEntityCache = new HashMap<>();
+//        this.clearCustomCache();
 //        return this.session.createQuery(queryString);
     }
 
@@ -756,8 +780,13 @@ public class CustomSessionWrapper implements Session {
     public Transaction beginTransaction(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel)
             throws SQLException {
         this.setIsolationLevel(isolationLevel);
-        this.nullEntityCache = new HashMap<>();
+        this.clearNullEntityCache();
+        this.clearCustomEntityCache();
         return this.session.beginTransaction();
+    }
+
+    private void clearCustomEntityCache() {
+        this.entitySet = new HashSet<>();
     }
 
     @Override
