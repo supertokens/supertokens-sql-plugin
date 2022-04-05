@@ -240,14 +240,18 @@ public class GeneralQueries {
         // requires the exact same instance. If previously we had not fetched it, or
         // if we tried to fetch but not get any result, then it will try and fetch once again
         // with a PESSIMISTIC_WRITE lock.
-        KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
+        KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key);
         if (toInsertOrUpdate == null) {
             toInsertOrUpdate = new KeyValueDO();
             toInsertOrUpdate.setName(key);
+            toInsertOrUpdate.setValue(info.value);
+            toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
+            session.save(toInsertOrUpdate);
+        } else {
+            toInsertOrUpdate.setValue(info.value);
+            toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
+            session.update(toInsertOrUpdate);
         }
-        toInsertOrUpdate.setValue(info.value);
-        toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
-        session.saveOrUpdate(toInsertOrUpdate);
     }
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)

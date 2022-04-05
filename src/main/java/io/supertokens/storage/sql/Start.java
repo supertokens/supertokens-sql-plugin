@@ -83,6 +83,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     private static final String ACCESS_TOKEN_SIGNING_KEY_NAME = "access_token_signing_key";
     private static final String REFRESH_TOKEN_KEY_NAME = "refresh_token_key";
     public static boolean isTesting = false;
+    public static boolean printSQL = false;
     boolean enabled = true;
     Thread mainThread = Thread.currentThread();
     private Thread shutdownHook;

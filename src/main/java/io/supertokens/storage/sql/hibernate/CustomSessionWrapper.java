@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.hibernate;
 
+import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import org.hibernate.*;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.internal.SessionImpl;
@@ -23,6 +24,7 @@ import org.hibernate.procedure.ProcedureCall;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.stat.SessionStatistics;
 
+import javax.annotation.Nullable;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
@@ -34,11 +36,21 @@ import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.metamodel.Metamodel;
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import static io.supertokens.pluginInterface.sqlStorage.SQLStorage.TransactionIsolationLevel.SERIALIZABLE;
 
 public class CustomSessionWrapper implements Session {
 
     final Session session;
+
+    // Example entry "KeyValueDO" -> {name1, name2, ..}
+    private Map<String, Set<Serializable>> nullEntityCache = new HashMap<>();
+    SQLStorage.TransactionIsolationLevel currentIsolationLevel = null;
 
     public CustomSessionWrapper(Session session) {
         this.session = session;
@@ -186,42 +198,46 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public Serializable save(Object object) {
+        this.nullEntityCache.remove(object.getClass().getName());
         return this.session.save(object);
     }
 
     @Override
     public Serializable save(String entityName, Object object) {
+        this.nullEntityCache.remove(entityName);
         return this.session.save(entityName, object);
     }
 
     @Override
     public void saveOrUpdate(Object object) {
-        this.session.saveOrUpdate(object);
+        throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
     @Override
     public void saveOrUpdate(String entityName, Object object) {
-        this.session.saveOrUpdate(entityName, object);
+        throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
     @Override
     public void update(Object object) {
+        this.nullEntityCache.remove(object.getClass().getName());
         this.session.update(object);
     }
 
     @Override
     public void update(String entityName, Object object) {
+        this.nullEntityCache.remove(entityName);
         this.session.update(entityName, object);
     }
 
     @Override
     public Object merge(Object object) {
-        return this.session.merge(object);
+        throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
     @Override
     public Object merge(String entityName, Object object) {
-        return this.session.merge(entityName, object);
+        throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
     @Override
@@ -266,11 +282,13 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void delete(Object object) {
+        this.nullEntityCache.remove(object.getClass().getName());
         this.session.delete(object);
     }
 
     @Override
     public void delete(String entityName, Object object) {
+        this.nullEntityCache.remove(entityName);
         this.session.delete(entityName, object);
     }
 
@@ -369,34 +387,108 @@ public class CustomSessionWrapper implements Session {
         return this.session.getProperties();
     }
 
+    public boolean isInNullEntityCache(String entityName, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            // here we know that the db state will not change if we read again, so we try to do that.
+            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
+            if (cacheForEntity == null) {
+                return false;
+            }
+            return cacheForEntity.contains(id);
+        } else {
+            // attempt to read from db again.
+            return false;
+        }
+    }
+
+    public void updateNullEntityCache(Object toSave, String entityName, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
+            if (toSave == null) {
+                if (cacheForEntity == null) {
+                    cacheForEntity = new HashSet<>();
+                }
+                // we add this ID so that future queries with this ID
+                // don't need to query the db
+                cacheForEntity.add(id);
+            } else if (cacheForEntity != null) {
+                // we remove this ID so that future queries for this ID
+                // check the Hibernate session.
+                cacheForEntity.remove(id);
+            }
+            if (cacheForEntity != null) {
+                this.nullEntityCache.put(entityName, cacheForEntity);
+            }
+        }
+    }
+
     @Override
     public <T> T get(Class<T> entityType, Serializable id) {
-        return this.session.get(entityType, id);
+        if (isInNullEntityCache(entityType.getName(), id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        T result = this.session.get(entityType, id);
+        updateNullEntityCache(result, entityType.getName(), id);
+        return result;
     }
 
     @Override
     public <T> T get(Class<T> entityType, Serializable id, LockMode lockMode) {
-        return this.session.get(entityType, id, lockMode);
+        if (isInNullEntityCache(entityType.getName(), id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        T result = this.session.get(entityType, id, lockMode);
+        updateNullEntityCache(result, entityType.getName(), id);
+        return result;
+
     }
 
     @Override
     public <T> T get(Class<T> entityType, Serializable id, LockOptions lockOptions) {
-        return this.session.get(entityType, id, lockOptions);
+        if (isInNullEntityCache(entityType.getName(), id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        T result = this.session.get(entityType, id, lockOptions);
+        updateNullEntityCache(result, entityType.getName(), id);
+        return result;
     }
 
     @Override
     public Object get(String entityName, Serializable id) {
-        return this.session.get(entityName, id);
+        if (isInNullEntityCache(entityName, id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        Object result = this.session.get(entityName, id);
+        updateNullEntityCache(result, entityName, id);
+        return result;
     }
 
     @Override
     public Object get(String entityName, Serializable id, LockMode lockMode) {
-        return this.session.get(entityName, id, lockMode);
+        if (isInNullEntityCache(entityName, id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        Object result = this.session.get(entityName, id, lockMode);
+        updateNullEntityCache(result, entityName, id);
+        return result;
     }
 
     @Override
     public Object get(String entityName, Serializable id, LockOptions lockOptions) {
-        return this.session.get(entityName, id, lockOptions);
+        if (isInNullEntityCache(entityName, id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        Object result = this.session.get(entityName, id, lockOptions);
+        updateNullEntityCache(result, entityName, id);
+        return result;
     }
 
     @Override
@@ -666,6 +758,13 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public Transaction beginTransaction() {
+        throw new UnsupportedOperationException("Please use beginTransaction(isolationLevel) function instead");
+    }
+
+    public Transaction beginTransaction(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel)
+            throws SQLException {
+        this.setIsolationLevel(isolationLevel);
+        this.nullEntityCache = new HashMap<>();
         return this.session.beginTransaction();
     }
 
@@ -736,5 +835,33 @@ public class CustomSessionWrapper implements Session {
 
     public SessionImpl getSessionImpl() {
         return (SessionImpl) this.session;
+    }
+
+    private void setIsolationLevel(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel) throws SQLException {
+        Connection con = this.getSessionImpl().connection();
+
+        if (isolationLevel != null) {
+            this.currentIsolationLevel = isolationLevel;
+            int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
+            switch (isolationLevel) {
+            case SERIALIZABLE:
+                break;
+            case REPEATABLE_READ:
+                libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
+                break;
+            case READ_COMMITTED:
+                libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+                break;
+            case READ_UNCOMMITTED:
+                libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
+                break;
+            case NONE:
+                libIsolationLevel = Connection.TRANSACTION_NONE;
+                break;
+            }
+            con.setTransactionIsolation(libIsolationLevel);
+        } else {
+            this.currentIsolationLevel = SERIALIZABLE;
+        }
     }
 }

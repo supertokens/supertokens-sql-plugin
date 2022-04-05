@@ -276,32 +276,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
             Connection con = session.getSessionImpl().connection();
-
-            if (isolationLevel != null) {
-                int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-                switch (isolationLevel) {
-                case SERIALIZABLE:
-                    break;
-                case REPEATABLE_READ:
-                    libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                    break;
-                case READ_COMMITTED:
-                    libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                    break;
-                case READ_UNCOMMITTED:
-                    libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                    break;
-                case NONE:
-                    libIsolationLevel = Connection.TRANSACTION_NONE;
-                    break;
-                }
-                // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
-                // it
-                // in the connection. But I think that's not needed. Is this correct?
-                con.setTransactionIsolation(libIsolationLevel);
-            }
             try {
-                tx = session.beginTransaction();
+                tx = session.beginTransaction(isolationLevel);
                 T result = func.op(session, con);
                 if (tx.isActive()) {
                     // maybe the user has already commited the transaction manually.
