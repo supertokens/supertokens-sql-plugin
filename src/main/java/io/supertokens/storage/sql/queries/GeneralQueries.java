@@ -27,6 +27,7 @@ import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -236,10 +237,10 @@ public class GeneralQueries {
     }
 
     public static void setKeyValue_Transaction(Session session, String key, KeyValueInfo info) {
-        // we get the previously fetched KeyValueDO from the session since saveOrUpdate
-        // requires the exact same instance. If previously we had not fetched it, or
-        // if we tried to fetch but not get any result, then it will try and fetch once again
-        // with a PESSIMISTIC_WRITE lock.
+        // we want to do an "insert .. on conflict" style query here. There is no
+        // HQL way of doing that, we so first get it, and then we save or update.
+        // We do not apply a pessimistic write lock here because if this function
+        // is called twice in a row with the same key, then it will throw an error.
         KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key);
         if (toInsertOrUpdate == null) {
             toInsertOrUpdate = new KeyValueDO();
@@ -281,13 +282,10 @@ public class GeneralQueries {
     }
 
     public static void deleteKeyValue_Transaction(Session session, String key) {
-        KeyValueDO toDelete = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
-        if (toDelete == null) {
-            toDelete = new KeyValueDO();
-            toDelete.setName(key);
-        }
-        toDelete.setName(key);
-        session.delete(toDelete);
+        String hql = "DELETE FROM KeyValueDO WHERE name = :name";
+        Query query = session.createQuery(hql);
+        query.setParameter("name", key);
+        query.executeUpdate();
     }
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)

@@ -58,147 +58,147 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public SharedSessionBuilder sessionWithOptions() {
-        return this.session.sessionWithOptions();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void flush() throws HibernateException {
-        this.session.flush();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setFlushMode(FlushModeType flushMode) {
-        this.session.setFlushMode(flushMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setFlushMode(FlushMode flushMode) {
-        this.session.setFlushMode(flushMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public FlushModeType getFlushMode() {
-        return this.session.getFlushMode();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void lock(Object entity, LockModeType lockMode) {
-        this.session.lock(entity, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
-        this.session.lock(entity, lockMode, properties);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setHibernateFlushMode(FlushMode flushMode) {
-        this.session.setHibernateFlushMode(flushMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public FlushMode getHibernateFlushMode() {
-        return this.session.getHibernateFlushMode();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setCacheMode(CacheMode cacheMode) {
-        this.session.setCacheMode(cacheMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public CacheMode getCacheMode() {
-        return this.session.getCacheMode();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public SessionFactory getSessionFactory() {
-        return this.session.getSessionFactory();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void cancelQuery() throws HibernateException {
-        this.session.cancelQuery();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isDirty() throws HibernateException {
-        return this.session.isDirty();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isDefaultReadOnly() {
-        return this.session.isDefaultReadOnly();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setDefaultReadOnly(boolean readOnly) {
-        this.session.setDefaultReadOnly(readOnly);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Serializable getIdentifier(Object object) {
-        return this.session.getIdentifier(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean contains(String entityName, Object object) {
-        return this.session.contains(entityName, object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void evict(Object object) {
-        this.session.evict(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T load(Class<T> theClass, Serializable id, LockMode lockMode) {
-        return this.session.load(theClass, id, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T load(Class<T> theClass, Serializable id, LockOptions lockOptions) {
-        return this.session.load(theClass, id, lockOptions);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object load(String entityName, Serializable id, LockMode lockMode) {
-        return this.session.load(entityName, id, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object load(String entityName, Serializable id, LockOptions lockOptions) {
-        return this.session.load(entityName, id, lockOptions);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T load(Class<T> theClass, Serializable id) {
-        return this.session.load(theClass, id);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object load(String entityName, Serializable id) {
-        return this.session.load(entityName, id);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void load(Object object, Serializable id) {
-        this.session.load(object, id);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void replicate(Object object, ReplicationMode replicationMode) {
-        this.session.replicate(object, replicationMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void replicate(String entityName, Object object, ReplicationMode replicationMode) {
-        this.session.replicate(entityName, object, replicationMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Serializable save(Object object) {
-        this.nullEntityCache.remove(object.getClass().getName());
+        this.nullEntityCache = new HashMap<>();
         return this.session.save(object);
     }
 
@@ -220,7 +220,7 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void update(Object object) {
-        this.nullEntityCache.remove(object.getClass().getName());
+        this.nullEntityCache = new HashMap<>();
         this.session.update(object);
     }
 
@@ -242,149 +242,151 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void persist(Object object) {
-        this.session.persist(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void remove(Object entity) {
-        this.session.remove(entity);
+        throw new UnsupportedOperationException("Please use HQL for this operation");
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey) {
-        return this.session.find(entityClass, primaryKey);
+        throw new UnsupportedOperationException("Please use HQL for this operation");
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
-        return this.session.find(entityClass, primaryKey, properties);
+        throw new UnsupportedOperationException("Please use HQL for this operation");
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
-        return this.session.find(entityClass, primaryKey, lockMode);
+        throw new UnsupportedOperationException("Please use HQL for this operation");
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
-        return this.session.find(entityClass, primaryKey, lockMode, properties);
+        throw new UnsupportedOperationException("Please use HQL for this operation");
     }
 
     @Override
     public <T> T getReference(Class<T> entityClass, Object primaryKey) {
-        return this.session.getReference(entityClass, primaryKey);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void persist(String entityName, Object object) {
-        this.session.persist(entityName, object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void delete(Object object) {
-        this.nullEntityCache.remove(object.getClass().getName());
-        this.session.delete(object);
+        throw new UnsupportedOperationException(
+                "Please use createQuery and provide a HQL query to it. The reason for this is that calling session"
+                        + ".delete does a select too if the entity is not already fetched");
     }
 
     @Override
     public void delete(String entityName, Object object) {
-        this.nullEntityCache.remove(entityName);
-        this.session.delete(entityName, object);
+        throw new UnsupportedOperationException(
+                "Please use createQuery and provide a HQL query to it. The reason for this is that calling session"
+                        + ".delete does a select too if the entity is not already fetched");
     }
 
     @Override
     public void lock(Object object, LockMode lockMode) {
-        this.session.lock(object, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void lock(String entityName, Object object, LockMode lockMode) {
-        this.session.lock(entityName, object, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public LockRequest buildLockRequest(LockOptions lockOptions) {
-        return this.session.buildLockRequest(lockOptions);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object object) {
-        this.session.refresh(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object entity, Map<String, Object> properties) {
-        this.session.refresh(entity, properties);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object entity, LockModeType lockMode) {
-        this.session.refresh(entity, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
-        this.session.refresh(entity, lockMode, properties);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(String entityName, Object object) {
-        this.session.refresh(entityName, object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object object, LockMode lockMode) {
-        this.session.refresh(object, lockMode);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(Object object, LockOptions lockOptions) {
-        this.session.refresh(object, lockOptions);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void refresh(String entityName, Object object, LockOptions lockOptions) {
-        this.session.refresh(entityName, object, lockOptions);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public LockMode getCurrentLockMode(Object object) {
-        return this.session.getCurrentLockMode(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Query createFilter(Object collection, String queryString) {
-        return this.session.createFilter(collection, queryString);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void clear() {
-        this.session.clear();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void detach(Object entity) {
-        this.session.detach(entity);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean contains(Object entity) {
-        return this.session.contains(entity);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public LockModeType getLockMode(Object entity) {
-        return this.session.getLockMode(entity);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setProperty(String propertyName, Object value) {
-        this.session.setProperty(propertyName, value);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Map<String, Object> getProperties() {
-        return this.session.getProperties();
+        throw new UnsupportedOperationException();
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
@@ -449,171 +451,147 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public <T> T get(Class<T> entityType, Serializable id, LockOptions lockOptions) {
-        if (isInNullEntityCache(entityType.getName(), id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        T result = this.session.get(entityType, id, lockOptions);
-        updateNullEntityCache(result, entityType.getName(), id);
-        return result;
+        throw new UnsupportedOperationException("Please use session.get(..., LockMode) instead");
     }
 
     @Override
     public Object get(String entityName, Serializable id) {
-        if (isInNullEntityCache(entityName, id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        Object result = this.session.get(entityName, id);
-        updateNullEntityCache(result, entityName, id);
-        return result;
+        throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
     @Override
     public Object get(String entityName, Serializable id, LockMode lockMode) {
-        if (isInNullEntityCache(entityName, id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        Object result = this.session.get(entityName, id, lockMode);
-        updateNullEntityCache(result, entityName, id);
-        return result;
+        throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
     @Override
     public Object get(String entityName, Serializable id, LockOptions lockOptions) {
-        if (isInNullEntityCache(entityName, id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        Object result = this.session.get(entityName, id, lockOptions);
-        updateNullEntityCache(result, entityName, id);
-        return result;
+        throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
     @Override
     public String getEntityName(Object object) {
-        return this.session.getEntityName(object);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public IdentifierLoadAccess byId(String entityName) {
-        return this.session.byId(entityName);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public <T> MultiIdentifierLoadAccess<T> byMultipleIds(Class<T> entityClass) {
-        return this.session.byMultipleIds(entityClass);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public MultiIdentifierLoadAccess byMultipleIds(String entityName) {
-        return this.session.byMultipleIds(entityName);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public <T> IdentifierLoadAccess<T> byId(Class<T> entityClass) {
-        return this.session.byId(entityClass);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public NaturalIdLoadAccess byNaturalId(String entityName) {
-        return this.session.byNaturalId(entityName);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public <T> NaturalIdLoadAccess<T> byNaturalId(Class<T> entityClass) {
-        return this.session.byNaturalId(entityClass);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public SimpleNaturalIdLoadAccess bySimpleNaturalId(String entityName) {
-        return this.session.bySimpleNaturalId(entityName);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public <T> SimpleNaturalIdLoadAccess<T> bySimpleNaturalId(Class<T> entityClass) {
-        return this.session.bySimpleNaturalId(entityClass);
+        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
     }
 
     @Override
     public Filter enableFilter(String filterName) {
-        return this.session.enableFilter(filterName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Filter getEnabledFilter(String filterName) {
-        return this.session.getEnabledFilter(filterName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void disableFilter(String filterName) {
-        this.session.disableFilter(filterName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public SessionStatistics getStatistics() {
-        return this.session.getStatistics();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isReadOnly(Object entityOrProxy) {
-        return this.session.isReadOnly(entityOrProxy);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setReadOnly(Object entityOrProxy, boolean readOnly) {
-        this.session.setReadOnly(entityOrProxy, readOnly);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> RootGraph<T> createEntityGraph(Class<T> rootType) {
-        return this.session.createEntityGraph(rootType);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public RootGraph<?> createEntityGraph(String graphName) {
-        return this.session.createEntityGraph(graphName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public RootGraph<?> getEntityGraph(String graphName) {
-        return this.session.getEntityGraph(graphName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Connection disconnect() {
-        return this.session.disconnect();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void reconnect(Connection connection) {
-        this.session.reconnect(connection);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isFetchProfileEnabled(String name) throws UnknownProfileException {
-        return this.session.isFetchProfileEnabled(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void enableFetchProfile(String name) throws UnknownProfileException {
-        this.session.enableFetchProfile(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void disableFetchProfile(String name) throws UnknownProfileException {
-        this.session.disableFetchProfile(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public TypeHelper getTypeHelper() {
-        return this.session.getTypeHelper();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public LobHelper getLobHelper() {
-        return this.session.getLobHelper();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -623,57 +601,72 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            // we ask to use the gte function cause that utilises our null value cache
+            throw new UnsupportedOperationException("Please use session.get instead");
+        }
+        this.nullEntityCache = new HashMap<>();
         return this.session.createQuery(queryString, resultType);
     }
 
     @Override
+    public org.hibernate.query.Query createQuery(String queryString) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            // we ask to use the gte function cause that utilises our null value cache
+            throw new UnsupportedOperationException("Please use session.get instead");
+        }
+        this.nullEntityCache = new HashMap<>();
+        return this.session.createQuery(queryString);
+    }
+
+    @Override
     public org.hibernate.query.Query createNamedQuery(String name) {
-        return this.session.createNamedQuery(name);
+        throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public <T> org.hibernate.query.Query<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-        return this.session.createQuery(criteriaQuery);
+        throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public org.hibernate.query.Query createQuery(CriteriaUpdate updateQuery) {
-        return this.session.createQuery(updateQuery);
+        throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public org.hibernate.query.Query createQuery(CriteriaDelete deleteQuery) {
-        return this.session.createQuery(deleteQuery);
+        throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public <T> org.hibernate.query.Query<T> createNamedQuery(String name, Class<T> resultType) {
-        return this.session.createNamedQuery(name, resultType);
+        throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public NativeQuery createNativeQuery(String sqlString, Class resultClass) {
-        return this.session.createNativeQuery(sqlString, resultClass);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
-        return this.session.createNamedStoredProcedureQuery(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName) {
-        return this.session.createStoredProcedureQuery(procedureName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName, Class... resultClasses) {
-        return this.session.createStoredProcedureQuery(procedureName, resultClasses);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName, String... resultSetMappings) {
-        return this.session.createStoredProcedureQuery(procedureName, resultSetMappings);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -708,27 +701,27 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public Metamodel getMetamodel() {
-        return this.session.getMetamodel();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NativeQuery createSQLQuery(String queryString) {
-        return this.session.createSQLQuery(queryString);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NativeQuery createNativeQuery(String sqlString) {
-        return this.session.createNativeQuery(sqlString);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NativeQuery createNativeQuery(String sqlString, String resultSetMapping) {
-        return this.session.createNativeQuery(sqlString, resultSetMapping);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NativeQuery getNamedNativeQuery(String name) {
-        return this.session.getNamedNativeQuery(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -738,7 +731,7 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public String getTenantIdentifier() {
-        return this.session.getTenantIdentifier();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -774,63 +767,58 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
-        return this.session.createQuery(queryString);
-    }
-
-    @Override
     public org.hibernate.query.Query getNamedQuery(String queryName) {
-        return this.session.getNamedQuery(queryName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ProcedureCall getNamedProcedureCall(String name) {
-        return this.session.getNamedProcedureCall(name);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName) {
-        return this.session.createStoredProcedureCall(procedureName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName, Class... resultClasses) {
-        return this.session.createStoredProcedureCall(procedureName, resultClasses);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName, String... resultSetMappings) {
-        return this.session.createStoredProcedureCall(procedureName, resultSetMappings);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Criteria createCriteria(Class persistentClass) {
-        return this.session.createCriteria(persistentClass);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Criteria createCriteria(Class persistentClass, String alias) {
-        return this.session.createCriteria(persistentClass, alias);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Criteria createCriteria(String entityName) {
-        return this.session.createCriteria(entityName);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Criteria createCriteria(String entityName, String alias) {
-        return this.session.createCriteria(entityName, alias);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Integer getJdbcBatchSize() {
-        return this.session.getJdbcBatchSize();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void setJdbcBatchSize(Integer jdbcBatchSize) {
-        this.session.setJdbcBatchSize(jdbcBatchSize);
+        throw new UnsupportedOperationException();
     }
 
     public SessionImpl getSessionImpl() {
