@@ -62,6 +62,177 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
+    public Serializable save(Object object) {
+        this.clearNullEntityCache();
+        this.entitySet.add(object);
+        return this.session.save(object);
+    }
+
+    @Override
+    public void update(Object object) {
+        this.clearNullEntityCache();
+        this.entitySet.add(object);
+        this.session.update(object);
+    }
+
+    public <T> void delete(Class<T> theClass, Serializable id, Object object) {
+        if (this.contains(object)) {
+            // if it comes here, it means that the entity is already loaded up in our entity memory or
+            // in hibernate's session memory.
+            object = this.get(theClass, id);
+        }
+        this.clearNullEntityCache();
+        this.entitySet.remove(object);
+        this.session.delete(object);
+    }
+
+    @Override
+    public boolean contains(Object entity) {
+        if (this.entitySet.contains(entity)) {
+            return true;
+        }
+        return this.session.contains(entity);
+    }
+
+    public boolean isInNullEntityCache(String entityName, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            // here we know that the db state will not change if we read again, so we try to do that.
+            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
+            if (cacheForEntity == null) {
+                return false;
+            }
+            return cacheForEntity.contains(id);
+        } else {
+            // attempt to read from db again.
+            return false;
+        }
+    }
+
+    public void updateCache(Object toSave, String entityName, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
+            if (toSave == null) {
+                if (cacheForEntity == null) {
+                    cacheForEntity = new HashSet<>();
+                }
+                // we add this ID so that future queries with this ID
+                // don't need to query the db
+                cacheForEntity.add(id);
+                // TODO: sql-plugin -> should we remove from entitySet?
+            } else {
+                if (cacheForEntity != null) {
+                    // we remove this ID so that future queries for this ID
+                    // check the Hibernate session.
+                    cacheForEntity.remove(id);
+                }
+                this.entitySet.add(toSave);
+            }
+            if (cacheForEntity != null) {
+                this.nullEntityCache.put(entityName, cacheForEntity);
+            }
+        }
+    }
+
+    @Override
+    public <T> T get(Class<T> entityType, Serializable id) {
+        if (isInNullEntityCache(entityType.getName(), id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        T result = this.session.get(entityType, id);
+        updateCache(result, entityType.getName(), id);
+        return result;
+    }
+
+    @Override
+    public <T> T get(Class<T> entityType, Serializable id, LockMode lockMode) {
+        if (isInNullEntityCache(entityType.getName(), id)) {
+            // this means that we had fetched it previously and the db had returned a null value.
+            return null;
+        }
+        T result = this.session.get(entityType, id, lockMode);
+        updateCache(result, entityType.getName(), id);
+        return result;
+
+    }
+
+    public SessionImpl getSessionImpl() {
+        return (SessionImpl) this.session;
+    }
+
+    private void setIsolationLevel(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel) throws SQLException {
+        Connection con = this.getSessionImpl().connection();
+
+        if (isolationLevel != null) {
+            this.currentIsolationLevel = isolationLevel;
+            int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
+            switch (isolationLevel) {
+            case SERIALIZABLE:
+                break;
+            case REPEATABLE_READ:
+                libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
+                break;
+            case READ_COMMITTED:
+                libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
+                break;
+            case READ_UNCOMMITTED:
+                libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
+                break;
+            case NONE:
+                libIsolationLevel = Connection.TRANSACTION_NONE;
+                break;
+            }
+            con.setTransactionIsolation(libIsolationLevel);
+        } else {
+            this.currentIsolationLevel = SERIALIZABLE;
+        }
+    }
+
+    @Override
+    public boolean isJoinedToTransaction() {
+        return this.session.isJoinedToTransaction();
+    }
+
+    public Transaction beginTransaction(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel)
+            throws SQLException {
+        this.setIsolationLevel(isolationLevel);
+        this.clearNullEntityCache();
+        this.clearCustomEntityCache();
+        return this.session.beginTransaction();
+    }
+
+    @Override
+    public void close() {
+        this.session.close();
+    }
+
+    private void clearCustomEntityCache() {
+        this.entitySet = new HashSet<>();
+    }
+
+    @Override
+    public Transaction getTransaction() {
+        return this.session.getTransaction();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    // UNSUPPORTED FUNCTIONS BELOW....................
+
+    @Override
     public SharedSessionBuilder sessionWithOptions() {
         throw new UnsupportedOperationException();
     }
@@ -202,16 +373,8 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public Serializable save(Object object) {
-        this.clearNullEntityCache();
-        this.entitySet.add(object);
-        return this.session.save(object);
-    }
-
-    @Override
     public Serializable save(String entityName, Object object) {
-        this.nullEntityCache.remove(entityName);
-        return this.session.save(entityName, object);
+        throw new UnsupportedOperationException("Please use session.save(Object) instead");
     }
 
     @Override
@@ -225,16 +388,8 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public void update(Object object) {
-        this.clearNullEntityCache();
-        this.entitySet.add(object);
-        this.session.update(object);
-    }
-
-    @Override
     public void update(String entityName, Object object) {
-        this.nullEntityCache.remove(entityName);
-        this.session.update(entityName, object);
+        throw new UnsupportedOperationException("Please use session.update(Object) instead");
     }
 
     @Override
@@ -290,17 +445,6 @@ public class CustomSessionWrapper implements Session {
     @Override
     public void delete(Object object) {
         throw new UnsupportedOperationException("Use session.delete(Class, Serializable, Object)");
-    }
-
-    public <T> void delete(Class<T> theClass, Serializable id, Object object) {
-        if (this.contains(object)) {
-            // if it comes here, it means that the entity is already loaded up in our entity memory or
-            // in hibernate's session memory.
-            object = this.get(theClass, id);
-        }
-        this.clearNullEntityCache();
-        this.entitySet.remove(object);
-        this.session.delete(object);
     }
 
     @Override
@@ -384,14 +528,6 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public boolean contains(Object entity) {
-        if (this.entitySet.contains(entity)) {
-            return true;
-        }
-        return this.session.contains(entity);
-    }
-
-    @Override
     public LockModeType getLockMode(Object entity) {
         throw new UnsupportedOperationException();
     }
@@ -404,70 +540,6 @@ public class CustomSessionWrapper implements Session {
     @Override
     public Map<String, Object> getProperties() {
         throw new UnsupportedOperationException();
-    }
-
-    public boolean isInNullEntityCache(String entityName, Serializable id) {
-        if (this.currentIsolationLevel == SERIALIZABLE
-                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
-            // here we know that the db state will not change if we read again, so we try to do that.
-            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
-            if (cacheForEntity == null) {
-                return false;
-            }
-            return cacheForEntity.contains(id);
-        } else {
-            // attempt to read from db again.
-            return false;
-        }
-    }
-
-    public void updateCache(Object toSave, String entityName, Serializable id) {
-        if (this.currentIsolationLevel == SERIALIZABLE
-                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
-            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
-            if (toSave == null) {
-                if (cacheForEntity == null) {
-                    cacheForEntity = new HashSet<>();
-                }
-                // we add this ID so that future queries with this ID
-                // don't need to query the db
-                cacheForEntity.add(id);
-                // TODO: sql-plugin -> should we remove from entitySet?
-            } else {
-                if (cacheForEntity != null) {
-                    // we remove this ID so that future queries for this ID
-                    // check the Hibernate session.
-                    cacheForEntity.remove(id);
-                }
-                this.entitySet.add(toSave);
-            }
-            if (cacheForEntity != null) {
-                this.nullEntityCache.put(entityName, cacheForEntity);
-            }
-        }
-    }
-
-    @Override
-    public <T> T get(Class<T> entityType, Serializable id) {
-        if (isInNullEntityCache(entityType.getName(), id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        T result = this.session.get(entityType, id);
-        updateCache(result, entityType.getName(), id);
-        return result;
-    }
-
-    @Override
-    public <T> T get(Class<T> entityType, Serializable id, LockMode lockMode) {
-        if (isInNullEntityCache(entityType.getName(), id)) {
-            // this means that we had fetched it previously and the db had returned a null value.
-            return null;
-        }
-        T result = this.session.get(entityType, id, lockMode);
-        updateCache(result, entityType.getName(), id);
-        return result;
-
     }
 
     @Override
@@ -617,7 +689,7 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void addEventListeners(SessionEventListener... listeners) {
-        this.session.addEventListeners(listeners);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -694,32 +766,27 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void joinTransaction() {
-        this.session.joinTransaction();
-    }
-
-    @Override
-    public boolean isJoinedToTransaction() {
-        return this.session.isJoinedToTransaction();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T unwrap(Class<T> cls) {
-        return this.session.unwrap(cls);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Object getDelegate() {
-        return this.session.getDelegate();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public EntityManagerFactory getEntityManagerFactory() {
-        return this.session.getEntityManagerFactory();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public CriteriaBuilder getCriteriaBuilder() {
-        return this.session.getCriteriaBuilder();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -749,7 +816,7 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public Session getSession() {
-        return this.session.getSession();
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -758,40 +825,18 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public void close() {
-        this.session.close();
-    }
-
-    @Override
     public boolean isOpen() {
-        return this.session.isOpen();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isConnected() {
-        return this.session.isConnected();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Transaction beginTransaction() {
         throw new UnsupportedOperationException("Please use beginTransaction(isolationLevel) function instead");
-    }
-
-    public Transaction beginTransaction(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel)
-            throws SQLException {
-        this.setIsolationLevel(isolationLevel);
-        this.clearNullEntityCache();
-        this.clearCustomEntityCache();
-        return this.session.beginTransaction();
-    }
-
-    private void clearCustomEntityCache() {
-        this.entitySet = new HashSet<>();
-    }
-
-    @Override
-    public Transaction getTransaction() {
-        return this.session.getTransaction();
     }
 
     @Override
@@ -847,37 +892,5 @@ public class CustomSessionWrapper implements Session {
     @Override
     public void setJdbcBatchSize(Integer jdbcBatchSize) {
         throw new UnsupportedOperationException();
-    }
-
-    public SessionImpl getSessionImpl() {
-        return (SessionImpl) this.session;
-    }
-
-    private void setIsolationLevel(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel) throws SQLException {
-        Connection con = this.getSessionImpl().connection();
-
-        if (isolationLevel != null) {
-            this.currentIsolationLevel = isolationLevel;
-            int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-            switch (isolationLevel) {
-            case SERIALIZABLE:
-                break;
-            case REPEATABLE_READ:
-                libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                break;
-            case READ_COMMITTED:
-                libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                break;
-            case READ_UNCOMMITTED:
-                libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                break;
-            case NONE:
-                libIsolationLevel = Connection.TRANSACTION_NONE;
-                break;
-            }
-            con.setTransactionIsolation(libIsolationLevel);
-        } else {
-            this.currentIsolationLevel = SERIALIZABLE;
-        }
     }
 }
