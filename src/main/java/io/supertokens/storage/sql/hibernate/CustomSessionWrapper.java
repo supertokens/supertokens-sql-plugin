@@ -48,31 +48,24 @@ public class CustomSessionWrapper implements Session {
 
     final Session session;
 
-    // Example entry "KeyValueDO" -> {name1, name2, ..}
+    // Example entry "KeyValueDO" -> {pk1, pk2, ..}
     private Map<String, Set<Serializable>> nullEntityCache = new HashMap<>();
     private Set<Object> entitySet = new HashSet<>();
     SQLStorage.TransactionIsolationLevel currentIsolationLevel = null;
-
-    private void clearNullEntityCache() {
-        this.nullEntityCache = new HashMap<>();
-    }
 
     public CustomSessionWrapper(Session session) {
         this.session = session;
     }
 
-    @Override
-    public Serializable save(Object object) {
-        this.clearNullEntityCache();
-        this.entitySet.add(object);
-        return this.session.save(object);
+    public <T> Serializable save(Class<T> theClass, Serializable id, Object object) {
+        Serializable result = this.session.save(object);
+        this.updateCache(object, theClass.getName(), id);
+        return result;
     }
 
-    @Override
-    public void update(Object object) {
-        this.clearNullEntityCache();
-        this.entitySet.add(object);
+    public <T> void update(Class<T> theClass, Serializable id, Object object) {
         this.session.update(object);
+        this.updateCache(object, theClass.getName(), id);
     }
 
     public <T> void delete(Class<T> theClass, Serializable id, Object object) {
@@ -81,58 +74,19 @@ public class CustomSessionWrapper implements Session {
             // in hibernate's session memory.
             object = this.get(theClass, id);
         }
-        this.clearNullEntityCache();
-        this.entitySet.remove(object);
         this.session.delete(object);
+        this.updateCache(object, theClass.getName(), id);
     }
 
     @Override
     public boolean contains(Object entity) {
-        if (this.entitySet.contains(entity)) {
-            return true;
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            if (this.entitySet.contains(entity)) {
+                return true;
+            }
         }
         return this.session.contains(entity);
-    }
-
-    public boolean isInNullEntityCache(String entityName, Serializable id) {
-        if (this.currentIsolationLevel == SERIALIZABLE
-                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
-            // here we know that the db state will not change if we read again, so we try to do that.
-            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
-            if (cacheForEntity == null) {
-                return false;
-            }
-            return cacheForEntity.contains(id);
-        } else {
-            // attempt to read from db again.
-            return false;
-        }
-    }
-
-    public void updateCache(Object toSave, String entityName, Serializable id) {
-        if (this.currentIsolationLevel == SERIALIZABLE
-                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
-            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
-            if (toSave == null) {
-                if (cacheForEntity == null) {
-                    cacheForEntity = new HashSet<>();
-                }
-                // we add this ID so that future queries with this ID
-                // don't need to query the db
-                cacheForEntity.add(id);
-                // TODO: sql-plugin -> should we remove from entitySet?
-            } else {
-                if (cacheForEntity != null) {
-                    // we remove this ID so that future queries for this ID
-                    // check the Hibernate session.
-                    cacheForEntity.remove(id);
-                }
-                this.entitySet.add(toSave);
-            }
-            if (cacheForEntity != null) {
-                this.nullEntityCache.put(entityName, cacheForEntity);
-            }
-        }
     }
 
     @Override
@@ -156,6 +110,51 @@ public class CustomSessionWrapper implements Session {
         updateCache(result, entityType.getName(), id);
         return result;
 
+    }
+
+    public boolean isInNullEntityCache(String entityName, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            // here we know that the db state will not change if we read again, so we try to do that.
+            Set<Serializable> cacheForEntity = this.nullEntityCache.get(entityName);
+            if (cacheForEntity == null) {
+                return false;
+            }
+            return cacheForEntity.contains(id);
+        } else {
+            // attempt to read from db again.
+            return false;
+        }
+    }
+
+    public void updateCache(@Nullable Object toSave, @Nullable String entityName, @Nullable Serializable id) {
+        if (entityName == null && id == null) {
+            throw new IllegalArgumentException("Please provide entityName and id");
+        }
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            Set<Serializable> cacheForNullIds = this.nullEntityCache.get(entityName);
+            if (toSave == null) {
+                if (cacheForNullIds == null) {
+                    cacheForNullIds = new HashSet<>();
+                }
+                // we add this ID so that future queries with this ID
+                // don't need to query the db
+                cacheForNullIds.add(id);
+                this.entitySet.clear();
+            } else {
+                if (cacheForNullIds != null) {
+                    // we remove this ID so that future queries for this ID
+                    // check the Hibernate session.
+                    cacheForNullIds.remove(id);
+                }
+                this.entitySet.add(toSave);
+            }
+            if (cacheForNullIds != null) {
+                this.nullEntityCache.put(entityName, cacheForNullIds);
+            }
+
+        }
     }
 
     public SessionImpl getSessionImpl() {
@@ -198,18 +197,14 @@ public class CustomSessionWrapper implements Session {
     public Transaction beginTransaction(@Nullable SQLStorage.TransactionIsolationLevel isolationLevel)
             throws SQLException {
         this.setIsolationLevel(isolationLevel);
-        this.clearNullEntityCache();
-        this.clearCustomEntityCache();
+        this.nullEntityCache = new HashMap<>();
+        this.entitySet = new HashSet<>();
         return this.session.beginTransaction();
     }
 
     @Override
     public void close() {
         this.session.close();
-    }
-
-    private void clearCustomEntityCache() {
-        this.entitySet = new HashSet<>();
     }
 
     @Override
@@ -231,6 +226,15 @@ public class CustomSessionWrapper implements Session {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     // UNSUPPORTED FUNCTIONS BELOW....................
+    @Override
+    public void update(Object object) {
+        throw new UnsupportedOperationException("Please use session.update(Class, Serializable, Object)");
+    }
+
+    @Override
+    public Serializable save(Object object) {
+        throw new UnsupportedOperationException("Please use session.save(Class, Serializable, Object)");
+    }
 
     @Override
     public SharedSessionBuilder sessionWithOptions() {

@@ -248,11 +248,11 @@ public class GeneralQueries {
             toInsertOrUpdate.setName(key);
             toInsertOrUpdate.setValue(info.value);
             toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
-            session.save(toInsertOrUpdate);
+            session.save(KeyValueDO.class, key, toInsertOrUpdate);
         } else {
             toInsertOrUpdate.setValue(info.value);
             toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
-            session.update(toInsertOrUpdate);
+            session.update(KeyValueDO.class, key, toInsertOrUpdate);
         }
     }
 
