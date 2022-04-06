@@ -254,27 +254,27 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void remove(Object entity) {
-        throw new UnsupportedOperationException("Please use HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey) {
-        throw new UnsupportedOperationException("Please use HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
-        throw new UnsupportedOperationException("Please use HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
-        throw new UnsupportedOperationException("Please use HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
-        throw new UnsupportedOperationException("Please use HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -497,42 +497,42 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public IdentifierLoadAccess byId(String entityName) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> MultiIdentifierLoadAccess<T> byMultipleIds(Class<T> entityClass) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public MultiIdentifierLoadAccess byMultipleIds(String entityName) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> IdentifierLoadAccess<T> byId(Class<T> entityClass) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public NaturalIdLoadAccess byNaturalId(String entityName) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> NaturalIdLoadAccess<T> byNaturalId(Class<T> entityClass) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public SimpleNaturalIdLoadAccess bySimpleNaturalId(String entityName) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public <T> SimpleNaturalIdLoadAccess<T> bySimpleNaturalId(Class<T> entityClass) {
-        throw new UnsupportedOperationException("Please use session.get or HQL for this operation");
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -27,7 +27,6 @@ import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
-import org.hibernate.Session;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -236,11 +235,13 @@ public class GeneralQueries {
         }
     }
 
-    public static void setKeyValue_Transaction(Session session, String key, KeyValueInfo info) {
+    public static void setKeyValue_Transaction(CustomSessionWrapper session, String key, KeyValueInfo info) {
         // we want to do an "insert .. on conflict" style query here. There is no
-        // HQL way of doing that, we so first get it, and then we save or update.
+        // direct way of doing that, we so first get it, and then we save or update.
         // We do not apply a pessimistic write lock here because if this function
         // is called twice in a row with the same key, then it will throw an error.
+        // Also we do not call saveOrUpdate since that does an extra select query in case
+        // we are inserting a new value.
         KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key);
         if (toInsertOrUpdate == null) {
             toInsertOrUpdate = new KeyValueDO();
@@ -273,7 +274,7 @@ public class GeneralQueries {
         }, false);
     }
 
-    public static KeyValueInfo getKeyValue_Transaction(Session session, String key) {
+    public static KeyValueInfo getKeyValue_Transaction(CustomSessionWrapper session, String key) {
         KeyValueDO result = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
         if (result == null) {
             return null;
@@ -281,10 +282,10 @@ public class GeneralQueries {
         return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
     }
 
-    public static void deleteKeyValue_Transaction(Session session, String key) {
+    public static void deleteKeyValue_Transaction(CustomSessionWrapper session, String key) {
         KeyValueDO toDelete = new KeyValueDO();
         toDelete.setName(key);
-        ((CustomSessionWrapper) session).delete(KeyValueDO.class, key, toDelete);
+        session.delete(KeyValueDO.class, key, toDelete);
     }
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)

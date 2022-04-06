@@ -51,9 +51,9 @@ import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
-import org.hibernate.Session;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,9 +264,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void commitTransaction(TransactionConnection con) throws StorageQueryException {
-        Object session = con.getSession();
-        if (session != null && ((Session) session).isJoinedToTransaction()) {
-            ((Session) session).getTransaction().commit();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+        if (session != null && session.isJoinedToTransaction()) {
+            session.getTransaction().commit();
         } else {
             Connection sqlCon = (Connection) con.getConnection();
             try {
@@ -280,13 +280,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public KeyValueInfo getLegacyAccessTokenSigningKey_Transaction(TransactionConnection con) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         return GeneralQueries.getKeyValue_Transaction(session, ACCESS_TOKEN_SIGNING_KEY_NAME);
     }
 
     @Override
     public void removeLegacyAccessTokenSigningKey_Transaction(TransactionConnection con) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         GeneralQueries.deleteKeyValue_Transaction(session, ACCESS_TOKEN_SIGNING_KEY_NAME);
     }
 
@@ -323,13 +323,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public KeyValueInfo getRefreshTokenSigningKey_Transaction(TransactionConnection con) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         return GeneralQueries.getKeyValue_Transaction(session, REFRESH_TOKEN_KEY_NAME);
     }
 
     @Override
     public void setRefreshTokenSigningKey_Transaction(TransactionConnection con, KeyValueInfo info) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         GeneralQueries.setKeyValue_Transaction(session, REFRESH_TOKEN_KEY_NAME, info);
     }
 
@@ -471,13 +471,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public void setKeyValue_Transaction(TransactionConnection con, String key, KeyValueInfo info) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         GeneralQueries.setKeyValue_Transaction(session, key, info);
     }
 
     @Override
     public KeyValueInfo getKeyValue_Transaction(TransactionConnection con, String key) {
-        Session session = (Session) con.getSession();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         return GeneralQueries.getKeyValue_Transaction(session, key);
     }
 

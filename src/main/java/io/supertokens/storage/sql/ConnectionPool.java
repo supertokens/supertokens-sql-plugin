@@ -29,7 +29,6 @@ import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.jetbrains.annotations.NotNull;
@@ -222,11 +221,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     }
 
     public interface WithSession<T> {
-        T op(Session session, Connection con) throws SQLException, StorageQueryException;
+        T op(CustomSessionWrapper session, Connection con) throws SQLException, StorageQueryException;
     }
 
     public interface WithSessionForComplexTransaction<T> {
-        T op(Session session, Connection con)
+        T op(CustomSessionWrapper session, Connection con)
                 throws SQLException, StorageQueryException, StorageTransactionLogicException;
 
     }
