@@ -20,7 +20,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 /*
 CREATE TABLE key_value (
@@ -51,4 +54,19 @@ public class KeyValueDO {
     private String value;
 
     private long created_at_time;
+
+    // TODO: sql-plugin -> does overriding the below have some other effect?
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof KeyValueDO) {
+            KeyValueDO otherKeyValue = (KeyValueDO) other;
+            return otherKeyValue.name.equals(this.name);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
 }

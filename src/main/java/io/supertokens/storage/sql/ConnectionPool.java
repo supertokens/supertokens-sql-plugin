@@ -25,14 +25,12 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.DatabaseConfig;
-import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.internal.SessionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.sql.DataSource;
@@ -223,11 +221,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     }
 
     public interface WithSession<T> {
-        T op(Session session, Connection con) throws SQLException, StorageQueryException;
+        T op(CustomSessionWrapper session, Connection con) throws SQLException, StorageQueryException;
     }
 
     public interface WithSessionForComplexTransaction<T> {
-        T op(Session session, Connection con)
+        T op(CustomSessionWrapper session, Connection con)
                 throws SQLException, StorageQueryException, StorageTransactionLogicException;
 
     }
@@ -251,8 +249,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } else {
             // for SELECT queries
             SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-            try (Session session = sessionFactory.openSession()) {
-                Connection con = ((SessionImpl) session).connection();
+            try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
+                Connection con = session.getSessionImpl().connection();
                 return func.op(session, con);
             }
         }
@@ -269,40 +267,16 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
+        try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
             // we assume that these queries will always have a non-SELECT part in them
             // so that's why we always begin a transaction.
             Transaction tx = null;
 
             // we do not use try-with resource for Connection below cause we close
             // the entire Session itself.
-            Connection con = ((SessionImpl) session).connection();
-
-            if (isolationLevel != null) {
-                int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-                switch (isolationLevel) {
-                case SERIALIZABLE:
-                    break;
-                case REPEATABLE_READ:
-                    libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                    break;
-                case READ_COMMITTED:
-                    libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                    break;
-                case READ_UNCOMMITTED:
-                    libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                    break;
-                case NONE:
-                    libIsolationLevel = Connection.TRANSACTION_NONE;
-                    break;
-                }
-                // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
-                // it
-                // in the connection. But I think that's not needed. Is this correct?
-                con.setTransactionIsolation(libIsolationLevel);
-            }
+            Connection con = session.getSessionImpl().connection();
             try {
-                tx = session.beginTransaction();
+                tx = session.beginTransaction(isolationLevel);
                 T result = func.op(session, con);
                 if (tx.isActive()) {
                     // maybe the user has already commited the transaction manually.

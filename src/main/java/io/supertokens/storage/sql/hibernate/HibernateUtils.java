@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.hibernate;
 
+import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.DatabaseConfig;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import org.hibernate.SessionFactory;
@@ -80,6 +81,10 @@ public class HibernateUtils {
         properties.put(Environment.DATASOURCE, dataSource);
 
         // Uncomment the below if you want to see SQL queries
+        if (Start.printSQL) {
+            // is true during certain tests.
+            properties.put(Environment.SHOW_SQL, true);
+        }
 //        properties.put(Environment.SHOW_SQL, true);
 //        properties.put(Environment.FORMAT_SQL, true);
 
