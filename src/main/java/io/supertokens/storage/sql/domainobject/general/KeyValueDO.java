@@ -16,11 +16,14 @@
 
 package io.supertokens.storage.sql.domainobject.general;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import java.math.BigInteger;
 
 /*
 CREATE TABLE key_value (
@@ -29,19 +32,41 @@ CREATE TABLE key_value (
     created_at_time BIGINT,
     CONSTRAINT key_value_pkey PRIMARY KEY(name)
 );
+
+See mapping of SQL column types to hiberate types here: https://docs.jboss.org/hibernate/orm/5
+.0/mappingGuide/en-US/html_single/#d5e555 (Section 3.1)
 */
 
 // TODO: sql-plugin: Name of the table and constraint should be based on user's config.
-@Table(name = "key_value", uniqueConstraints = @UniqueConstraint(name = "key_value_pkey", columnNames = { "name" }))
+// TODO: sql-plugin: Is using @UniqueConstraint correct?
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "key_value")
 public class KeyValueDO {
 
     @Id
-    @Column(columnDefinition = "CHAR", length = 128)
+    @Column(length = 128)
     private String name;
 
     @Column(columnDefinition = "TEXT")
     private String value;
 
-    @Column(columnDefinition = "BIGINT")
-    private BigInteger created_at_time;
+    private long created_at_time;
+
+    // TODO: sql-plugin -> does overriding the below have some other effect?
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof KeyValueDO) {
+            KeyValueDO otherKeyValue = (KeyValueDO) other;
+            return otherKeyValue.name.equals(this.name);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name.hashCode();
+    }
 }

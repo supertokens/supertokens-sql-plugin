@@ -24,17 +24,16 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.config.Config;
-import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.config.DatabaseConfig;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
+import io.supertokens.storage.sql.hibernate.HibernateUtils;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.utils.Utils;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.MetadataSources;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Environment;
-import org.hibernate.internal.SessionImpl;
+import org.jetbrains.annotations.NotNull;
 
+import javax.sql.DataSource;
 import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,27 +45,71 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.sql.ConnectionPool";
     private static SessionFactory sessionFactory = null;
-    private static HikariDataSource hikariDataSource = null;
+    private static HikariDataSource dataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
             throw new RuntimeException(new ConnectException("Connection to refused")); // emulates exception thrown by
-                                                                                       // Hikari
+            // Hikari
         }
 
-        if (ConnectionPool.hikariDataSource != null) {
+        if (ConnectionPool.sessionFactory != null) {
             // This implies that it was already created before and that
-            // there is no need to create Hikari or sessionFactory again.
+            // there is no need to create sessionFactory again.
 
-            // If ConnectionPool.hikariDataSource == null, it implies that
+            // If ConnectionPool.sessionFactory == null, it implies that
             // either the config file had changed somehow (which means the plugin JAR was reloaded, resulting in static
             // variables to be set to null), or it means that this is the first time we are trying to connect to a db
             // (applicable only for testing).
             return;
         }
 
-        PostgreSQLConfig userConfig = Config.getConfig(start);
+        final DatabaseConfig config = Config.getConfig(start);
+        dataSource = (HikariDataSource) dataSource(config);
+        sessionFactory = HibernateUtils.initSessionFactory(config, dataSource);
+    }
 
+    private static DataSource dataSource(DatabaseConfig databaseConfig) {
+        return new HikariDataSource(hikariConfig(databaseConfig));
+    }
+
+    @NotNull
+    private static HikariConfig hikariConfig(DatabaseConfig databaseConfig) {
+
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(getJdbcUrl(databaseConfig));
+
+        // TODO: sql-plugin -> choose the right driver based on actual config
+        // TODO: sql-plugin: do we need a validate function to check if the dialect passed exists or not
+        // like invoke a Class.forName() and if it throws an exception we do a quit program exception,
+        // or do we let hibernate handle if a dialect does not exist ?
+        // this basically might be a measure against spelling mistakes or such
+        hikariConfig.setDriverClassName(databaseConfig.getDriverClassName());
+
+        if (databaseConfig.getUser() != null) {
+            hikariConfig.setUsername(databaseConfig.getUser());
+        }
+
+        if (databaseConfig.getPassword() != null && !databaseConfig.getPassword().equals("")) {
+            hikariConfig.setPassword(databaseConfig.getPassword());
+        }
+        hikariConfig.setMaximumPoolSize(databaseConfig.getConnectionPoolSize());
+        hikariConfig.setConnectionTimeout(5000);
+        hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+        hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
+        // io.supertokens.storage.postgresql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) |
+        // SuperTokens
+        // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
+        // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
+        hikariConfig.setPoolName("SuperTokens");
+
+        return hikariConfig;
+    }
+
+    @NotNull
+    private static String getJdbcUrl(DatabaseConfig userConfig) {
         String scheme = userConfig.getConnectionScheme();
 
         String hostName = userConfig.getHostName();
@@ -85,42 +128,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             attributes = "?" + attributes;
         }
 
-        HikariConfig config = new HikariConfig();
-
-        // TODO: sql-plugin -> choose the right driver based on actual config
-        config.setDriverClassName("org.postgresql.Driver");
-
-        config.setJdbcUrl("jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes);
-        if (userConfig.getUser() != null) {
-            config.setUsername(userConfig.getUser());
-        }
-
-        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
-            config.setPassword(userConfig.getPassword());
-        }
-        config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
-        config.setConnectionTimeout(5000);
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
-        // io.supertokens.storage.postgresql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) |
-        // SuperTokens
-        // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
-        // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
-        config.setPoolName("SuperTokens");
-        hikariDataSource = new HikariDataSource(config);
-
-        // Creating Hibernate sessionFactory
-        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
-        registryBuilder.applySetting(Environment.DATASOURCE, hikariDataSource);
-
-        // TODO: sql-plugin -> chose the right dialect based on the db.
-        // TODO: sql-plugin -> even if I give MySQLDialect when using postgres, tests still pass. Is this done
-        // correctly?
-        registryBuilder.applySetting(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
-
-        sessionFactory = new MetadataSources(registryBuilder.build()).buildMetadata().buildSessionFactory();
+        return "jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes;
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -198,29 +206,59 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
+    static void close(Start start) {
+        if (getInstance(start) == null) {
+            return;
+        }
+        ConnectionPool.sessionFactory.close();
+        ConnectionPool.sessionFactory = null;
+        ConnectionPool.dataSource.close();
+        ConnectionPool.dataSource = null;
+    }
+
     private static boolean hibernateFailedToConnect(Exception e) {
         return Utils.isExceptionCause(ConnectException.class, e);
     }
 
-    public interface WithConnection<T> {
-        T op(Connection con) throws SQLException, StorageQueryException;
+    public interface WithSession<T> {
+        T op(CustomSessionWrapper session, Connection con) throws SQLException, StorageQueryException;
     }
 
-    public interface WithConnectionForComplexTransaction<T> {
-        T op(Connection con) throws SQLException, StorageQueryException, StorageTransactionLogicException;
+    public interface WithSessionForComplexTransaction<T> {
+        T op(CustomSessionWrapper session, Connection con)
+                throws SQLException, StorageQueryException, StorageTransactionLogicException;
+
     }
 
-    public static <T> T withConnection(Start start, WithConnection<T> func) throws SQLException, StorageQueryException {
-        try {
-            return withConnectionForComplexTransaction(start, null, func::op);
-        } catch (StorageTransactionLogicException e) {
+    public static <T> T withSession(Start start, WithSession<T> func, boolean beginTransaction)
+            throws SQLException, StorageQueryException {
+        if (getInstance(start) == null) {
+            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+        }
+        if (!start.enabled) {
             throw new SQLException("Should never come here");
+        }
+
+        if (beginTransaction) {
+            // for non-SELECT query
+            try {
+                return withSessionForComplexTransaction(start, null, func::op);
+            } catch (StorageTransactionLogicException e) {
+                throw new SQLException("Should never come here");
+            }
+        } else {
+            // for SELECT queries
+            SessionFactory sessionFactory = ConnectionPool.sessionFactory;
+            try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
+                Connection con = session.getSessionImpl().connection();
+                return func.op(session, con);
+            }
         }
     }
 
-    public static <T> T withConnectionForComplexTransaction(Start start,
-            SQLStorage.TransactionIsolationLevel isolationLevel, WithConnectionForComplexTransaction<T> func)
-            throws SQLException, StorageTransactionLogicException, StorageQueryException {
+    public static <T> T withSessionForComplexTransaction(Start start,
+            SQLStorage.TransactionIsolationLevel isolationLevel, WithSessionForComplexTransaction<T> func)
+            throws SQLException, StorageQueryException, StorageTransactionLogicException {
         if (getInstance(start) == null) {
             throw new QuitProgramFromPluginException("Please call initPool before getConnection");
         }
@@ -229,43 +267,26 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
 
         SessionFactory sessionFactory = ConnectionPool.sessionFactory;
-        try (Session session = sessionFactory.openSession()) {
+        try (CustomSessionWrapper session = new CustomSessionWrapper(sessionFactory.openSession())) {
+            // we assume that these queries will always have a non-SELECT part in them
+            // so that's why we always begin a transaction.
             Transaction tx = null;
+
+            // we do not use try-with resource for Connection below cause we close
+            // the entire Session itself.
+            Connection con = session.getSessionImpl().connection();
             try {
-                tx = session.beginTransaction();
-
-                // we do not use try-with resource for Connection below cause we close
-                // the entire Session itself.
-                Connection con = ((SessionImpl) session.getSession()).connection();
-
-                if (isolationLevel != null) {
-                    int libIsolationLevel = Connection.TRANSACTION_SERIALIZABLE;
-                    switch (isolationLevel) {
-                    case SERIALIZABLE:
-                        break;
-                    case REPEATABLE_READ:
-                        libIsolationLevel = Connection.TRANSACTION_REPEATABLE_READ;
-                        break;
-                    case READ_COMMITTED:
-                        libIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
-                        break;
-                    case READ_UNCOMMITTED:
-                        libIsolationLevel = Connection.TRANSACTION_READ_UNCOMMITTED;
-                        break;
-                    case NONE:
-                        libIsolationLevel = Connection.TRANSACTION_NONE;
-                        break;
-                    }
-                    // TODO: sql-plugin -> Previously we used to store the defualt isolation level and then restore
-                    // it
-                    // in the connection. But I think that's not needed. Is this correct?
-                    con.setTransactionIsolation(libIsolationLevel);
+                tx = session.beginTransaction(isolationLevel);
+                T result = func.op(session, con);
+                if (tx.isActive()) {
+                    // maybe the user has already commited the transaction manually.
+                    tx.commit();
                 }
-                T result = func.op(con);
-                tx.commit();
                 return result;
-            } catch (Exception e) {
+            } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 if (tx != null) {
+                    // the user can't rollback a transaction. So we can do this
+                    // without checking for tx.isActive()
                     tx.rollback();
                 }
                 throw e;
@@ -273,13 +294,4 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
-    static void close(Start start) {
-        if (getInstance(start) == null) {
-            return;
-        }
-        ConnectionPool.hikariDataSource.close();
-        ConnectionPool.hikariDataSource = null;
-        ConnectionPool.sessionFactory.close();
-        ConnectionPool.sessionFactory = null;
-    }
 }

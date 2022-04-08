@@ -384,8 +384,8 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode[] getCodesOfDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnection(start,
-                con -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash));
+        return ConnectionPool.withSession(start,
+                (session, con) -> PasswordlessQueries.getCodesOfDevice_Transaction(start, con, deviceIdHash), true);
     }
 
     public static PasswordlessCode[] getCodesBefore(Start start, long time) throws StorageQueryException, SQLException {
@@ -419,8 +419,9 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode getCodeByLinkCodeHash(Start start, String linkCodeHash)
             throws StorageQueryException, SQLException {
-        return ConnectionPool.withConnection(start,
-                con -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash));
+        return ConnectionPool.withSession(start,
+                (session, con) -> PasswordlessQueries.getCodeByLinkCodeHash_Transaction(start, con, linkCodeHash),
+                true);
     }
 
     public static List<UserInfo> getUsersByIdList(Start start, List<String> ids)

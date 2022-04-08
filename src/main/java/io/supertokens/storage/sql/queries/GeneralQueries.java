@@ -18,19 +18,19 @@ package io.supertokens.storage.sql.queries;
 
 import io.supertokens.pluginInterface.KeyValueInfo;
 import io.supertokens.pluginInterface.RECIPE_ID;
-import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.LockMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -235,58 +235,57 @@ public class GeneralQueries {
         }
     }
 
-    public static void setKeyValue_Transaction(Start start, Connection con, String key, KeyValueInfo info)
-            throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getKeyValueTable()
-                + "(name, value, created_at_time) VALUES(?, ?, ?) "
-                + "ON CONFLICT (name) DO UPDATE SET value = ?, created_at_time = ?";
-
-        update(con, QUERY, pst -> {
-            pst.setString(1, key);
-            pst.setString(2, info.value);
-            pst.setLong(3, info.createdAtTime);
-            pst.setString(4, info.value);
-            pst.setLong(5, info.createdAtTime);
-        });
+    public static void setKeyValue_Transaction(CustomSessionWrapper session, String key, KeyValueInfo info) {
+        // we want to do an "insert .. on conflict" style query here. There is no
+        // direct way of doing that, we so first get it, and then we save or update.
+        // We do not apply a pessimistic write lock here because if this function
+        // is called twice in a row with the same key, then it will throw an error.
+        // Also we do not call saveOrUpdate since that does an extra select query in case
+        // we are inserting a new value.
+        KeyValueDO toInsertOrUpdate = session.get(KeyValueDO.class, key);
+        if (toInsertOrUpdate == null) {
+            toInsertOrUpdate = new KeyValueDO();
+            toInsertOrUpdate.setName(key);
+            toInsertOrUpdate.setValue(info.value);
+            toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
+            session.save(KeyValueDO.class, key, toInsertOrUpdate);
+        } else {
+            toInsertOrUpdate.setValue(info.value);
+            toInsertOrUpdate.setCreated_at_time(info.createdAtTime);
+            session.update(KeyValueDO.class, key, toInsertOrUpdate);
+        }
     }
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
-        ConnectionPool.withConnection(start, con -> {
-            setKeyValue_Transaction(start, con, key, info);
+        ConnectionPool.withSession(start, (session, con) -> {
+            setKeyValue_Transaction(session, key, info);
             return null;
-        });
+        }, true);
     }
 
     public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT value, created_at_time FROM " + getConfig(start).getKeyValueTable() + " WHERE name = ?";
-
-        return execute(start, QUERY, pst -> pst.setString(1, key), result -> {
-            if (result.next()) {
-                return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
+        return ConnectionPool.withSession(start, (session, con) -> {
+            KeyValueDO result = session.get(KeyValueDO.class, key);
+            if (result != null) {
+                return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
             }
             return null;
-        });
+        }, false);
     }
 
-    public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key)
-            throws SQLException, StorageQueryException {
-        String QUERY = "SELECT value, created_at_time FROM " + getConfig(start).getKeyValueTable()
-                + " WHERE name = ? FOR UPDATE";
-
-        return execute(con, QUERY, pst -> pst.setString(1, key), result -> {
-            if (result.next()) {
-                return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
-            }
+    public static KeyValueInfo getKeyValue_Transaction(CustomSessionWrapper session, String key) {
+        KeyValueDO result = session.get(KeyValueDO.class, key, LockMode.PESSIMISTIC_WRITE);
+        if (result == null) {
             return null;
-        });
+        }
+        return new KeyValueInfo(result.getValue(), result.getCreated_at_time());
     }
 
-    public static void deleteKeyValue_Transaction(Start start, Connection con, String key)
-            throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getKeyValueTable() + " WHERE name = ?";
-
-        update(con, QUERY, pst -> pst.setString(1, key));
+    public static void deleteKeyValue_Transaction(CustomSessionWrapper session, String key) {
+        KeyValueDO toDelete = new KeyValueDO();
+        toDelete.setName(key);
+        session.delete(KeyValueDO.class, key, toDelete);
     }
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)
@@ -433,22 +432,6 @@ public class GeneralQueries {
         UserInfoPaginationResultHolder(String userId, String recipeId) {
             this.userId = userId;
             this.recipeId = recipeId;
-        }
-    }
-
-    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
-        public static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
-
-        private KeyValueInfoRowMapper() {
-        }
-
-        private static KeyValueInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public KeyValueInfo map(ResultSet result) throws Exception {
-            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
         }
     }
 }
