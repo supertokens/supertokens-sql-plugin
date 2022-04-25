@@ -23,6 +23,7 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
@@ -294,9 +295,10 @@ public class GeneralQueries {
         return ConnectionPool.withSession(start, (session, con) -> {
             Query<Long> q;
             if (includeRecipeIds == null || includeRecipeIds.length == 0) {
-                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO");
+                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO", Long.class);
             } else {
-                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO WHERE recipe_id IN (:recipe_ids)");
+                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO WHERE recipe_id IN (:recipe_ids)",
+                        Long.class);
                 String[] includeRecipeIdsStr = new String[includeRecipeIds.length];
                 for (int i = 0; i < includeRecipeIds.length; i++) {
                     includeRecipeIdsStr[i] = includeRecipeIds[i].toString();
@@ -313,21 +315,11 @@ public class GeneralQueries {
             throws SQLException, StorageQueryException {
 
         // This list will be used to keep track of the result's order from the db
-        List<UserInfoPaginationResultHolder> usersFromQuery;
-
-        {
+        List<AllAuthRecipeUsersDO> usersFromQuery = ConnectionPool.withSession(start, (session, con) -> {
+            Query<AllAuthRecipeUsersDO> q;
             StringBuilder RECIPE_ID_CONDITION = new StringBuilder();
             if (includeRecipeIds != null && includeRecipeIds.length > 0) {
-                RECIPE_ID_CONDITION.append("recipe_id IN (");
-                for (int i = 0; i < includeRecipeIds.length; i++) {
-                    String recipeId = includeRecipeIds[i].toString();
-                    RECIPE_ID_CONDITION.append("'").append(recipeId).append("'");
-                    if (i != includeRecipeIds.length - 1) {
-                        // not the last element
-                        RECIPE_ID_CONDITION.append(",");
-                    }
-                }
-                RECIPE_ID_CONDITION.append(")");
+                RECIPE_ID_CONDITION.append("recipe_id IN (:recipe_ids)");
             }
 
             if (timeJoined != null && userId != null) {
@@ -336,53 +328,47 @@ public class GeneralQueries {
                     recipeIdCondition = recipeIdCondition + " AND";
                 }
                 String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
-                String QUERY = "SELECT user_id, recipe_id FROM " + getConfig(start).getUsersTable() + " WHERE "
-                        + recipeIdCondition + " (time_joined " + timeJoinedOrderSymbol
-                        + " ? OR (time_joined = ? AND user_id <= ?)) ORDER BY time_joined " + timeJoinedOrder
-                        + ", user_id DESC LIMIT ?";
-                usersFromQuery = execute(start, QUERY, pst -> {
-                    pst.setLong(1, timeJoined);
-                    pst.setLong(2, timeJoined);
-                    pst.setString(3, userId);
-                    pst.setInt(4, limit);
-                }, result -> {
-                    List<UserInfoPaginationResultHolder> temp = new ArrayList<>();
-                    while (result.next()) {
-                        temp.add(new UserInfoPaginationResultHolder(result.getString("user_id"),
-                                result.getString("recipe_id")));
-                    }
-                    return temp;
-                });
+                String QUERY = "SELECT entity FROM AllAuthRecipeUsersDO entity WHERE " + recipeIdCondition
+                        + " (time_joined " + timeJoinedOrderSymbol
+                        + " :time_joined1 OR (time_joined = :time_joined2 AND user_id <= :user_id)) ORDER BY "
+                        + "time_joined " + timeJoinedOrder + ", user_id DESC";
+                q = session.createQuery(QUERY, AllAuthRecipeUsersDO.class);
+                q.setParameter("time_joined1", timeJoined);
+                q.setParameter("time_joined2", timeJoined);
+                q.setParameter("user_id", userId);
+                q.setMaxResults(limit);
             } else {
                 String recipeIdCondition = RECIPE_ID_CONDITION.toString();
                 if (!recipeIdCondition.equals("")) {
                     recipeIdCondition = " WHERE " + recipeIdCondition;
                 }
-                String QUERY = "SELECT user_id, recipe_id FROM " + getConfig(start).getUsersTable() + recipeIdCondition
-                        + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC LIMIT ?";
-                usersFromQuery = execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
-                    List<UserInfoPaginationResultHolder> temp = new ArrayList<>();
-                    while (result.next()) {
-                        temp.add(new UserInfoPaginationResultHolder(result.getString("user_id"),
-                                result.getString("recipe_id")));
-                    }
-                    return temp;
-                });
+                String QUERY = "SELECT entity FROM AllAuthRecipeUsersDO entity" + recipeIdCondition
+                        + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC";
+                q = session.createQuery(QUERY, AllAuthRecipeUsersDO.class);
+                q.setMaxResults(limit);
             }
-        }
+            if (includeRecipeIds != null && includeRecipeIds.length > 0) {
+                String[] includeRecipeIdsStr = new String[includeRecipeIds.length];
+                for (int i = 0; i < includeRecipeIds.length; i++) {
+                    includeRecipeIdsStr[i] = includeRecipeIds[i].toString();
+                }
+                q.setParameterList("recipe_ids", includeRecipeIdsStr);
+            }
+            return q.list();
+        }, false);
 
         // we create a map from recipe ID -> userId[]
         Map<RECIPE_ID, List<String>> recipeIdToUserIdListMap = new HashMap<>();
-        for (UserInfoPaginationResultHolder user : usersFromQuery) {
-            RECIPE_ID recipeId = RECIPE_ID.getEnumFromString(user.recipeId);
+        for (AllAuthRecipeUsersDO user : usersFromQuery) {
+            RECIPE_ID recipeId = RECIPE_ID.getEnumFromString(user.getRecipe_id());
             if (recipeId == null) {
-                throw new SQLException("Unrecognised recipe ID in database: " + user.recipeId);
+                throw new SQLException("Unrecognised recipe ID in database: " + user.getRecipe_id());
             }
             List<String> userIdList = recipeIdToUserIdListMap.get(recipeId);
             if (userIdList == null) {
                 userIdList = new ArrayList<>();
             }
-            userIdList.add(user.userId);
+            userIdList.add(user.getUser_id());
             recipeIdToUserIdListMap.put(recipeId, userIdList);
         }
 
@@ -400,7 +386,7 @@ public class GeneralQueries {
             }
             for (int i = 0; i < usersFromQuery.size(); i++) {
                 if (finalResult[i] == null) {
-                    finalResult[i] = userIdToInfoMap.get(usersFromQuery.get(i).userId);
+                    finalResult[i] = userIdToInfoMap.get(usersFromQuery.get(i).getUser_id());
                 }
             }
         }
@@ -418,16 +404,6 @@ public class GeneralQueries {
             return PasswordlessQueries.getUsersByIdList(start, userIds);
         } else {
             throw new IllegalArgumentException("No implementation of get users for recipe: " + recipeId.toString());
-        }
-    }
-
-    private static class UserInfoPaginationResultHolder {
-        String userId;
-        String recipeId;
-
-        UserInfoPaginationResultHolder(String userId, String recipeId) {
-            this.userId = userId;
-            this.recipeId = recipeId;
         }
     }
 }

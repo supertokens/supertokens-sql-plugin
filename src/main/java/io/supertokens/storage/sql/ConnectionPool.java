@@ -230,7 +230,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     }
 
-    public static <T> T withSession(Start start, WithSession<T> func, boolean beginTransaction)
+    public static <T> T withSession(Start start, WithSession<T> func, boolean isNonSelectQuery)
             throws SQLException, StorageQueryException {
         if (getInstance(start) == null) {
             throw new QuitProgramFromPluginException("Please call initPool before getConnection");
@@ -239,8 +239,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             throw new SQLException("Should never come here");
         }
 
-        if (beginTransaction) {
-            // for non-SELECT query
+        if (isNonSelectQuery) {
             try {
                 return withSessionForComplexTransaction(start, null, func::op);
             } catch (StorageTransactionLogicException e) {
