@@ -26,12 +26,14 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /*
-CREATE TABLE key_value (
-    name VARCHAR(128),
-    value TEXT,
-    created_at_time BIGINT,
-    CONSTRAINT key_value_pkey PRIMARY KEY(name)
-);
+
+CREATE TABLE IF NOT EXISTS all_auth_recipe_users (
+    user_id CHAR(36) NOT NULL,
+    recipe_id VARCHAR(128) NOT NULL,
+    time_joined BIGINT NOT NULL,
+    CONSTRAINT " + Utils.getConstraintName(schema, usersTable, null, "pkey"),
+    PRIMARY KEY (user_id)
+)
 
 See mapping of SQL column types to hiberate types here: https://docs.jboss.org/hibernate/orm/5
 .0/mappingGuide/en-US/html_single/#d5e555 (Section 3.1)
@@ -41,30 +43,30 @@ See mapping of SQL column types to hiberate types here: https://docs.jboss.org/h
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "key_value")
-public class KeyValueDO {
+@Table(name = "all_auth_recipe_users")
+public class AllAuthRecipeUsersDO {
 
     @Id
-    @Column(length = 128)
-    private String name;
+    @Column(length = 36, nullable = false)
+    private String user_id;
 
-    @Column(columnDefinition = "TEXT")
-    private String value;
+    @Column(length = 128, nullable = false)
+    private String recipe_id;
 
-    private long created_at_time;
+    @Column(nullable = false)
+    private long time_joined;
 
-    // TODO: sql-plugin -> does overriding the below have some other effect?
     @Override
     public boolean equals(Object other) {
-        if (other instanceof KeyValueDO) {
-            KeyValueDO otherKeyValue = (KeyValueDO) other;
-            return otherKeyValue.name.equals(this.name);
+        if (other instanceof AllAuthRecipeUsersDO) {
+            AllAuthRecipeUsersDO otherKeyValue = (AllAuthRecipeUsersDO) other;
+            return otherKeyValue.user_id.equals(this.user_id);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return user_id.hashCode();
     }
 }

@@ -109,7 +109,14 @@ public class CustomSessionWrapper implements Session {
         T result = this.session.get(entityType, id, lockMode);
         updateCache(result, entityType.getName(), id);
         return result;
+    }
 
+    @Override
+    public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            return this.session.createQuery(queryString, resultType);
+        }
+        throw new UnsupportedOperationException();
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
@@ -697,40 +704,23 @@ public class CustomSessionWrapper implements Session {
     }
 
     @Override
-    public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
-        throw new UnsupportedOperationException();
-//        if (queryString.toLowerCase().trim().startsWith("select")) {
-//            // we ask to use the gte function cause that utilises our null value cache
-//            throw new UnsupportedOperationException("Please use session.get instead");
-//        }
-//        this.clearCustomCache();
-//        return this.session.createQuery(queryString, resultType);
-    }
-
-    @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
-        throw new UnsupportedOperationException();
-//        if (queryString.toLowerCase().trim().startsWith("select")) {
-//            // we ask to use the gte function cause that utilises our null value cache
-//            throw new UnsupportedOperationException("Please use session.get instead");
-//        }
-//        this.clearCustomCache();
-//        return this.session.createQuery(queryString);
-    }
-
-    @Override
     public org.hibernate.query.Query createNamedQuery(String name) {
         throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
     @Override
     public <T> org.hibernate.query.Query<T> createQuery(CriteriaQuery<T> criteriaQuery) {
-        throw new UnsupportedOperationException("Please use session.createQuery instead");
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public org.hibernate.query.Query createQuery(CriteriaUpdate updateQuery) {
-        throw new UnsupportedOperationException("Please use session.createQuery instead");
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public org.hibernate.query.Query createQuery(String queryString) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
