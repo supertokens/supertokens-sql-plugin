@@ -27,6 +27,7 @@ import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
+import org.hibernate.query.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -290,26 +291,21 @@ public class GeneralQueries {
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)
             throws SQLException, StorageQueryException {
-        StringBuilder QUERY = new StringBuilder("SELECT COUNT(*) as total FROM " + getConfig(start).getUsersTable());
-        if (includeRecipeIds != null && includeRecipeIds.length > 0) {
-            QUERY.append(" WHERE recipe_id IN (");
-            for (int i = 0; i < includeRecipeIds.length; i++) {
-                String recipeId = includeRecipeIds[i].toString();
-                QUERY.append("'").append(recipeId).append("'");
-                if (i != includeRecipeIds.length - 1) {
-                    // not the last element
-                    QUERY.append(",");
+        return ConnectionPool.withSession(start, (session, con) -> {
+            Query<Long> q;
+            if (includeRecipeIds == null || includeRecipeIds.length == 0) {
+                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO");
+            } else {
+                q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO WHERE recipe_id IN (:recipe_ids)");
+                String[] includeRecipeIdsStr = new String[includeRecipeIds.length];
+                for (int i = 0; i < includeRecipeIds.length; i++) {
+                    includeRecipeIdsStr[i] = includeRecipeIds[i].toString();
                 }
+                q.setParameterList("recipe_ids", includeRecipeIdsStr);
             }
-            QUERY.append(")");
-        }
-
-        return execute(start, QUERY.toString(), NO_OP_SETTER, result -> {
-            if (result.next()) {
-                return result.getLong("total");
-            }
-            return 0L;
-        });
+            List<Long> result = q.list();
+            return result.get(0);
+        }, false);
     }
 
     public static AuthRecipeUserInfo[] getUsers(Start start, @NotNull Integer limit, @NotNull String timeJoinedOrder,

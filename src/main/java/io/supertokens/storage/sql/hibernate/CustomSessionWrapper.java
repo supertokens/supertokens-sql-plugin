@@ -109,7 +109,14 @@ public class CustomSessionWrapper implements Session {
         T result = this.session.get(entityType, id, lockMode);
         updateCache(result, entityType.getName(), id);
         return result;
+    }
 
+    @Override
+    public org.hibernate.query.Query createQuery(String queryString) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            return this.session.createQuery(queryString);
+        }
+        throw new UnsupportedOperationException();
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
@@ -705,17 +712,6 @@ public class CustomSessionWrapper implements Session {
 //        }
 //        this.clearCustomCache();
 //        return this.session.createQuery(queryString, resultType);
-    }
-
-    @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
-        throw new UnsupportedOperationException();
-//        if (queryString.toLowerCase().trim().startsWith("select")) {
-//            // we ask to use the gte function cause that utilises our null value cache
-//            throw new UnsupportedOperationException("Please use session.get instead");
-//        }
-//        this.clearCustomCache();
-//        return this.session.createQuery(queryString);
     }
 
     @Override
