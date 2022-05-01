@@ -21,9 +21,11 @@ import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.query.Query;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -79,9 +81,13 @@ public class EmailPasswordQueries {
     }
 
     public static void deleteExpiredPasswordResetTokens(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE token_expiry < ?";
-
-        update(start, QUERY, pst -> pst.setLong(1, currentTimeMillis()));
+        ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM PasswordResetTokensDO where token_expiry < :expiry";
+            Query q = session.createQuery(QUERY);
+            q.setParameter("expiry", currentTimeMillis());
+            q.executeUpdate();
+            return null;
+        }, true);
     }
 
     public static void updateUsersPassword_Transaction(Start start, Connection con, String userId, String newPassword)

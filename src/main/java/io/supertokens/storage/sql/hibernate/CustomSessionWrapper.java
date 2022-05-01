@@ -116,7 +116,15 @@ public class CustomSessionWrapper implements Session {
         if (queryString.toLowerCase().trim().startsWith("select")) {
             return this.session.createQuery(queryString, resultType);
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Please use the untyped version of this function");
+    }
+
+    @Override
+    public org.hibernate.query.Query createQuery(String queryString) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            throw new UnsupportedOperationException("Please use the typed version of this function");
+        }
+        return this.session.createQuery(queryString);
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
@@ -715,11 +723,6 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public org.hibernate.query.Query createQuery(CriteriaUpdate updateQuery) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
         throw new UnsupportedOperationException();
     }
 
