@@ -512,29 +512,18 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException, DuplicateUserIdException, DuplicateEmailException {
         try {
             EmailPasswordQueries.signUp(this, userInfo.id, userInfo.email, userInfo.passwordHash, userInfo.timeJoined);
-        } catch (StorageTransactionLogicException eTemp) {
-            Exception e = eTemp.actualException;
-            if (e instanceof PSQLException) {
-                PostgreSQLConfig config = Config.getConfig(this);
-                ServerErrorMessage serverMessage = ((PSQLException) e).getServerErrorMessage();
+        } catch (PersistenceException eTemp) {
+            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
+            PostgreSQLConfig config = Config.getConfig(this);
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
 
-                if (isUniqueConstraintError(serverMessage, config.getEmailPasswordUsersTable(), "email")) {
-                    throw new DuplicateEmailException();
-                } else if (isPrimaryKeyError(serverMessage, config.getEmailPasswordUsersTable())
-                        || isPrimaryKeyError(serverMessage, config.getUsersTable())) {
-                    throw new DuplicateUserIdException();
-                }
-            }
-
-            // We keep the old exception detection logic to ensure backwards compatibility.
-            // We could get here if the new logic hits a false negative,
-            // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (email)")) {
+            if (isUniqueConstraintError(serverMessage, config.getEmailPasswordUsersTable(), "email")) {
                 throw new DuplicateEmailException();
-            } else if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (user_id)")) {
+            } else if (isPrimaryKeyError(serverMessage, config.getEmailPasswordUsersTable())
+                    || isPrimaryKeyError(serverMessage, config.getUsersTable())) {
                 throw new DuplicateUserIdException();
             }
-
+        } catch (SQLException | StorageTransactionLogicException e) {
             throw new StorageQueryException(e);
         }
     }

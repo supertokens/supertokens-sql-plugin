@@ -27,6 +27,7 @@ import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensPK;
+import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
@@ -253,38 +254,22 @@ public class EmailPasswordQueries {
     }
 
     public static void signUp(Start start, String userId, String email, String passwordHash, long timeJoined)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getUsersTable()
-                            + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userId);
-                        pst.setString(2, EMAIL_PASSWORD.toString());
-                        pst.setLong(3, timeJoined);
-                    });
-                }
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            AllAuthRecipeUsersDO allUsersRow = new AllAuthRecipeUsersDO();
+            allUsersRow.setUser_id(userId);
+            allUsersRow.setRecipe_id(EMAIL_PASSWORD.toString());
+            allUsersRow.setTime_joined(timeJoined);
+            session.save(AllAuthRecipeUsersDO.class, userId, allUsersRow);
 
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getEmailPasswordUsersTable()
-                            + "(user_id, email, password_hash, time_joined)" + " VALUES(?, ?, ?, ?)";
-
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userId);
-                        pst.setString(2, email);
-                        pst.setString(3, passwordHash);
-                        pst.setLong(4, timeJoined);
-                    });
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
-            }
+            EmailPasswordUsersDO epRow = new EmailPasswordUsersDO();
+            epRow.setUser_id(userId);
+            epRow.setPassword_hash(passwordHash);
+            epRow.setTime_joined(timeJoined);
+            epRow.setEmail(email);
+            session.save(EmailPasswordUsersDO.class, userId, epRow);
             return null;
-        });
+        }, true);
     }
 
     public static void deleteUser(Start start, String userId)
