@@ -17,13 +17,22 @@
 package io.supertokens.storage.sql.test;
 
 import io.supertokens.ProcessState;
+import io.supertokens.emailpassword.EmailPassword;
 import io.supertokens.pluginInterface.KeyValueInfo;
+import io.supertokens.pluginInterface.STORAGE_TYPE;
 import io.supertokens.pluginInterface.Storage;
+import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
+import io.supertokens.pluginInterface.emailpassword.UserInfo;
+import io.supertokens.pluginInterface.emailpassword.sqlStorage.EmailPasswordSQLStorage;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.Start;
+import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensPK;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storageLayer.StorageLayer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -340,6 +349,51 @@ public class HibernateTest {
         // We do -1 cause if there is one occurrence of this, it will split the string into 2 parts
         assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
         assert (sqlStorage.getKeyValue("access_token_signing_key").value.equals("Value2"));
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
+    public void testThatUsingCreateQuerySavesItemInTheCacheCorrectly() throws Exception {
+        String[] args = { "../" };
+
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
+
+        EmailPasswordSQLStorage storage = StorageLayer.getEmailPasswordStorage(process.getProcess());
+
+        printInterceptor.start = true;
+        storage.startTransaction(con -> {
+            PasswordResetTokenInfo[] result = storage.getAllPasswordResetTokenInfoForUser_Transaction(con, user.id);
+            PasswordResetTokensDO p = new PasswordResetTokensDO();
+            PasswordResetTokensPK pk = new PasswordResetTokensPK();
+            pk.setToken(result[0].token);
+            EmailPasswordUsersDO epUser = new EmailPasswordUsersDO();
+            epUser.setUser_id(user.id);
+            pk.setUser(epUser);
+            p.setPk(pk);
+            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+            PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
+            if (!other.equals(p)) {
+                throw new StorageTransactionLogicException(new Exception("Test failed!"));
+            }
+
+            return null;
+        });
+
+        // TODO: change to 1 below
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 2);
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));

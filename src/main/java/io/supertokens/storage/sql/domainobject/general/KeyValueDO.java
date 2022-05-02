@@ -58,13 +58,13 @@ public class KeyValueDO {
     public boolean equals(Object other) {
         if (other instanceof KeyValueDO) {
             KeyValueDO otherKeyValue = (KeyValueDO) other;
-            return otherKeyValue.name.equals(this.name);
+            return otherKeyValue.getName().equals(this.getName());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.name.hashCode();
+        return this.getName().hashCode();
     }
 }

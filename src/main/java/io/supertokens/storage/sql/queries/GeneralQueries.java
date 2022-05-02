@@ -25,10 +25,10 @@ import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
-import org.hibernate.query.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -293,7 +293,7 @@ public class GeneralQueries {
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)
             throws SQLException, StorageQueryException {
         return ConnectionPool.withSession(start, (session, con) -> {
-            Query<Long> q;
+            CustomQueryWrapper<Long> q;
             if (includeRecipeIds == null || includeRecipeIds.length == 0) {
                 q = session.createQuery("SELECT COUNT(*) FROM AllAuthRecipeUsersDO", Long.class);
             } else {
@@ -305,7 +305,7 @@ public class GeneralQueries {
                 }
                 q.setParameterList("recipe_ids", includeRecipeIdsStr);
             }
-            List<Long> result = q.list();
+            List<Long> result = q.list(item -> null);
             return result.get(0);
         }, false);
     }
@@ -316,7 +316,7 @@ public class GeneralQueries {
 
         // This list will be used to keep track of the result's order from the db
         List<AllAuthRecipeUsersDO> usersFromQuery = ConnectionPool.withSession(start, (session, con) -> {
-            Query<AllAuthRecipeUsersDO> q;
+            CustomQueryWrapper<AllAuthRecipeUsersDO> q;
             StringBuilder RECIPE_ID_CONDITION = new StringBuilder();
             if (includeRecipeIds != null && includeRecipeIds.length > 0) {
                 RECIPE_ID_CONDITION.append("recipe_id IN (:recipe_ids)");
@@ -354,7 +354,7 @@ public class GeneralQueries {
                 }
                 q.setParameterList("recipe_ids", includeRecipeIdsStr);
             }
-            return q.list();
+            return q.list(AllAuthRecipeUsersDO::getUser_id);
         }, false);
 
         // we create a map from recipe ID -> userId[]

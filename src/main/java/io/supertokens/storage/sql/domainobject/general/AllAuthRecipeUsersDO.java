@@ -60,13 +60,13 @@ public class AllAuthRecipeUsersDO {
     public boolean equals(Object other) {
         if (other instanceof AllAuthRecipeUsersDO) {
             AllAuthRecipeUsersDO otherKeyValue = (AllAuthRecipeUsersDO) other;
-            return otherKeyValue.user_id.equals(this.user_id);
+            return otherKeyValue.getUser_id().equals(this.getUser_id());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return user_id.hashCode();
+        return getUser_id().hashCode();
     }
 }

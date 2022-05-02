@@ -25,9 +25,9 @@ import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
-import org.hibernate.query.Query;
 
 import javax.persistence.LockModeType;
 import java.sql.Connection;
@@ -86,7 +86,7 @@ public class EmailPasswordQueries {
     public static void deleteExpiredPasswordResetTokens(Start start) throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
             String QUERY = "DELETE FROM PasswordResetTokensDO where token_expiry < :expiry";
-            Query q = session.createQuery(QUERY);
+            CustomQueryWrapper q = session.createQuery(QUERY);
             q.setParameter("expiry", currentTimeMillis());
             q.executeUpdate();
             return null;
@@ -142,16 +142,15 @@ public class EmailPasswordQueries {
             String userId) {
         String QUERY = "SELECT entity FROM PasswordResetTokensDO entity WHERE entity.pk.user.id = :userid";
 
-        Query<PasswordResetTokensDO> q = session.createQuery(QUERY, PasswordResetTokensDO.class);
+        CustomQueryWrapper<PasswordResetTokensDO> q = session.createQuery(QUERY, PasswordResetTokensDO.class);
         q.setParameter("userid", userId);
         q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
-        List<PasswordResetTokensDO> result = q.list();
+        List<PasswordResetTokensDO> result = q.list(PasswordResetTokensDO::getPk);
 
         PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[result.size()];
         for (int i = 0; i < result.size(); i++) {
             PasswordResetTokensDO curr = result.get(i);
-            session.updateCache(curr, curr.getClass().getName(), curr.getPk());
             finalResult[i] = new PasswordResetTokenInfo(curr.getPk().getUser().getUser_id(), curr.getPk().getToken(),
                     curr.getToken_expiry());
         }

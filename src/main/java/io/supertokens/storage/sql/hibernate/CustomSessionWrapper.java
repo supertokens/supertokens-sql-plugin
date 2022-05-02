@@ -89,15 +89,32 @@ public class CustomSessionWrapper implements Session {
         return this.session.contains(entity);
     }
 
+    public <T> T getFromCacheById(Class<T> entityType, Serializable id) {
+        if (this.currentIsolationLevel == SERIALIZABLE
+                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+            for (Object curr : this.entitySet) {
+                if (curr.getClass() == entityType) {
+                    // TODO: get primary key from curr and compare it to id. If they are the same, return curr.
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public <T> T get(Class<T> entityType, Serializable id) {
         if (isInNullEntityCache(entityType.getName(), id)) {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
-        T result = this.session.get(entityType, id);
-        updateCache(result, entityType.getName(), id);
-        return result;
+        T fromCache = getFromCacheById(entityType, id);
+        if (fromCache == null) {
+            T result = this.session.get(entityType, id);
+            updateCache(result, entityType.getName(), id);
+            return result;
+        } else {
+            return fromCache;
+        }
     }
 
     @Override
@@ -106,25 +123,30 @@ public class CustomSessionWrapper implements Session {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
-        T result = this.session.get(entityType, id, lockMode);
-        updateCache(result, entityType.getName(), id);
-        return result;
+        T fromCache = getFromCacheById(entityType, id);
+        if (fromCache == null) {
+            T result = this.session.get(entityType, id, lockMode);
+            updateCache(result, entityType.getName(), id);
+            return result;
+        } else {
+            return fromCache;
+        }
     }
 
     @Override
-    public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
+    public <T> CustomQueryWrapper<T> createQuery(String queryString, Class<T> resultType) {
         if (queryString.toLowerCase().trim().startsWith("select")) {
-            return this.session.createQuery(queryString, resultType);
+            return new CustomQueryWrapper<T>(this.session.createQuery(queryString, resultType), this);
         }
         throw new UnsupportedOperationException("Please use the untyped version of this function");
     }
 
     @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
+    public CustomQueryWrapper createQuery(String queryString) {
         if (queryString.toLowerCase().trim().startsWith("select")) {
             throw new UnsupportedOperationException("Please use the typed version of this function");
         }
-        return this.session.createQuery(queryString);
+        return new CustomQueryWrapper(this.session.createQuery(queryString), this);
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
