@@ -654,12 +654,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public UserInfo getUserInfoUsingId_Transaction(TransactionConnection con, String userId)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return EmailPasswordQueries.getUserInfoUsingId_Transaction(this, sqlCon, userId);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+        return EmailPasswordQueries.getUserInfoUsingId_Transaction(session, userId);
     }
 
     @Override
