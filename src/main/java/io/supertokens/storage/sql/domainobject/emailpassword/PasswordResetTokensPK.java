@@ -16,22 +16,27 @@
 
 package io.supertokens.storage.sql.domainobject.emailpassword;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.io.Serializable;
 
 @Embeddable
+@Getter
+@Setter
 public class PasswordResetTokensPK implements Serializable {
 
-    @ManyToOne // TODO: sql-plugin -> should we us @ManyToOne(fetch = FetchType.LAZY) instead?
+    @ManyToOne(fetch = FetchType.LAZY)
+    // we use FetchType.LAZY so that when we fetch Password reset tokens, we don't also unnecessarily end up fetching
+    // email password users table
     @JoinColumn(name = "user_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private EmailPasswordUsersDO user;
+    // TODO: sql-plugin -> when fetching this, hibernate doesn't actually set the user_id inside this object, but if
+    // we call .getUser_id() function, it returns it correctly.. how?
 
     @Column(length = 128, nullable = false, unique = true)
     private String token;
@@ -40,13 +45,13 @@ public class PasswordResetTokensPK implements Serializable {
     public boolean equals(Object other) {
         if (other instanceof PasswordResetTokensPK) {
             PasswordResetTokensPK otherKeyValue = (PasswordResetTokensPK) other;
-            return otherKeyValue.user.equals(this.user) && otherKeyValue.token.equals(token);
+            return otherKeyValue.getUser().equals(this.getUser()) && otherKeyValue.getToken().equals(getToken());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (user.getUser_id() + token).hashCode();
+        return (getUser().getUser_id() + getToken()).hashCode();
     }
 }

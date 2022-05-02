@@ -59,13 +59,13 @@ public class EmailPasswordUsersDO {
     public boolean equals(Object other) {
         if (other instanceof EmailPasswordUsersDO) {
             EmailPasswordUsersDO otherKeyValue = (EmailPasswordUsersDO) other;
-            return otherKeyValue.user_id.equals(this.user_id);
+            return otherKeyValue.getUser_id().equals(this.getUser_id());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return user_id.hashCode();
+        return getUser_id().hashCode();
     }
 }

@@ -53,13 +53,13 @@ public class PasswordResetTokensDO {
     public boolean equals(Object other) {
         if (other instanceof PasswordResetTokensDO) {
             PasswordResetTokensDO otherKeyValue = (PasswordResetTokensDO) other;
-            return otherKeyValue.pk.equals(this.pk);
+            return otherKeyValue.getPk().equals(this.getPk());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return pk.hashCode();
+        return getPk().hashCode();
     }
 }

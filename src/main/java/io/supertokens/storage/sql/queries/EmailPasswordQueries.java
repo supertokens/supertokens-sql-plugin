@@ -24,9 +24,12 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.query.Query;
 
+import javax.persistence.LockModeType;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -111,11 +114,10 @@ public class EmailPasswordQueries {
         });
     }
 
-    public static void deleteAllPasswordResetTokensForUser_Transaction(Start start, Connection con, String userId)
-            throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
-
-        update(con, QUERY, pst -> pst.setString(1, userId));
+    public static void deleteAllPasswordResetTokensForUser_Transaction(CustomSessionWrapper session, String userId) {
+//        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
+//
+//        update(con, QUERY, pst -> pst.setString(1, userId));
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, String userId)
@@ -136,23 +138,24 @@ public class EmailPasswordQueries {
         });
     }
 
-    public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Start start, Connection con,
-            String userId) throws SQLException, StorageQueryException {
+    public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(CustomSessionWrapper session,
+            String userId) {
+        String QUERY = "SELECT entity FROM PasswordResetTokensDO entity WHERE entity.pk.user.id = :userid";
 
-        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
-                + " WHERE user_id = ? FOR UPDATE";
+        Query<PasswordResetTokensDO> q = session.createQuery(QUERY, PasswordResetTokensDO.class);
+        q.setParameter("userid", userId);
+        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
-        return execute(con, QUERY, pst -> pst.setString(1, userId), result -> {
-            List<PasswordResetTokenInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(PasswordResetRowMapper.getInstance().mapOrThrow(result));
-            }
-            PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+        List<PasswordResetTokensDO> result = q.list();
+
+        PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            PasswordResetTokensDO curr = result.get(i);
+            session.updateCache(curr, curr.getClass().getName(), curr.getPk());
+            finalResult[i] = new PasswordResetTokenInfo(curr.getPk().getUser().getUser_id(), curr.getPk().getToken(),
+                    curr.getToken_expiry());
+        }
+        return finalResult;
     }
 
     public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con, String id)

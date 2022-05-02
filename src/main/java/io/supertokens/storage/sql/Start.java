@@ -616,23 +616,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(TransactionConnection con,
             String userId) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return EmailPasswordQueries.getAllPasswordResetTokenInfoForUser_Transaction(this, sqlCon, userId);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+        return EmailPasswordQueries.getAllPasswordResetTokenInfoForUser_Transaction(session, userId);
     }
 
     @Override
     public void deleteAllPasswordResetTokensForUser_Transaction(TransactionConnection con, String userId)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            EmailPasswordQueries.deleteAllPasswordResetTokensForUser_Transaction(this, sqlCon, userId);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+        EmailPasswordQueries.deleteAllPasswordResetTokensForUser_Transaction(session, userId);
     }
 
     @Override

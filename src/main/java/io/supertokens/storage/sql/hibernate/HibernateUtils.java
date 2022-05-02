@@ -85,7 +85,7 @@ public class HibernateUtils {
         properties.put(Environment.DATASOURCE, dataSource);
 
         // Uncomment the below if you want to see SQL queries
-        if (Start.printSQL) {
+        if (Start.printSQL || true) {
             // is true during certain tests.
             properties.put(Environment.SHOW_SQL, true);
         }
