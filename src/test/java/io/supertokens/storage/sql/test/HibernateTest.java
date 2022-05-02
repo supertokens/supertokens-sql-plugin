@@ -67,8 +67,7 @@ public class HibernateTest {
     public void shouldSelectFromDbOnce()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -100,8 +99,7 @@ public class HibernateTest {
     public void shouldSelectFromDbTwice()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -131,8 +129,7 @@ public class HibernateTest {
     public void shouldSelectFromDbTwiceWithoutInitialRowBecauseQueryingTwoDifferentKeys()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -167,8 +164,7 @@ public class HibernateTest {
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
 
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -203,8 +199,7 @@ public class HibernateTest {
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -234,8 +229,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -262,8 +256,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -291,8 +284,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -324,8 +316,7 @@ public class HibernateTest {
     public void selectThenDeleteThenSet()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -357,7 +348,7 @@ public class HibernateTest {
     @Test
     public void testThatUsingCreateQuerySavesItemInTheCacheCorrectly() throws Exception {
         String[] args = { "../" };
-
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -391,11 +382,15 @@ public class HibernateTest {
             }
             return null;
         });
-
         assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    private static void enableSQLLogging() {
+        Start.printSQL = true;
+        StorageLayer.close();
     }
 
     private static class Interceptor extends PrintStream {

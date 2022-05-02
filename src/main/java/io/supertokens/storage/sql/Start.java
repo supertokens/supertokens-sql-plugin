@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.persistence.OptimisticLockException;
+import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
@@ -630,33 +631,23 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void updateUsersPassword_Transaction(TransactionConnection con, String userId, String newPassword)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            EmailPasswordQueries.updateUsersPassword_Transaction(this, sqlCon, userId, newPassword);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+        EmailPasswordQueries.updateUsersPassword_Transaction(session, userId, newPassword);
     }
 
     @Override
     public void updateUsersEmail_Transaction(TransactionConnection conn, String userId, String email)
             throws StorageQueryException, DuplicateEmailException {
-        Connection sqlCon = (Connection) conn.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) conn.getSession();
         try {
-            EmailPasswordQueries.updateUsersEmail_Transaction(this, sqlCon, userId, email);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException && isUniqueConstraintError(((PSQLException) e).getServerErrorMessage(),
+            EmailPasswordQueries.updateUsersEmail_Transaction(session, userId, email);
+        } catch (PersistenceException e) {
+            PSQLException psqlException = (PSQLException) e.getCause().getCause();
+            if (isUniqueConstraintError((psqlException).getServerErrorMessage(),
                     Config.getConfig(this).getEmailPasswordUsersTable(), "email")) {
                 throw new DuplicateEmailException();
             }
-
-            // We keep the old exception detection logic to ensure backwards compatibility.
-            // We could get here if the new logic hits a false negative,
-            // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (email)")) {
-                throw new DuplicateEmailException();
-            }
-            throw new StorageQueryException(e);
+            throw e;
         }
     }
 

@@ -93,25 +93,25 @@ public class EmailPasswordQueries {
         }, true);
     }
 
-    public static void updateUsersPassword_Transaction(Start start, Connection con, String userId, String newPassword)
-            throws SQLException, StorageQueryException {
-        String QUERY = "UPDATE " + getConfig(start).getEmailPasswordUsersTable()
-                + " SET password_hash = ? WHERE user_id = ?";
+    public static void updateUsersPassword_Transaction(CustomSessionWrapper session, String userId,
+            String newPassword) {
+        String QUERY = "UPDATE EmailPasswordUsersDO entity SET entity.password_hash = :passwordhash WHERE entity"
+                + ".user_id = :userid";
 
-        update(con, QUERY, pst -> {
-            pst.setString(1, newPassword);
-            pst.setString(2, userId);
-        });
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("passwordhash", newPassword);
+        q.setParameter("userid", userId);
+        q.executeUpdate();
     }
 
-    public static void updateUsersEmail_Transaction(Start start, Connection con, String userId, String newEmail)
-            throws SQLException, StorageQueryException {
-        String QUERY = "UPDATE " + getConfig(start).getEmailPasswordUsersTable() + " SET email = ? WHERE user_id = ?";
+    public static void updateUsersEmail_Transaction(CustomSessionWrapper session, String userId, String newEmail) {
+        String QUERY = "UPDATE EmailPasswordUsersDO entity SET entity.email = :email WHERE entity"
+                + ".user_id = :userid";
 
-        update(con, QUERY, pst -> {
-            pst.setString(1, newEmail);
-            pst.setString(2, userId);
-        });
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("email", newEmail);
+        q.setParameter("userid", userId);
+        q.executeUpdate();
     }
 
     public static void deleteAllPasswordResetTokensForUser_Transaction(CustomSessionWrapper session, String userId) {
