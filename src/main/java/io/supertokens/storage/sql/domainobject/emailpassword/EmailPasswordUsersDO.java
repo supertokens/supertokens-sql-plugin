@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobject.emailpassword;
 
+import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 /*
 CREATE TABLE IF NOT EXISTS emailpassword_users(
@@ -40,7 +42,7 @@ CREATE TABLE IF NOT EXISTS emailpassword_users(
 @NoArgsConstructor
 @Entity
 @Table(name = "emailpassword_users")
-public class EmailPasswordUsersDO {
+public class EmailPasswordUsersDO extends PrimaryKeyFetchable {
 
     @Id
     @Column(length = 36, nullable = false)
@@ -67,5 +69,10 @@ public class EmailPasswordUsersDO {
     @Override
     public int hashCode() {
         return getUser_id().hashCode();
+    }
+
+    @Override
+    public Serializable getPrimaryKey() {
+        return this.getUser_id();
     }
 }

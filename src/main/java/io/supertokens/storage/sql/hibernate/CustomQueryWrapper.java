@@ -70,12 +70,14 @@ public class CustomQueryWrapper<R> implements Query<R> {
     // Pass null as ID if it shouldn't be saved.
     public List<R> list(GetPrimaryKey<R> getPrimaryKeyFunc) {
         List<R> result = this.query.list();
-        for (R r : result) {
-            Serializable pk = getPrimaryKeyFunc.op(r);
-            if (pk != null) {
-                session.updateCache(r, r.getClass().getName(), pk);
-            }
-        }
+        // the below doesn't seem to be required as the result of query.list() seems to be put in
+        // hibernate's L1 cache as well.
+//        for (R r : result) {
+//            Serializable pk = getPrimaryKeyFunc.op(r);
+//            if (pk != null) {
+//                session.updateCache(r, r.getClass().getName(), pk);
+//            }
+//        }
         return result;
     }
 

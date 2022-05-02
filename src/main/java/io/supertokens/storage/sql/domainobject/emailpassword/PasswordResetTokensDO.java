@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobject.emailpassword;
 
+import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 /*
 CREATE TABLE IF NOT EXISTS emailpassword_pswd_reset_tokens (
@@ -41,7 +43,7 @@ CREATE TABLE IF NOT EXISTS emailpassword_pswd_reset_tokens (
 @NoArgsConstructor
 @Entity
 @Table(name = "emailpassword_pswd_reset_tokens")
-public class PasswordResetTokensDO {
+public class PasswordResetTokensDO extends PrimaryKeyFetchable {
 
     @EmbeddedId
     private PasswordResetTokensPK pk;
@@ -61,5 +63,10 @@ public class PasswordResetTokensDO {
     @Override
     public int hashCode() {
         return getPk().hashCode();
+    }
+
+    @Override
+    public Serializable getPrimaryKey() {
+        return this.getPk();
     }
 }

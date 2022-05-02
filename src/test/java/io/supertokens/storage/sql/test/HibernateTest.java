@@ -385,15 +385,14 @@ public class HibernateTest {
             p.setPk(pk);
             CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
             PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
-            if (!other.equals(p)) {
+            if (!other.getPk().getToken().equals(result[0].token)
+                    || !other.getPk().getUser().getUser_id().equals(user.id)) {
                 throw new StorageTransactionLogicException(new Exception("Test failed!"));
             }
-
             return null;
         });
 
-        // TODO: change to 1 below
-        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 2);
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));

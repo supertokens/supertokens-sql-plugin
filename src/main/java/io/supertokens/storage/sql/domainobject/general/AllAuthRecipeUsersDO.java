@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobject.general;
 
+import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 /*
 
@@ -44,7 +46,7 @@ See mapping of SQL column types to hiberate types here: https://docs.jboss.org/h
 @NoArgsConstructor
 @Entity
 @Table(name = "all_auth_recipe_users")
-public class AllAuthRecipeUsersDO {
+public class AllAuthRecipeUsersDO extends PrimaryKeyFetchable {
 
     @Id
     @Column(length = 36, nullable = false)
@@ -68,5 +70,10 @@ public class AllAuthRecipeUsersDO {
     @Override
     public int hashCode() {
         return getUser_id().hashCode();
+    }
+
+    @Override
+    public Serializable getPrimaryKey() {
+        return this.getUser_id();
     }
 }

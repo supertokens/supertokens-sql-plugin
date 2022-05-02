@@ -115,9 +115,10 @@ public class EmailPasswordQueries {
     }
 
     public static void deleteAllPasswordResetTokensForUser_Transaction(CustomSessionWrapper session, String userId) {
-//        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
-//
-//        update(con, QUERY, pst -> pst.setString(1, userId));
+        String QUERY = "DELETE FROM PasswordResetTokensDO entity WHERE entity.pk.user.user_id = :userid";
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("userid", userId);
+        q.executeUpdate();
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, String userId)
@@ -140,7 +141,7 @@ public class EmailPasswordQueries {
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(CustomSessionWrapper session,
             String userId) {
-        String QUERY = "SELECT entity FROM PasswordResetTokensDO entity WHERE entity.pk.user.id = :userid";
+        String QUERY = "SELECT entity FROM PasswordResetTokensDO entity WHERE entity.pk.user.user_id = :userid";
 
         CustomQueryWrapper<PasswordResetTokensDO> q = session.createQuery(QUERY, PasswordResetTokensDO.class);
         q.setParameter("userid", userId);

@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.hibernate;
 
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
+import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import org.hibernate.*;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.internal.SessionImpl;
@@ -50,7 +51,7 @@ public class CustomSessionWrapper implements Session {
 
     // Example entry "KeyValueDO" -> {pk1, pk2, ..}
     private Map<String, Set<Serializable>> nullEntityCache = new HashMap<>();
-    private Set<Object> entitySet = new HashSet<>();
+    private Set<PrimaryKeyFetchable> entitySet = new HashSet<>();
     SQLStorage.TransactionIsolationLevel currentIsolationLevel = null;
 
     public CustomSessionWrapper(Session session) {
@@ -89,17 +90,20 @@ public class CustomSessionWrapper implements Session {
         return this.session.contains(entity);
     }
 
-    public <T> T getFromCacheById(Class<T> entityType, Serializable id) {
-        if (this.currentIsolationLevel == SERIALIZABLE
-                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
-            for (Object curr : this.entitySet) {
-                if (curr.getClass() == entityType) {
-                    // TODO: get primary key from curr and compare it to id. If they are the same, return curr.
-                }
-            }
-        }
-        return null;
-    }
+    // uncomment the below if we need to loopup our cache during session.get queries as well..
+//    public <T> T getFromCacheById(Class<T> entityType, Serializable id) {
+//        if (this.currentIsolationLevel == SERIALIZABLE
+//                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+//            for (PrimaryKeyFetchable curr : this.entitySet) {
+//                if (curr.getClass() == entityType) {
+//                    if (curr.getPrimaryKey().equals(id)) {
+//                        return (T) curr;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
     @Override
     public <T> T get(Class<T> entityType, Serializable id) {
@@ -107,14 +111,14 @@ public class CustomSessionWrapper implements Session {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
-        T fromCache = getFromCacheById(entityType, id);
-        if (fromCache == null) {
-            T result = this.session.get(entityType, id);
-            updateCache(result, entityType.getName(), id);
-            return result;
-        } else {
-            return fromCache;
-        }
+//        T fromCache = getFromCacheById(entityType, id);
+//        if (fromCache == null) {
+        T result = this.session.get(entityType, id);
+        updateCache(result, entityType.getName(), id);
+        return result;
+//        } else {
+//            return fromCache;
+//        }
     }
 
     @Override
@@ -123,14 +127,14 @@ public class CustomSessionWrapper implements Session {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
-        T fromCache = getFromCacheById(entityType, id);
-        if (fromCache == null) {
-            T result = this.session.get(entityType, id, lockMode);
-            updateCache(result, entityType.getName(), id);
-            return result;
-        } else {
-            return fromCache;
-        }
+//        T fromCache = getFromCacheById(entityType, id);
+//        if (fromCache == null) {
+        T result = this.session.get(entityType, id, lockMode);
+        updateCache(result, entityType.getName(), id);
+        return result;
+//        } else {
+//            return fromCache;
+//        }
     }
 
     @Override
@@ -185,7 +189,7 @@ public class CustomSessionWrapper implements Session {
                     // check the Hibernate session.
                     cacheForNullIds.remove(id);
                 }
-                this.entitySet.add(toSave);
+                this.entitySet.add((PrimaryKeyFetchable) toSave);
             }
             if (cacheForNullIds != null) {
                 this.nullEntityCache.put(entityName, cacheForNullIds);
