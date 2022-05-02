@@ -572,26 +572,18 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             EmailPasswordQueries.addPasswordResetToken(this, passwordResetTokenInfo.userId,
                     passwordResetTokenInfo.token, passwordResetTokenInfo.tokenExpiry);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException) {
-                ServerErrorMessage serverMessage = ((PSQLException) e).getServerErrorMessage();
+        } catch (PersistenceException e) {
+            PSQLException psqlException = (PSQLException) e.getCause().getCause();
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
 
-                if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getPasswordResetTokensTable())) {
-                    throw new DuplicatePasswordResetTokenException();
-                } else if (isForeignKeyConstraintError(serverMessage,
-                        Config.getConfig(this).getPasswordResetTokensTable(), "user_id")) {
-                    throw new UnknownUserIdException();
-                }
-            }
-
-            // We keep the old exception detection logic to ensure backwards compatibility.
-            // We could get here if the new logic hits a false negative,
-            // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (user_id, token)")) {
+            if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getPasswordResetTokensTable())) {
                 throw new DuplicatePasswordResetTokenException();
-            } else if (e.getMessage().contains("foreign key") && e.getMessage().contains("user_id")) {
+            } else if (isForeignKeyConstraintError(serverMessage, Config.getConfig(this).getPasswordResetTokensTable(),
+                    "user_id")) {
                 throw new UnknownUserIdException();
             }
+            throw e;
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }

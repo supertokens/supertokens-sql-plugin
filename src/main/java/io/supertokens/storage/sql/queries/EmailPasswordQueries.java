@@ -26,6 +26,7 @@ import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensPK;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
@@ -148,7 +149,7 @@ public class EmailPasswordQueries {
         q.setParameter("userid", userId);
         q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
-        List<PasswordResetTokensDO> result = q.list(PasswordResetTokensDO::getPk);
+        List<PasswordResetTokensDO> result = q.list();
 
         PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[result.size()];
         for (int i = 0; i < result.size(); i++) {
@@ -175,7 +176,7 @@ public class EmailPasswordQueries {
                     + timeJoinedOrder + ", user_id DESC";
             CustomQueryWrapper<EmailPasswordUsersDO> q = session.createQuery(QUERY, EmailPasswordUsersDO.class);
             q.setMaxResults(limit);
-            List<EmailPasswordUsersDO> result = q.list(EmailPasswordUsersDO::getUser_id);
+            List<EmailPasswordUsersDO> result = q.list();
             UserInfo[] finalResult = new UserInfo[result.size()];
             for (int i = 0; i < result.size(); i++) {
                 EmailPasswordUsersDO curr = result.get(i);
@@ -200,7 +201,7 @@ public class EmailPasswordQueries {
             q.setParameter("tj1", timeJoined);
             q.setParameter("tj2", timeJoined);
             q.setParameter("userid", userId);
-            List<EmailPasswordUsersDO> result = q.list(EmailPasswordUsersDO::getUser_id);
+            List<EmailPasswordUsersDO> result = q.list();
             UserInfo[] finalResult = new UserInfo[result.size()];
             for (int i = 0; i < result.size(); i++) {
                 EmailPasswordUsersDO curr = result.get(i);
@@ -215,33 +216,40 @@ public class EmailPasswordQueries {
     public static long getUsersCount(Start start) throws SQLException, StorageQueryException {
         return ConnectionPool.withSession(start, (session, con) -> {
             CustomQueryWrapper<Long> q = session.createQuery("SELECT COUNT(*) FROM EmailPasswordUsersDO", Long.class);
-            List<Long> result = q.list(item -> null);
+            List<Long> result = q.list();
             return result.get(0);
         }, false);
     }
 
     public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, String token)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
-                + " WHERE token = ?";
-        return execute(start, QUERY, pst -> pst.setString(1, token), result -> {
-            if (result.next()) {
-                return PasswordResetRowMapper.getInstance().mapOrThrow(result);
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM PasswordResetTokensDO entity WHERE entity.pk.token = :token";
+            CustomQueryWrapper<PasswordResetTokensDO> q = session.createQuery(QUERY, PasswordResetTokensDO.class);
+            q.setParameter("token", token);
+            List<PasswordResetTokensDO> result = q.list();
+            if (result.size() == 0) {
+                return null;
             }
-            return null;
-        });
+            return new PasswordResetTokenInfo(result.get(0).getPk().getUser().getUser_id(),
+                    result.get(0).getPk().getToken(), result.get(0).getToken_expiry());
+        }, false);
     }
 
     public static void addPasswordResetToken(Start start, String userId, String tokenHash, long expiry)
             throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getPasswordResetTokensTable()
-                + "(user_id, token, token_expiry)" + " VALUES(?, ?, ?)";
-
-        update(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, tokenHash);
-            pst.setLong(3, expiry);
-        });
+        ConnectionPool.withSession(start, (session, con) -> {
+            PasswordResetTokensDO toInsert = new PasswordResetTokensDO();
+            PasswordResetTokensPK pk = new PasswordResetTokensPK();
+            pk.setToken(tokenHash);
+            EmailPasswordUsersDO epUser = new EmailPasswordUsersDO();
+            epUser.setUser_id(userId);
+            pk.setUser(epUser);
+            toInsert.setPk(pk);
+            toInsert.setToken_expiry(expiry);
+            session.save(PasswordResetTokensPK.class, pk, toInsert);
+            return null;
+        }, true);
     }
 
     public static void signUp(Start start, String userId, String email, String passwordHash, long timeJoined)

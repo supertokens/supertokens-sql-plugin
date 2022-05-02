@@ -68,7 +68,8 @@ public class CustomQueryWrapper<R> implements Query<R> {
 
     // Returns list from db as well as saves it in the custom cache.
     // Pass null as ID if it shouldn't be saved.
-    public List<R> list(GetPrimaryKey<R> getPrimaryKeyFunc) {
+    @Override
+    public List<R> list(/* GetPrimaryKey<R> getPrimaryKeyFunc */) {
         List<R> result = this.query.list();
         // the below doesn't seem to be required as the result of query.list() seems to be put in
         // hibernate's L1 cache as well.
@@ -112,10 +113,10 @@ public class CustomQueryWrapper<R> implements Query<R> {
     ////////////////////////////////////////////////////////////////////////////////
     // UNSUPPORTED FUNCTIONS BELOW....................
 
-    @Override
-    public List<R> list() {
-        throw new UnsupportedOperationException("Please use list(GetPrimaryKey<R> getPrimaryKeyFunc)");
-    }
+//    @Override
+//    public List<R> list() {
+//        throw new UnsupportedOperationException("Please use list(GetPrimaryKey<R> getPrimaryKeyFunc)");
+//    }
 
     @Override
     public QueryProducer getProducer() {

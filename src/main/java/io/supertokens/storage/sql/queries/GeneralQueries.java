@@ -305,7 +305,7 @@ public class GeneralQueries {
                 }
                 q.setParameterList("recipe_ids", includeRecipeIdsStr);
             }
-            List<Long> result = q.list(item -> null);
+            List<Long> result = q.list();
             return result.get(0);
         }, false);
     }
@@ -354,7 +354,7 @@ public class GeneralQueries {
                 }
                 q.setParameterList("recipe_ids", includeRecipeIdsStr);
             }
-            return q.list(AllAuthRecipeUsersDO::getUser_id);
+            return q.list();
         }, false);
 
         // we create a map from recipe ID -> userId[]

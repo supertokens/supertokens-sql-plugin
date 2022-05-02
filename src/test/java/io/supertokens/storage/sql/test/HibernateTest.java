@@ -388,6 +388,31 @@ public class HibernateTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 
+    @Test
+    public void testThatUsingSessionSaveOnPartialPkDoesOnlyInsert() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        printInterceptor.start = true;
+        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
+
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
+        assert (printInterceptor.s.split("Hibernate: insert").length - 1 == 1);
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
     private static void enableSQLLogging() {
         Start.printSQL = true;
         StorageLayer.close();
