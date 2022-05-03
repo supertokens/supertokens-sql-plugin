@@ -89,6 +89,12 @@ public class CustomQueryWrapper<R> implements Query<R> {
     }
 
     @Override
+    public Query<R> setParameterList(String name, Collection values) {
+        this.query.setParameterList(name, values);
+        return this;
+    }
+
+    @Override
     public CustomQueryWrapper<R> setMaxResults(int maxResult) {
         this.query.setMaxResults(maxResult);
         return this;
@@ -510,11 +516,6 @@ public class CustomQueryWrapper<R> implements Query<R> {
 
     @Override
     public <P> Query<R> setParameterList(QueryParameter<P> parameter, Collection<P> values) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Query<R> setParameterList(String name, Collection values) {
         throw new UnsupportedOperationException();
     }
 
