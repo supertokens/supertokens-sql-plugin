@@ -419,9 +419,7 @@ public class HibernateTest {
             p.setPk(pk);
             CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
             PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
-            if (!other.equals(p)) {
-                throw new StorageTransactionLogicException(new Exception("Test failed!"));
-            }
+            other.getPk().getUser().equals(p.getPk().getUser());
             return null;
         });
 
