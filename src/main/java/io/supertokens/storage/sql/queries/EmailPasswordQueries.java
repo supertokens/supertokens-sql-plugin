@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
@@ -34,17 +33,12 @@ import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
 
 import javax.persistence.LockModeType;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.EMAIL_PASSWORD;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
 import static java.lang.System.currentTimeMillis;
 
 public class EmailPasswordQueries {
@@ -126,20 +120,12 @@ public class EmailPasswordQueries {
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, String userId)
             throws StorageQueryException, SQLException {
-        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
-                + " WHERE user_id = ?";
-
-        return execute(start, QUERY, pst -> pst.setString(1, userId), result -> {
-            List<PasswordResetTokenInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(PasswordResetRowMapper.getInstance().mapOrThrow(result));
-            }
-            PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+        try {
+            return ConnectionPool.withSessionForComplexTransaction(start, null,
+                    (session, con) -> getAllPasswordResetTokenInfoForUser_Transaction(session, userId));
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(CustomSessionWrapper session,
@@ -273,32 +259,18 @@ public class EmailPasswordQueries {
     }
 
     public static void deleteUser(Start start, String userId)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getUsersTable()
-                            + " WHERE user_id = ? AND recipe_id = ?";
-
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userId);
-                        pst.setString(2, EMAIL_PASSWORD.toString());
-                    });
-                }
-
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getEmailPasswordUsersTable()
-                            + " WHERE user_id = ?";
-
-                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
-                }
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                String QUERY = "DELETE FROM AllAuthRecipeUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
+            }
+            {
+                String QUERY = "DELETE FROM EmailPasswordUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
             }
             return null;
-        });
+        }, true);
     }
 
     public static UserInfo getUserInfoUsingId(Start start, String id) throws SQLException, StorageQueryException {
@@ -314,81 +286,32 @@ public class EmailPasswordQueries {
     public static List<UserInfo> getUsersInfoUsingIdList(Start start, List<String> ids)
             throws SQLException, StorageQueryException {
         if (ids.size() > 0) {
-            StringBuilder QUERY = new StringBuilder("SELECT user_id, email, password_hash, time_joined FROM "
-                    + getConfig(start).getEmailPasswordUsersTable());
-            QUERY.append(" WHERE user_id IN (");
-            for (int i = 0; i < ids.size(); i++) {
-
-                QUERY.append("?");
-                if (i != ids.size() - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(")");
-
-            return execute(start, QUERY.toString(), pst -> {
-                for (int i = 0; i < ids.size(); i++) {
-                    // i+1 cause this starts with 1 and not 0
-                    pst.setString(i + 1, ids.get(i));
-                }
-            }, result -> {
+            return ConnectionPool.withSession(start, (session, con) -> {
+                String QUERY = "SELECT entity FROM EmailPasswordUsersDO entity WHERE entity.user_id IN (:useridlist)";
+                CustomQueryWrapper<EmailPasswordUsersDO> q = session.createQuery(QUERY, EmailPasswordUsersDO.class);
+                q.setParameterList("useridlist", ids);
+                List<EmailPasswordUsersDO> result = q.list();
                 List<UserInfo> finalResult = new ArrayList<>();
-                while (result.next()) {
-                    finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                for (EmailPasswordUsersDO user : result) {
+                    finalResult.add(new UserInfo(user.getUser_id(), user.getEmail(), user.getPassword_hash(),
+                            user.getTime_joined()));
                 }
                 return finalResult;
-            });
+            }, false);
         }
         return Collections.emptyList();
     }
 
     public static UserInfo getUserInfoUsingEmail(Start start, String email) throws StorageQueryException, SQLException {
-        String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-                + getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
-        return execute(start, QUERY, pst -> pst.setString(1, email), result -> {
-            if (result.next()) {
-                return UserInfoRowMapper.getInstance().mapOrThrow(result);
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM EmailPasswordUsersDO entity WHERE entity.email = :email";
+            List<EmailPasswordUsersDO> result = session.createQuery(QUERY, EmailPasswordUsersDO.class)
+                    .setParameter("email", email).list();
+            if (result.size() == 0) {
+                return null;
             }
-            return null;
-        });
-    }
-
-    private static class PasswordResetRowMapper implements RowMapper<PasswordResetTokenInfo, ResultSet> {
-        public static final PasswordResetRowMapper INSTANCE = new PasswordResetRowMapper();
-
-        private PasswordResetRowMapper() {
-        }
-
-        private static PasswordResetRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public PasswordResetTokenInfo map(ResultSet result) throws StorageQueryException {
-            try {
-                return new PasswordResetTokenInfo(result.getString("user_id"), result.getString("token"),
-                        result.getLong("token_expiry"));
-            } catch (Exception e) {
-                throw new StorageQueryException(e);
-            }
-        }
-    }
-
-    private static class UserInfoRowMapper implements RowMapper<UserInfo, ResultSet> {
-        static final UserInfoRowMapper INSTANCE = new UserInfoRowMapper();
-
-        private UserInfoRowMapper() {
-        }
-
-        private static UserInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public UserInfo map(ResultSet result) throws Exception {
-            return new UserInfo(result.getString("user_id"), result.getString("email"),
-                    result.getString("password_hash"), result.getLong("time_joined"));
-        }
+            EmailPasswordUsersDO user = result.get(0);
+            return new UserInfo(user.getUser_id(), user.getEmail(), user.getPassword_hash(), user.getTime_joined());
+        }, false);
     }
 }

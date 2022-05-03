@@ -413,6 +413,33 @@ public class HibernateTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 
+    @Test
+    public void testThatDeletingAUserDoesNotUseSelect() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        printInterceptor.start = true;
+        StorageLayer.getEmailPasswordStorage(process.getProcess()).deleteEmailPasswordUser(user.id);
+
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
+        assert (printInterceptor.s.split("Hibernate: delete").length - 1 == 2); // one delete from emailpassword users
+                                                                                // table, and the other from all auth
+                                                                                // users table
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
     private static void enableSQLLogging() {
         Start.printSQL = true;
         StorageLayer.close();
