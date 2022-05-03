@@ -389,6 +389,47 @@ public class HibernateTest {
     }
 
     @Test
+    public void temp() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        // System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
+
+        EmailPasswordSQLStorage storage = StorageLayer.getEmailPasswordStorage(process.getProcess());
+
+        printInterceptor.start = true;
+        storage.startTransaction(con -> {
+            PasswordResetTokenInfo[] result = storage.getAllPasswordResetTokenInfoForUser_Transaction(con, user.id);
+            PasswordResetTokensDO p = new PasswordResetTokensDO();
+            PasswordResetTokensPK pk = new PasswordResetTokensPK();
+            pk.setToken(result[0].token);
+            EmailPasswordUsersDO epUser = new EmailPasswordUsersDO();
+            epUser.setUser_id(user.id);
+            pk.setUser(epUser);
+            p.setPk(pk);
+            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+            PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
+            if (!other.equals(p)) {
+                throw new StorageTransactionLogicException(new Exception("Test failed!"));
+            }
+            return null;
+        });
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
     public void testThatUsingSessionSaveOnPartialPkDoesOnlyInsert() throws Exception {
         String[] args = { "../" };
         enableSQLLogging();
@@ -433,8 +474,8 @@ public class HibernateTest {
 
         assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
         assert (printInterceptor.s.split("Hibernate: delete").length - 1 == 2); // one delete from emailpassword users
-                                                                                // table, and the other from all auth
-                                                                                // users table
+        // table, and the other from all auth
+        // users table
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
