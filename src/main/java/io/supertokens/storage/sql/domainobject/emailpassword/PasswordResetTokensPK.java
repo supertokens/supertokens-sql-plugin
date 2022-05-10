@@ -43,7 +43,7 @@ public class PasswordResetTokensPK implements Serializable {
     @Column(length = 128, nullable = false, unique = true)
     private String token;
 
-    public String getUserId() {
+    public String getUser_id() {
         return user.getUser_id();
     }
 
@@ -51,13 +51,17 @@ public class PasswordResetTokensPK implements Serializable {
     public boolean equals(Object other) {
         if (other instanceof PasswordResetTokensPK) {
             PasswordResetTokensPK otherKeyValue = (PasswordResetTokensPK) other;
-            return otherKeyValue.getUser().equals(this.getUser()) && otherKeyValue.getToken().equals(getToken());
+            /*
+             * We do not use getUser().equals here because if we do that, Hibernate will run an extra query to get
+             * all user info from EmailPasswordDO table
+             */
+            return otherKeyValue.getUser_id().equals(this.getUser_id()) && otherKeyValue.getToken().equals(getToken());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return (getUser().getUser_id() + getToken()).hashCode();
+        return (getUser_id() + getToken()).hashCode();
     }
 }

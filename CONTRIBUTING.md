@@ -102,3 +102,25 @@ There are two types of these:
 - #### No query in the transaction has `ON CONFLICT DO ...`
 
   Here we can freely use HQL or one of the session `get` / `save` / `update` functions.
+
+### Foreign key constraint
+
+There are several ways of achieving this in Hibernate. We use the following method(Table `Q` depends on a column from
+Table `F`):
+
+- In `Q`'s DO, we add a field referencing `F`'s DO.
+- This field is marked with the following annotations:
+    ```
+    @Getter(value = AccessLevel.PRIVATE)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    ```
+  `ManyToOne` may change based on the relationship. The `name` field in `JoinColumn` will change too.
+- Notice that we set the getter of this to be private. The reason is that we don't want anyone outside to use this
+  getter as if they use it, most likely, there will be a db query that is run to fetch all the info, even if all the
+  user might want is the primary key of the `F`.
+- We should manually add getter functions to get the primary key of `F` which will reference the `F`'s variable and call
+  the getter on that to get the primary key. Even the internal `.equals` function should use this manual getter
+  function.
+- As an example, see the `PasswordResetTokensPk.java` code.

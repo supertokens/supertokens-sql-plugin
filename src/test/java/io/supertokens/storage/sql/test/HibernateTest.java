@@ -376,51 +376,13 @@ public class HibernateTest {
             p.setPk(pk);
             CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
             PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
-            if (!other.getPk().getToken().equals(result[0].token) || !other.getPk().getUserId().equals(user.id)) {
+            if (!other.getPk().getToken().equals(result[0].token) || !other.getPk().equals(pk)
+                    || !pk.equals(other.getPk())) {
                 throw new StorageTransactionLogicException(new Exception("Test failed!"));
             }
             return null;
         });
         assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-    }
-
-    @Test
-    public void temp() throws Exception {
-        String[] args = { "../" };
-        enableSQLLogging();
-        Interceptor printInterceptor = new Interceptor();
-        // System.setOut(printInterceptor);
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-
-        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
-            return;
-        }
-
-        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
-
-        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
-
-        EmailPasswordSQLStorage storage = StorageLayer.getEmailPasswordStorage(process.getProcess());
-
-        printInterceptor.start = true;
-        storage.startTransaction(con -> {
-            PasswordResetTokenInfo[] result = storage.getAllPasswordResetTokenInfoForUser_Transaction(con, user.id);
-            PasswordResetTokensDO p = new PasswordResetTokensDO();
-            PasswordResetTokensPK pk = new PasswordResetTokensPK();
-            pk.setToken(result[0].token);
-            EmailPasswordUsersDO epUser = new EmailPasswordUsersDO();
-            epUser.setUser_id(user.id);
-            pk.setUser(epUser);
-            p.setPk(pk);
-            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
-            PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
-            p.getPk().equals(other.getPk());
-            return null;
-        });
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
