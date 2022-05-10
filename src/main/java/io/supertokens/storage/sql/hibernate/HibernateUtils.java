@@ -18,6 +18,8 @@ package io.supertokens.storage.sql.hibernate;
 
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.DatabaseConfig;
+import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import org.hibernate.SessionFactory;
@@ -56,7 +58,8 @@ public class HibernateUtils {
     }
 
     private static Class<?>[] entities() {
-        return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class };
+        return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class, EmailPasswordUsersDO.class,
+                PasswordResetTokensDO.class };
     }
 
     @NotNull

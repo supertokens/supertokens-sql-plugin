@@ -14,7 +14,7 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobject.general;
+package io.supertokens.storage.sql.domainobject.emailpassword;
 
 import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import lombok.Getter;
@@ -28,40 +28,39 @@ import javax.persistence.Table;
 import java.io.Serializable;
 
 /*
-
-CREATE TABLE IF NOT EXISTS all_auth_recipe_users (
+CREATE TABLE IF NOT EXISTS emailpassword_users(
     user_id CHAR(36) NOT NULL,
-    recipe_id VARCHAR(128) NOT NULL,
+    email VARCHAR(256) NOT NULL UNIQUE,
+    password_hash VARCHAR(128) NOT NULL,
     time_joined BIGINT NOT NULL,
-    CONSTRAINT " + Utils.getConstraintName(schema, usersTable, null, "pkey"),
     PRIMARY KEY (user_id)
-)
-
-See mapping of SQL column types to hiberate types here: https://docs.jboss.org/hibernate/orm/5
-.0/mappingGuide/en-US/html_single/#d5e555 (Section 3.1)
+);
 */
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "all_auth_recipe_users")
-public class AllAuthRecipeUsersDO extends PrimaryKeyFetchable {
+@Table(name = "emailpassword_users")
+public class EmailPasswordUsersDO extends PrimaryKeyFetchable {
 
     @Id
     @Column(length = 36, nullable = false)
     private String user_id;
 
+    @Column(length = 256, nullable = false, unique = true)
+    private String email;
+
     @Column(length = 128, nullable = false)
-    private String recipe_id;
+    private String password_hash;
 
     @Column(nullable = false)
     private long time_joined;
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof AllAuthRecipeUsersDO) {
-            AllAuthRecipeUsersDO otherKeyValue = (AllAuthRecipeUsersDO) other;
+        if (other instanceof EmailPasswordUsersDO) {
+            EmailPasswordUsersDO otherKeyValue = (EmailPasswordUsersDO) other;
             return otherKeyValue.getUser_id().equals(this.getUser_id());
         }
         return false;

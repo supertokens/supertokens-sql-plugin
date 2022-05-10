@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.hibernate;
 
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
+import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import org.hibernate.*;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.internal.SessionImpl;
@@ -50,7 +51,7 @@ public class CustomSessionWrapper implements Session {
 
     // Example entry "KeyValueDO" -> {pk1, pk2, ..}
     private Map<String, Set<Serializable>> nullEntityCache = new HashMap<>();
-    private Set<Object> entitySet = new HashSet<>();
+    private Set<PrimaryKeyFetchable> entitySet = new HashSet<>();
     SQLStorage.TransactionIsolationLevel currentIsolationLevel = null;
 
     public CustomSessionWrapper(Session session) {
@@ -89,15 +90,35 @@ public class CustomSessionWrapper implements Session {
         return this.session.contains(entity);
     }
 
+    // uncomment the below if we need to loopup our cache during session.get queries as well..
+//    public <T> T getFromCacheById(Class<T> entityType, Serializable id) {
+//        if (this.currentIsolationLevel == SERIALIZABLE
+//                || this.currentIsolationLevel == SQLStorage.TransactionIsolationLevel.REPEATABLE_READ) {
+//            for (PrimaryKeyFetchable curr : this.entitySet) {
+//                if (curr.getClass() == entityType) {
+//                    if (curr.getPrimaryKey().equals(id)) {
+//                        return (T) curr;
+//                    }
+//                }
+//            }
+//        }
+//        return null;
+//    }
+
     @Override
     public <T> T get(Class<T> entityType, Serializable id) {
         if (isInNullEntityCache(entityType.getName(), id)) {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
+//        T fromCache = getFromCacheById(entityType, id);
+//        if (fromCache == null) {
         T result = this.session.get(entityType, id);
         updateCache(result, entityType.getName(), id);
         return result;
+//        } else {
+//            return fromCache;
+//        }
     }
 
     @Override
@@ -106,17 +127,30 @@ public class CustomSessionWrapper implements Session {
             // this means that we had fetched it previously and the db had returned a null value.
             return null;
         }
+//        T fromCache = getFromCacheById(entityType, id);
+//        if (fromCache == null) {
         T result = this.session.get(entityType, id, lockMode);
         updateCache(result, entityType.getName(), id);
         return result;
+//        } else {
+//            return fromCache;
+//        }
     }
 
     @Override
-    public <T> org.hibernate.query.Query<T> createQuery(String queryString, Class<T> resultType) {
+    public <T> CustomQueryWrapper<T> createQuery(String queryString, Class<T> resultType) {
         if (queryString.toLowerCase().trim().startsWith("select")) {
-            return this.session.createQuery(queryString, resultType);
+            return new CustomQueryWrapper<T>(this.session.createQuery(queryString, resultType), this);
         }
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("Please use the untyped version of this function");
+    }
+
+    @Override
+    public CustomQueryWrapper createQuery(String queryString) {
+        if (queryString.toLowerCase().trim().startsWith("select")) {
+            throw new UnsupportedOperationException("Please use the typed version of this function");
+        }
+        return new CustomQueryWrapper(this.session.createQuery(queryString), this);
     }
 
     public boolean isInNullEntityCache(String entityName, Serializable id) {
@@ -155,7 +189,7 @@ public class CustomSessionWrapper implements Session {
                     // check the Hibernate session.
                     cacheForNullIds.remove(id);
                 }
-                this.entitySet.add(toSave);
+                this.entitySet.add((PrimaryKeyFetchable) toSave);
             }
             if (cacheForNullIds != null) {
                 this.nullEntityCache.put(entityName, cacheForNullIds);
@@ -715,11 +749,6 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public org.hibernate.query.Query createQuery(CriteriaUpdate updateQuery) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public org.hibernate.query.Query createQuery(String queryString) {
         throw new UnsupportedOperationException();
     }
 
