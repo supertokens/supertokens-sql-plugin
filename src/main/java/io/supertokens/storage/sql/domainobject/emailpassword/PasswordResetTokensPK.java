@@ -16,6 +16,7 @@
 
 package io.supertokens.storage.sql.domainobject.emailpassword;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
@@ -29,6 +30,7 @@ import java.io.Serializable;
 @Setter
 public class PasswordResetTokensPK implements Serializable {
 
+    @Getter(value = AccessLevel.PRIVATE)
     @ManyToOne(fetch = FetchType.LAZY)
     // we use FetchType.LAZY so that when we fetch Password reset tokens, we don't also unnecessarily end up fetching
     // email password users table
@@ -40,6 +42,10 @@ public class PasswordResetTokensPK implements Serializable {
 
     @Column(length = 128, nullable = false, unique = true)
     private String token;
+
+    public String getUserId() {
+        return user.getUser_id();
+    }
 
     @Override
     public boolean equals(Object other) {
