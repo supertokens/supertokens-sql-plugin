@@ -141,7 +141,7 @@ public class EmailPasswordQueries {
         PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[result.size()];
         for (int i = 0; i < result.size(); i++) {
             PasswordResetTokensDO curr = result.get(i);
-            finalResult[i] = new PasswordResetTokenInfo(curr.getPk().getUser().getUser_id(), curr.getPk().getToken(),
+            finalResult[i] = new PasswordResetTokenInfo(curr.getPk().getUserId(), curr.getPk().getToken(),
                     curr.getToken_expiry());
         }
         return finalResult;
@@ -218,8 +218,8 @@ public class EmailPasswordQueries {
             if (result.size() == 0) {
                 return null;
             }
-            return new PasswordResetTokenInfo(result.get(0).getPk().getUser().getUser_id(),
-                    result.get(0).getPk().getToken(), result.get(0).getToken_expiry());
+            return new PasswordResetTokenInfo(result.get(0).getPk().getUserId(), result.get(0).getPk().getToken(),
+                    result.get(0).getToken_expiry());
         }, false);
     }
 
