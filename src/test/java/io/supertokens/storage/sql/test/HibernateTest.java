@@ -17,13 +17,22 @@
 package io.supertokens.storage.sql.test;
 
 import io.supertokens.ProcessState;
+import io.supertokens.emailpassword.EmailPassword;
 import io.supertokens.pluginInterface.KeyValueInfo;
+import io.supertokens.pluginInterface.STORAGE_TYPE;
 import io.supertokens.pluginInterface.Storage;
+import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
+import io.supertokens.pluginInterface.emailpassword.UserInfo;
+import io.supertokens.pluginInterface.emailpassword.sqlStorage.EmailPasswordSQLStorage;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.storage.sql.Start;
+import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensPK;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storageLayer.StorageLayer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -58,8 +67,7 @@ public class HibernateTest {
     public void shouldSelectFromDbOnce()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -91,8 +99,7 @@ public class HibernateTest {
     public void shouldSelectFromDbTwice()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -122,8 +129,7 @@ public class HibernateTest {
     public void shouldSelectFromDbTwiceWithoutInitialRowBecauseQueryingTwoDifferentKeys()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -158,8 +164,7 @@ public class HibernateTest {
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
 
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -194,8 +199,7 @@ public class HibernateTest {
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -225,8 +229,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -253,8 +256,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -282,8 +284,7 @@ public class HibernateTest {
 
         {
             String[] args = { "../" };
-            Start.printSQL = true;
-            StorageLayer.close();
+            enableSQLLogging();
             Interceptor printInterceptor = new Interceptor();
             System.setOut(printInterceptor);
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -315,8 +316,7 @@ public class HibernateTest {
     public void selectThenDeleteThenSet()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
         String[] args = { "../" };
-        Start.printSQL = true;
-        StorageLayer.close();
+        enableSQLLogging();
         Interceptor printInterceptor = new Interceptor();
         System.setOut(printInterceptor);
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -343,6 +343,106 @@ public class HibernateTest {
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
+    public void testThatUsingCreateQuerySavesItemInTheCacheCorrectly() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
+
+        EmailPasswordSQLStorage storage = StorageLayer.getEmailPasswordStorage(process.getProcess());
+
+        printInterceptor.start = true;
+        storage.startTransaction(con -> {
+            PasswordResetTokenInfo[] result = storage.getAllPasswordResetTokenInfoForUser_Transaction(con, user.id);
+            PasswordResetTokensDO p = new PasswordResetTokensDO();
+            PasswordResetTokensPK pk = new PasswordResetTokensPK();
+            pk.setToken(result[0].token);
+            EmailPasswordUsersDO epUser = new EmailPasswordUsersDO();
+            epUser.setUser_id(user.id);
+            pk.setUser(epUser);
+            p.setPk(pk);
+            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+            PasswordResetTokensDO other = session.get(PasswordResetTokensDO.class, pk);
+            if (!other.getPk().getToken().equals(result[0].token) || !other.getPk().equals(pk)
+                    || !pk.equals(other.getPk())) {
+                throw new StorageTransactionLogicException(new Exception("Test failed!"));
+            }
+            return null;
+        });
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 1);
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
+    public void testThatUsingSessionSaveOnPartialPkDoesOnlyInsert() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        printInterceptor.start = true;
+        EmailPassword.generatePasswordResetToken(process.getProcess(), user.id);
+
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
+        assert (printInterceptor.s.split("Hibernate: insert").length - 1 == 1);
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
+    public void testThatDeletingAUserDoesNotUseSelect() throws Exception {
+        String[] args = { "../" };
+        enableSQLLogging();
+        Interceptor printInterceptor = new Interceptor();
+        System.setOut(printInterceptor);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        if (StorageLayer.getStorage(process.getProcess()).getType() != STORAGE_TYPE.SQL) {
+            return;
+        }
+
+        UserInfo user = EmailPassword.signUp(process.getProcess(), "random@gmail.com", "validPass123");
+
+        printInterceptor.start = true;
+        StorageLayer.getEmailPasswordStorage(process.getProcess()).deleteEmailPasswordUser(user.id);
+
+        assert (printInterceptor.s.split("Hibernate: select").length - 1 == 0);
+        assert (printInterceptor.s.split("Hibernate: delete").length - 1 == 2); // one delete from emailpassword users
+        // table, and the other from all auth
+        // users table
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    private static void enableSQLLogging() {
+        Start.printSQL = true;
+        StorageLayer.close();
     }
 
     private static class Interceptor extends PrintStream {

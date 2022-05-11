@@ -14,7 +14,7 @@
  *    under the License.
  */
 
-package io.supertokens.storage.sql.domainobject.general;
+package io.supertokens.storage.sql.domainobject.emailpassword;
 
 import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
 import lombok.Getter;
@@ -22,58 +22,51 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
 /*
-
-CREATE TABLE IF NOT EXISTS all_auth_recipe_users (
+CREATE TABLE IF NOT EXISTS emailpassword_pswd_reset_tokens (
     user_id CHAR(36) NOT NULL,
-    recipe_id VARCHAR(128) NOT NULL,
-    time_joined BIGINT NOT NULL,
-    CONSTRAINT " + Utils.getConstraintName(schema, usersTable, null, "pkey"),
-    PRIMARY KEY (user_id)
-)
-
-See mapping of SQL column types to hiberate types here: https://docs.jboss.org/hibernate/orm/5
-.0/mappingGuide/en-US/html_single/#d5e555 (Section 3.1)
+    token VARCHAR(128) NOT NULL CONSTRAINT UNIQUE,
+    token_expiry BIGINT NOT NULL,
+    PRIMARY KEY (user_id, token),
+    FOREIGN KEY (user_id) REFERENCES emailpassword_users(user_id),
+    ON DELETE CASCADE ON UPDATE CASCADE);
+);
 */
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "all_auth_recipe_users")
-public class AllAuthRecipeUsersDO extends PrimaryKeyFetchable {
+@Table(name = "emailpassword_pswd_reset_tokens")
+public class PasswordResetTokensDO extends PrimaryKeyFetchable {
 
-    @Id
-    @Column(length = 36, nullable = false)
-    private String user_id;
-
-    @Column(length = 128, nullable = false)
-    private String recipe_id;
+    @EmbeddedId
+    private PasswordResetTokensPK pk;
 
     @Column(nullable = false)
-    private long time_joined;
+    private long token_expiry;
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof AllAuthRecipeUsersDO) {
-            AllAuthRecipeUsersDO otherKeyValue = (AllAuthRecipeUsersDO) other;
-            return otherKeyValue.getUser_id().equals(this.getUser_id());
+        if (other instanceof PasswordResetTokensDO) {
+            PasswordResetTokensDO otherKeyValue = (PasswordResetTokensDO) other;
+            return otherKeyValue.getPk().equals(this.getPk());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return getUser_id().hashCode();
+        return getPk().hashCode();
     }
 
     @Override
     public Serializable getPrimaryKey() {
-        return this.getUser_id();
+        return this.getPk();
     }
 }
