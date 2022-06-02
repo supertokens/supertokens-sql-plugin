@@ -305,6 +305,18 @@ public class PostgreSQLConfig implements DatabaseConfig {
         return addSchemaAndPrefixToTableName("user_metadata");
     }
 
+    public String getUserRolesTable() {
+        return addSchemaAndPrefixToTableName("user_roles");
+    }
+
+    public String getUserRolesPermissionsTable() {
+        return addSchemaAndPrefixToTableName("role_permissions");
+    }
+
+    public String getRolesTable() {
+        return addSchemaAndPrefixToTableName("roles");
+    }
+
     @Override
     public String addSchemaAndPrefixToTableName(String tableName) {
         String name = tableName;

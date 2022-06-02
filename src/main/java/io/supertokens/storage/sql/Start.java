@@ -49,6 +49,9 @@ import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
+import io.supertokens.pluginInterface.userroles.exception.DuplicateUserRoleMappingException;
+import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
+import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
@@ -71,7 +74,7 @@ import java.sql.SQLTransactionRollbackException;
 import java.util.List;
 
 public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
-        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage {
+        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage {
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -1376,6 +1379,176 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public int deleteUserMetadata(String userId) throws StorageQueryException {
         try {
             return UserMetadataQueries.deleteUserMetadata(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void addRoleToUser(String userId, String role)
+            throws StorageQueryException, UnknownRoleException, DuplicateUserRoleMappingException {
+
+        try {
+            UserRolesQueries.addRoleToUser(this, userId, role);
+        } catch (SQLException e) {
+            if (e instanceof PSQLException) {
+                PostgreSQLConfig config = Config.getConfig(this);
+                ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
+                if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
+                    throw new UnknownRoleException();
+                }
+                if (isPrimaryKeyError(serverErrorMessage, config.getUserRolesTable())) {
+                    throw new DuplicateUserRoleMappingException();
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+
+    }
+
+    @Override
+    public String[] getRolesForUser(String userId) throws StorageQueryException {
+        try {
+            return UserRolesQueries.getRolesForUser(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public String[] getUsersForRole(String role) throws StorageQueryException {
+        try {
+            return UserRolesQueries.getUsersForRole(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public String[] getPermissionsForRole(String role) throws StorageQueryException {
+        try {
+            return UserRolesQueries.getPermissionsForRole(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public String[] getRolesThatHavePermission(String permission) throws StorageQueryException {
+        try {
+            return UserRolesQueries.getRolesThatHavePermission(this, permission);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteRole(String role) throws StorageQueryException {
+        try {
+            return UserRolesQueries.deleteRole(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public String[] getRoles() throws StorageQueryException {
+        try {
+            return UserRolesQueries.getRoles(this);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean doesRoleExist(String role) throws StorageQueryException {
+        try {
+            return UserRolesQueries.doesRoleExist(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int deleteAllRolesForUser(String userId) throws StorageQueryException {
+        try {
+            return UserRolesQueries.deleteAllRolesForUser(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteRoleForUser_Transaction(TransactionConnection con, String userId, String role)
+            throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+
+        try {
+            return UserRolesQueries.deleteRoleForUser_Transaction(this, sqlCon, userId, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean createNewRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role)
+            throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+
+        try {
+            return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(this, sqlCon, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
+            String permission) throws StorageQueryException, UnknownRoleException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
+        } catch (SQLException e) {
+            if (e instanceof PSQLException) {
+                PostgreSQLConfig config = Config.getConfig(this);
+                ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
+                if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesPermissionsTable(), "role")) {
+                    throw new UnknownRoleException();
+                }
+            }
+
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deletePermissionForRole_Transaction(TransactionConnection con, String role, String permission)
+            throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserRolesQueries.deletePermissionForRole_Transaction(this, sqlCon, role, permission);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int deleteAllPermissionsForRole_Transaction(TransactionConnection con, String role)
+            throws StorageQueryException {
+
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserRolesQueries.deleteAllPermissionsForRole_Transaction(this, sqlCon, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserRolesQueries.doesRoleExist_transaction(this, sqlCon, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
