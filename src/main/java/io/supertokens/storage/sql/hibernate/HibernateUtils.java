@@ -22,6 +22,7 @@ import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersD
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersDO;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -59,7 +60,7 @@ public class HibernateUtils {
 
     private static Class<?>[] entities() {
         return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class, EmailPasswordUsersDO.class,
-                PasswordResetTokensDO.class };
+                PasswordResetTokensDO.class, ThirdPartyUsersDO.class };
     }
 
     @NotNull

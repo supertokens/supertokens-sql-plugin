@@ -20,8 +20,12 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.thirdparty.UserInfo;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
+import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersPK;
 import io.supertokens.storage.sql.utils.Utils;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,39 +61,25 @@ public class ThirdPartyQueries {
     }
 
     public static void signUp(Start start, io.supertokens.pluginInterface.thirdparty.UserInfo userInfo)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getUsersTable()
-                            + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userInfo.id);
-                        pst.setString(2, THIRD_PARTY.toString());
-                        pst.setLong(3, userInfo.timeJoined);
-                    });
-                }
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            AllAuthRecipeUsersDO allUsersRow = new AllAuthRecipeUsersDO();
+            allUsersRow.setUser_id(userInfo.id);
+            allUsersRow.setRecipe_id(THIRD_PARTY.toString());
+            allUsersRow.setTime_joined(userInfo.timeJoined);
+            session.save(AllAuthRecipeUsersDO.class, userInfo.id, allUsersRow);
 
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getThirdPartyUsersTable()
-                            + "(third_party_id, third_party_user_id, user_id, email, time_joined)"
-                            + " VALUES(?, ?, ?, ?, ?)";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userInfo.thirdParty.id);
-                        pst.setString(2, userInfo.thirdParty.userId);
-                        pst.setString(3, userInfo.id);
-                        pst.setString(4, userInfo.email);
-                        pst.setLong(5, userInfo.timeJoined);
-                    });
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
-            }
+            ThirdPartyUsersDO tpRow = new ThirdPartyUsersDO();
+            ThirdPartyUsersPK pk = new ThirdPartyUsersPK();
+            pk.setThird_party_id(userInfo.thirdParty.id);
+            pk.setThird_party_user_id(userInfo.thirdParty.userId);
+            tpRow.setPk(pk);
+            tpRow.setUser_id(userInfo.id);
+            tpRow.setEmail(userInfo.email);
+            tpRow.setTime_joined(userInfo.timeJoined);
+            session.save(ThirdPartyUsersDO.class, pk, tpRow);
             return null;
-        });
+        }, true);
     }
 
     public static void deleteUser(Start start, String userId)

@@ -526,6 +526,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                     || isPrimaryKeyError(serverMessage, config.getUsersTable())) {
                 throw new DuplicateUserIdException();
             }
+
+            throw new StorageQueryException(eTemp);
         } catch (SQLException | StorageTransactionLogicException e) {
             throw new StorageQueryException(e);
         }
@@ -846,28 +848,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             DuplicateThirdPartyUserException {
         try {
             ThirdPartyQueries.signUp(this, userInfo);
-        } catch (StorageTransactionLogicException eTemp) {
-            Exception e = eTemp.actualException;
-            if (e instanceof PSQLException) {
-                ServerErrorMessage serverMessage = ((PSQLException) e).getServerErrorMessage();
-                if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getThirdPartyUsersTable())) {
-                    throw new DuplicateThirdPartyUserException();
-                } else if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getUsersTable())) {
-                    throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
-                }
-            }
-
-            // We keep the old exception detection logic to ensure backwards compatibility.
-            // We could get here if the new logic hits a false negative,
-            // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key")
-                    && e.getMessage().contains("Key (third_party_id, third_party_user_id)")) {
+        } catch (PersistenceException eTemp) {
+            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
+            PostgreSQLConfig config = Config.getConfig(this);
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
+            if (isPrimaryKeyError(serverMessage, config.getThirdPartyUsersTable())) {
                 throw new DuplicateThirdPartyUserException();
-            } else if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (user_id)")) {
+            } else if (isPrimaryKeyError(serverMessage, config.getUsersTable())) {
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
 
-            throw new StorageQueryException(eTemp.actualException);
+            throw new StorageQueryException(eTemp);
+        } catch (SQLException | StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
         }
     }
 
