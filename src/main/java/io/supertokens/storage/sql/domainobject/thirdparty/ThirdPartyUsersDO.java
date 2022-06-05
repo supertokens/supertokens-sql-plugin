@@ -51,7 +51,7 @@ public class ThirdPartyUsersDO extends PrimaryKeyFetchable {
     @Column(length = 36, nullable = false, unique = true)
     private String user_id;
 
-    @Column(length = 256, nullable = false, unique = true)
+    @Column(length = 256, nullable = false)
     private String email;
 
     @Column(nullable = false)
