@@ -83,30 +83,18 @@ public class ThirdPartyQueries {
     }
 
     public static void deleteUser(Start start, String userId)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getUsersTable()
-                            + " WHERE user_id = ? AND recipe_id = ?";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userId);
-                        pst.setString(2, THIRD_PARTY.toString());
-                    });
-                }
-
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getThirdPartyUsersTable() + " WHERE user_id = ? ";
-                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                String QUERY = "DELETE FROM AllAuthRecipeUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
+            }
+            {
+                String QUERY = "DELETE FROM ThirdPartyUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
             }
             return null;
-        });
+        }, true);
     }
 
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String userId)

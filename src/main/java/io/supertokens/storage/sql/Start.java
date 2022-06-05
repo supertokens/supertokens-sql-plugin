@@ -870,6 +870,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             ThirdPartyQueries.deleteUser(this, userId);
         } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
