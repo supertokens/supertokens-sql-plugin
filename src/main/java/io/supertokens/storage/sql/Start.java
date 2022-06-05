@@ -526,6 +526,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                     || isPrimaryKeyError(serverMessage, config.getUsersTable())) {
                 throw new DuplicateUserIdException();
             }
+
+            throw new StorageQueryException(eTemp);
         } catch (SQLException | StorageTransactionLogicException e) {
             throw new StorageQueryException(e);
         }
@@ -821,9 +823,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public io.supertokens.pluginInterface.thirdparty.UserInfo getUserInfoUsingId_Transaction(TransactionConnection con,
             String thirdPartyId, String thirdPartyUserId) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper sesison = (CustomSessionWrapper) con.getSession();
         try {
-            return ThirdPartyQueries.getUserInfoUsingId_Transaction(this, sqlCon, thirdPartyId, thirdPartyUserId);
+            return ThirdPartyQueries.getUserInfoUsingId_Transaction(sesison, thirdPartyId, thirdPartyUserId);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -832,9 +834,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void updateUserEmail_Transaction(TransactionConnection con, String thirdPartyId, String thirdPartyUserId,
             String newEmail) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            ThirdPartyQueries.updateUserEmail_Transaction(this, sqlCon, thirdPartyId, thirdPartyUserId, newEmail);
+            ThirdPartyQueries.updateUserEmail_Transaction(session, thirdPartyId, thirdPartyUserId, newEmail);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -846,28 +848,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             DuplicateThirdPartyUserException {
         try {
             ThirdPartyQueries.signUp(this, userInfo);
-        } catch (StorageTransactionLogicException eTemp) {
-            Exception e = eTemp.actualException;
-            if (e instanceof PSQLException) {
-                ServerErrorMessage serverMessage = ((PSQLException) e).getServerErrorMessage();
-                if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getThirdPartyUsersTable())) {
-                    throw new DuplicateThirdPartyUserException();
-                } else if (isPrimaryKeyError(serverMessage, Config.getConfig(this).getUsersTable())) {
-                    throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
-                }
-            }
-
-            // We keep the old exception detection logic to ensure backwards compatibility.
-            // We could get here if the new logic hits a false negative,
-            // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key")
-                    && e.getMessage().contains("Key (third_party_id, third_party_user_id)")) {
+        } catch (PersistenceException eTemp) {
+            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
+            PostgreSQLConfig config = Config.getConfig(this);
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
+            if (isPrimaryKeyError(serverMessage, config.getThirdPartyUsersTable())) {
                 throw new DuplicateThirdPartyUserException();
-            } else if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (user_id)")) {
+            } else if (isPrimaryKeyError(serverMessage, config.getUsersTable())) {
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
 
-            throw new StorageQueryException(eTemp.actualException);
+            throw new StorageQueryException(eTemp);
+        } catch (SQLException | StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
         }
     }
 
@@ -877,6 +870,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             ThirdPartyQueries.deleteUser(this, userId);
         } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 

@@ -16,27 +16,27 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.thirdparty.UserInfo;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
+import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersPK;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.LockMode;
 import org.jetbrains.annotations.NotNull;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.THIRD_PARTY;
-import static io.supertokens.storage.sql.PreparedStatementValueSetter.NO_OP_SETTER;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
 
 public class ThirdPartyQueries {
 
@@ -57,66 +57,40 @@ public class ThirdPartyQueries {
     }
 
     public static void signUp(Start start, io.supertokens.pluginInterface.thirdparty.UserInfo userInfo)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getUsersTable()
-                            + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userInfo.id);
-                        pst.setString(2, THIRD_PARTY.toString());
-                        pst.setLong(3, userInfo.timeJoined);
-                    });
-                }
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            AllAuthRecipeUsersDO allUsersRow = new AllAuthRecipeUsersDO();
+            allUsersRow.setUser_id(userInfo.id);
+            allUsersRow.setRecipe_id(THIRD_PARTY.toString());
+            allUsersRow.setTime_joined(userInfo.timeJoined);
+            session.save(AllAuthRecipeUsersDO.class, userInfo.id, allUsersRow);
 
-                {
-                    String QUERY = "INSERT INTO " + getConfig(start).getThirdPartyUsersTable()
-                            + "(third_party_id, third_party_user_id, user_id, email, time_joined)"
-                            + " VALUES(?, ?, ?, ?, ?)";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userInfo.thirdParty.id);
-                        pst.setString(2, userInfo.thirdParty.userId);
-                        pst.setString(3, userInfo.id);
-                        pst.setString(4, userInfo.email);
-                        pst.setLong(5, userInfo.timeJoined);
-                    });
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
-            }
+            ThirdPartyUsersDO tpRow = new ThirdPartyUsersDO();
+            ThirdPartyUsersPK pk = new ThirdPartyUsersPK();
+            pk.setThird_party_id(userInfo.thirdParty.id);
+            pk.setThird_party_user_id(userInfo.thirdParty.userId);
+            tpRow.setPk(pk);
+            tpRow.setUser_id(userInfo.id);
+            tpRow.setEmail(userInfo.email);
+            tpRow.setTime_joined(userInfo.timeJoined);
+            session.save(ThirdPartyUsersDO.class, pk, tpRow);
             return null;
-        });
+        }, true);
     }
 
     public static void deleteUser(Start start, String userId)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getUsersTable()
-                            + " WHERE user_id = ? AND recipe_id = ?";
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, userId);
-                        pst.setString(2, THIRD_PARTY.toString());
-                    });
-                }
-
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getThirdPartyUsersTable() + " WHERE user_id = ? ";
-                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                String QUERY = "DELETE FROM AllAuthRecipeUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
+            }
+            {
+                String QUERY = "DELETE FROM ThirdPartyUsersDO entity WHERE entity.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
             }
             return null;
-        });
+        }, true);
     }
 
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String userId)
@@ -133,164 +107,138 @@ public class ThirdPartyQueries {
     public static List<UserInfo> getUsersInfoUsingIdList(Start start, List<String> ids)
             throws SQLException, StorageQueryException {
         if (ids.size() > 0) {
-            StringBuilder QUERY = new StringBuilder(
-                    "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                            + getConfig(start).getThirdPartyUsersTable());
-            QUERY.append(" WHERE user_id IN (");
-            for (int i = 0; i < ids.size(); i++) {
-
-                QUERY.append("?");
-                if (i != ids.size() - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(")");
-
-            return execute(start, QUERY.toString(), pst -> {
-                for (int i = 0; i < ids.size(); i++) {
-                    // i+1 cause this starts with 1 and not 0
-                    pst.setString(i + 1, ids.get(i));
-                }
-            }, result -> {
+            return ConnectionPool.withSession(start, (session, con) -> {
+                String QUERY = "SELECT entity FROM ThirdPartyUsersDO entity WHERE entity.user_id IN (:useridlist)";
+                CustomQueryWrapper<ThirdPartyUsersDO> q = session.createQuery(QUERY, ThirdPartyUsersDO.class);
+                q.setParameterList("useridlist", ids);
+                List<ThirdPartyUsersDO> result = q.list();
                 List<UserInfo> finalResult = new ArrayList<>();
-                while (result.next()) {
-                    finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                for (ThirdPartyUsersDO user : result) {
+                    finalResult.add(new UserInfo(user.getUser_id(), user.getEmail(),
+                            new UserInfo.ThirdParty(user.getPk().getThird_party_id(),
+                                    user.getPk().getThird_party_user_id()),
+                            user.getTime_joined()));
                 }
                 return finalResult;
-            });
+            }, false);
         }
         return Collections.emptyList();
     }
 
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String thirdPartyId, String thirdPartyUserId)
             throws SQLException, StorageQueryException {
-
-        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + getConfig(start).getThirdPartyUsersTable() + " WHERE third_party_id = ? AND third_party_user_id = ?";
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, thirdPartyId);
-            pst.setString(2, thirdPartyUserId);
-        }, result -> {
-            if (result.next()) {
-                return UserInfoRowMapper.getInstance().mapOrThrow(result);
+        return ConnectionPool.withSession(start, (session, con) -> {
+            ThirdPartyUsersPK pk = new ThirdPartyUsersPK();
+            pk.setThird_party_user_id(thirdPartyUserId);
+            pk.setThird_party_id(thirdPartyId);
+            ThirdPartyUsersDO user = session.get(ThirdPartyUsersDO.class, pk);
+            if (user == null) {
+                return null;
             }
-            return null;
-        });
+            return new UserInfo(user.getUser_id(), user.getEmail(),
+                    new UserInfo.ThirdParty(user.getPk().getThird_party_id(), user.getPk().getThird_party_user_id()),
+                    user.getTime_joined());
+        }, false);
     }
 
-    public static void updateUserEmail_Transaction(Start start, Connection con, String thirdPartyId,
-            String thirdPartyUserId, String newEmail) throws SQLException, StorageQueryException {
-        String QUERY = "UPDATE " + getConfig(start).getThirdPartyUsersTable()
-                + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
-
-        update(con, QUERY, pst -> {
-            pst.setString(1, newEmail);
-            pst.setString(2, thirdPartyId);
-            pst.setString(3, thirdPartyUserId);
-        });
+    public static void updateUserEmail_Transaction(CustomSessionWrapper session, String thirdPartyId,
+            String thirdPartyUserId, String newEmail) throws SQLException {
+        String QUERY = "UPDATE ThirdPartyUsersDO entity SET entity.email = :email WHERE entity.pk.third_party_id = :tpid AND"
+                + " entity.pk.third_party_user_id = :tpuid";
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("email", newEmail);
+        q.setParameter("tpid", thirdPartyId);
+        q.setParameter("tpuid", thirdPartyUserId);
+        q.executeUpdate();
     }
 
-    public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con, String thirdPartyId,
-            String thirdPartyUserId) throws SQLException, StorageQueryException {
+    public static UserInfo getUserInfoUsingId_Transaction(CustomSessionWrapper session, String thirdPartyId,
+            String thirdPartyUserId) throws SQLException {
 
-        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + getConfig(start).getThirdPartyUsersTable()
-                + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
-        return execute(con, QUERY, pst -> {
-            pst.setString(1, thirdPartyId);
-            pst.setString(2, thirdPartyUserId);
-        }, result -> {
-            if (result.next()) {
-                return UserInfoRowMapper.getInstance().mapOrThrow(result);
-            }
+        ThirdPartyUsersPK pk = new ThirdPartyUsersPK();
+        pk.setThird_party_user_id(thirdPartyUserId);
+        pk.setThird_party_id(thirdPartyId);
+        ThirdPartyUsersDO user = session.get(ThirdPartyUsersDO.class, pk, LockMode.PESSIMISTIC_WRITE);
+        if (user == null) {
             return null;
-        });
+        }
+        return new UserInfo(user.getUser_id(), user.getEmail(),
+                new UserInfo.ThirdParty(user.getPk().getThird_party_id(), user.getPk().getThird_party_user_id()),
+                user.getTime_joined());
     }
 
     @Deprecated
     public static UserInfo[] getThirdPartyUsers(Start start, @NotNull Integer limit, @NotNull String timeJoinedOrder)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
-                + ", user_id DESC LIMIT ?";
-        return execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
-            List<UserInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM ThirdPartyUsersDO entity ORDER BY entity.time_joined " + timeJoinedOrder
+                    + ", user_id DESC";
+            CustomQueryWrapper<ThirdPartyUsersDO> q = session.createQuery(QUERY, ThirdPartyUsersDO.class);
+            q.setMaxResults(limit);
+            List<ThirdPartyUsersDO> result = q.list();
+            UserInfo[] finalResult = new UserInfo[result.size()];
+            for (int i = 0; i < result.size(); i++) {
+                ThirdPartyUsersDO curr = result.get(i);
+                finalResult[i] = new UserInfo(curr.getUser_id(), curr.getEmail(),
+                        new UserInfo.ThirdParty(curr.getPk().getThird_party_id(),
+                                curr.getPk().getThird_party_user_id()),
+                        curr.getTime_joined());
             }
-            return temp.toArray(UserInfo[]::new);
-        });
+            return finalResult;
+        }, false);
     }
 
     @Deprecated
     public static UserInfo[] getThirdPartyUsers(Start start, @NotNull String userId, @NotNull Long timeJoined,
             @NotNull Integer limit, @NotNull String timeJoinedOrder) throws SQLException, StorageQueryException {
-        String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
-        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
-                + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
-                + ", user_id DESC LIMIT ?";
-
-        return execute(start, QUERY, pst -> {
-            pst.setLong(1, timeJoined);
-            pst.setLong(2, timeJoined);
-            pst.setString(3, userId);
-            pst.setInt(4, limit);
-        }, result -> {
-            List<UserInfo> users = new ArrayList<>();
-
-            while (result.next()) {
-                users.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
+            String QUERY = "SELECT entity FROM ThirdPartyUsersDO entity WHERE entity.time_joined "
+                    + timeJoinedOrderSymbol
+                    + " :tj1 OR (entity.time_joined = :tj2 AND entity.user_id <= :userid) ORDER BY entity"
+                    + ".time_joined " + timeJoinedOrder + ", user_id DESC";
+            CustomQueryWrapper<ThirdPartyUsersDO> q = session.createQuery(QUERY, ThirdPartyUsersDO.class);
+            q.setMaxResults(limit);
+            q.setParameter("tj1", timeJoined);
+            q.setParameter("tj2", timeJoined);
+            q.setParameter("userid", userId);
+            List<ThirdPartyUsersDO> result = q.list();
+            UserInfo[] finalResult = new UserInfo[result.size()];
+            for (int i = 0; i < result.size(); i++) {
+                ThirdPartyUsersDO curr = result.get(i);
+                finalResult[i] = new UserInfo(curr.getUser_id(), curr.getEmail(),
+                        new UserInfo.ThirdParty(curr.getPk().getThird_party_id(),
+                                curr.getPk().getThird_party_user_id()),
+                        curr.getTime_joined());
             }
-
-            return users.toArray(UserInfo[]::new);
-        });
+            return finalResult;
+        }, false);
     }
 
     @Deprecated
     public static long getUsersCount(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT COUNT(*) as total FROM " + getConfig(start).getThirdPartyUsersTable();
-        return execute(start, QUERY, NO_OP_SETTER, result -> {
-            if (result.next()) {
-                return result.getLong("total");
-            }
-            return 0L;
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            CustomQueryWrapper<Long> q = session.createQuery("SELECT COUNT(*) FROM ThirdPartyUsersDO ", Long.class);
+            List<Long> result = q.list();
+            return result.get(0);
+        }, false);
     }
 
     public static UserInfo[] getThirdPartyUsersByEmail(Start start, @NotNull String email)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
-
-        return execute(start, QUERY, pst -> pst.setString(1, email), result -> {
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM ThirdPartyUsersDO entity where entity.email = :email";
+            CustomQueryWrapper<ThirdPartyUsersDO> q = session.createQuery(QUERY, ThirdPartyUsersDO.class);
+            q.setParameter("email", email);
+            List<ThirdPartyUsersDO> result = q.list();
             List<UserInfo> users = new ArrayList<>();
-
-            while (result.next()) {
-                users.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+            for (ThirdPartyUsersDO curr : result) {
+                users.add(new UserInfo(curr.getUser_id(), curr.getEmail(),
+                        new UserInfo.ThirdParty(curr.getPk().getThird_party_id(),
+                                curr.getPk().getThird_party_user_id()),
+                        curr.getTime_joined()));
             }
-
             return users.toArray(UserInfo[]::new);
-        });
-    }
-
-    private static class UserInfoRowMapper implements RowMapper<UserInfo, ResultSet> {
-        private static final UserInfoRowMapper INSTANCE = new UserInfoRowMapper();
-
-        private UserInfoRowMapper() {
-        }
-
-        private static UserInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public UserInfo map(ResultSet result) throws Exception {
-            return new UserInfo(result.getString("user_id"), result.getString("email"),
-                    new UserInfo.ThirdParty(result.getString("third_party_id"),
-                            result.getString("third_party_user_id")),
-                    result.getLong("time_joined"));
-        }
+        }, false);
     }
 }
