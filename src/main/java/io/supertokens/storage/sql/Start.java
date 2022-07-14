@@ -678,9 +678,9 @@ public class Start
     @Override
     public void deleteAllEmailVerificationTokensForUser_Transaction(TransactionConnection con, String userId,
             String email) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(this, sqlCon, userId, email);
+            EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(session, userId, email);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }

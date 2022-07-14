@@ -24,6 +24,7 @@ import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
 import java.sql.Connection;
@@ -103,16 +104,15 @@ public class EmailVerificationQueries {
         }
     }
 
-    public static void deleteAllEmailVerificationTokensForUser_Transaction(Start start, Connection unusedCon,
-            String userId, String email) throws SQLException, StorageQueryException {
-        ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "DELETE FROM EmailVerificationTokensDO WHERE pk.user_id = :user_id AND pk.email = :email";
-            CustomQueryWrapper q = session.createQuery(QUERY);
-            q.setParameter("user_id", userId);
-            q.setParameter("email", email);
-            q.executeUpdate();
-            return null;
-        }, true);
+    public static void deleteAllEmailVerificationTokensForUser_Transaction(CustomSessionWrapper session, String userId,
+            String email) throws SQLException {
+        String QUERY = "DELETE FROM EmailVerificationTokensDO entity "
+                + "WHERE entity.pk.user_id = :user_id AND entity.pk.email = :email";
+
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("user_id", userId);
+        q.setParameter("email", email);
+        q.executeUpdate();
     }
 
     public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, String token)
@@ -222,7 +222,8 @@ public class EmailVerificationQueries {
     public static void unverifyEmail(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "DELETE FROM EmailVerificationDO WHERE pk.user_id = :user_id AND pk.email = :email";
+            String QUERY = "DELETE FROM EmailVerificationDO entity WHERE entity.pk.user_id = :user_id AND entity.pk"
+                    + ".email = :email";
             CustomQueryWrapper q = session.createQuery(QUERY);
             q.setParameter("user_id", userId);
             q.setParameter("email", email);
@@ -234,7 +235,8 @@ public class EmailVerificationQueries {
     public static void revokeAllTokens(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "DELETE FROM EmailVerificationTokensDO WHERE pk.user_id = :user_id AND pk.email = :email";
+            String QUERY = "DELETE FROM EmailVerificationTokensDO entity WHERE entity.pk.user_id = :user_id AND "
+                    + "entity.pk.email = :email";
             CustomQueryWrapper q = session.createQuery(QUERY);
             q.setParameter("user_id", userId);
             q.setParameter("email", email);
