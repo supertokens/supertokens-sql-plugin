@@ -689,10 +689,10 @@ public class Start
     @Override
     public void updateIsEmailVerified_Transaction(TransactionConnection con, String userId, String email,
             boolean isEmailVerified) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(this, sqlCon, userId, email,
-                    isEmailVerified);
+            EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(session, userId, email, isEmailVerified);
         } catch (SQLException e) {
             boolean isPSQLPrimKeyError = e instanceof PSQLException && isPrimaryKeyError(
                     ((PSQLException) e).getServerErrorMessage(), Config.getConfig(this).getEmailVerificationTable());

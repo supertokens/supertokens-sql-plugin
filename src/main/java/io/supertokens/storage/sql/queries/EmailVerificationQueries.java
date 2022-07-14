@@ -23,6 +23,10 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationDO;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationTokensDO;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationTokensPK;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationUsersPK;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
@@ -37,6 +41,9 @@ import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
 import static io.supertokens.storage.sql.config.Config.getConfig;
 import static java.lang.System.currentTimeMillis;
+
+@interface Done {
+}
 
 public class EmailVerificationQueries {
 
@@ -82,25 +89,21 @@ public class EmailVerificationQueries {
         }, true);
     }
 
-    public static void updateUsersIsEmailVerified_Transaction(Start start, Connection con, String userId, String email,
-            boolean isEmailVerified) throws SQLException, StorageQueryException {
-
+    public static void updateUsersIsEmailVerified_Transaction(CustomSessionWrapper session, String userId, String email,
+            boolean isEmailVerified) throws SQLException {
         if (isEmailVerified) {
-            String QUERY = "INSERT INTO " + getConfig(start).getEmailVerificationTable()
-                    + "(user_id, email) VALUES(?, ?)";
+            final EmailVerificationUsersPK pk = new EmailVerificationUsersPK(userId, email);
+            final EmailVerificationDO toInsert = new EmailVerificationDO(pk);
 
-            update(con, QUERY, pst -> {
-                pst.setString(1, userId);
-                pst.setString(2, email);
-            });
+            session.save(EmailVerificationUsersPK.class, pk, toInsert);
         } else {
-            String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTable()
-                    + " WHERE user_id = ? AND email = ?";
+            String QUERY = "DELETE FROM EmailVerificationDO entity "
+                    + "WHERE entity.pk.user_id = :user_id AND entity.pk.email = :email";
 
-            update(con, QUERY, pst -> {
-                pst.setString(1, userId);
-                pst.setString(2, email);
-            });
+            CustomQueryWrapper q = session.createQuery(QUERY);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+            q.executeUpdate();
         }
     }
 
@@ -129,15 +132,14 @@ public class EmailVerificationQueries {
 
     public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
             String email) throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getEmailVerificationTokensTable()
-                + "(user_id, token, token_expiry, email)" + " VALUES(?, ?, ?, ?)";
 
-        update(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, tokenHash);
-            pst.setLong(3, expiry);
-            pst.setString(4, email);
-        });
+        ConnectionPool.withSession(start, (session, con) -> {
+            final EmailVerificationTokensPK pk1 = new EmailVerificationTokensPK(userId, email, tokenHash);
+            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk1, expiry);
+            session.save(EmailVerificationUsersPK.class, pk1, toInsert);
+
+            return null;
+        }, true);
     }
 
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(Start start,
