@@ -17,6 +17,7 @@
 package io.supertokens.storage.sql.domainobject.emailverification;
 
 import io.supertokens.storage.sql.domainobject.PrimaryKeyFetchable;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "emailverification_verified_emails")
 public class EmailVerificationDO extends PrimaryKeyFetchable {
