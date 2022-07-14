@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
@@ -31,19 +30,11 @@ import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
+import javax.persistence.LockModeType;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
 import static java.lang.System.currentTimeMillis;
-
-@interface Done {
-}
 
 public class EmailVerificationQueries {
 
@@ -118,18 +109,6 @@ public class EmailVerificationQueries {
         q.executeUpdate();
     }
 
-    public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, String token)
-            throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, token, token_expiry, email FROM "
-                + getConfig(start).getEmailVerificationTokensTable() + " WHERE token = ?";
-        return execute(start, QUERY, pst -> pst.setString(1, token), result -> {
-            if (result.next()) {
-                return EmailVerificationTokenInfoRowMapper.getInstance().mapOrThrow(result);
-            }
-            return null;
-        });
-    }
-
     public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
             String email) throws SQLException, StorageQueryException {
 
@@ -142,83 +121,93 @@ public class EmailVerificationQueries {
         }, true);
     }
 
-    public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(Start start,
-            Connection con, String userId, String email) throws SQLException, StorageQueryException {
+    public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, String token)
+            throws SQLException, StorageQueryException {
 
-        String QUERY = "SELECT user_id, token, token_expiry, email FROM "
-                + getConfig(start).getEmailVerificationTokensTable() + " WHERE user_id = ? AND email = ? FOR UPDATE";
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity " + "WHERE entity.pk.token = :token";
 
-        return execute(con, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        }, result -> {
-            List<EmailVerificationTokenInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(EmailVerificationTokenInfoRowMapper.getInstance().mapOrThrow(result));
+            CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY,
+                    EmailVerificationTokensDO.class);
+            q.setParameter("token", token);
+
+            final List<EmailVerificationTokensDO> result = q.list();
+            if (result.size() == 0) {
+                return null;
             }
-            EmailVerificationTokenInfo[] finalResult = new EmailVerificationTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+            return new EmailVerificationTokenInfo(result.get(0).getPk().getUser_id(), result.get(0).getPk().getToken(),
+                    result.get(0).getToken_expiry(), result.get(0).getPk().getEmail());
+        }, false);
+    }
+
+    public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(
+            CustomSessionWrapper session, String userId, String email) throws SQLException {
+
+        String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity "
+                + "WHERE entity.pk.user_id = :user_id AND entity.pk.email = :email";
+
+        CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY, EmailVerificationTokensDO.class);
+        q.setParameter("user_id", userId);
+        q.setParameter("email", email);
+        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+
+        return entityToEmailVerificationTokenInfos(q.list());
     }
 
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(Start start, String userId,
             String email) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, token, token_expiry, email FROM "
-                + getConfig(start).getEmailVerificationTokensTable() + " WHERE user_id = ? AND email = ?";
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity "
+                    + "WHERE entity.pk.user_id = :user_id AND entity.pk.email = :email";
 
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        }, result -> {
-            List<EmailVerificationTokenInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(EmailVerificationTokenInfoRowMapper.getInstance().mapOrThrow(result));
-            }
-            EmailVerificationTokenInfo[] finalResult = new EmailVerificationTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+            CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY,
+                    EmailVerificationTokensDO.class);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+
+            return entityToEmailVerificationTokenInfos(q.list());
+        }, false);
+    }
+
+    private static EmailVerificationTokenInfo[] entityToEmailVerificationTokenInfos(
+            List<EmailVerificationTokensDO> result) {
+
+        EmailVerificationTokenInfo[] finalResult = new EmailVerificationTokenInfo[result.size()];
+        for (int i = 0; i < result.size(); i++) {
+            EmailVerificationTokensDO curr = result.get(i);
+            finalResult[i] = new EmailVerificationTokenInfo(curr.getPk().getUser_id(), curr.getPk().getToken(),
+                    curr.getToken_expiry(), curr.getPk().getEmail());
+        }
+        return finalResult;
     }
 
     public static boolean isEmailVerified(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT * FROM " + getConfig(start).getEmailVerificationTable()
-                + " WHERE user_id = ? AND email = ?";
 
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        }, result -> result.next());
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM EmailVerificationDO entity WHERE entity.pk.user_id = :user_id AND "
+                    + "entity.pk.email = :email";
+            CustomQueryWrapper<EmailVerificationDO> q = session.createQuery(QUERY, EmailVerificationDO.class);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+
+            return q.list().size() > 0;
+        }, false);
     }
 
     public static void deleteUserInfo(Start start, String userId)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            try {
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTable() + " WHERE user_id = ?";
-                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
-                }
-
-                {
-                    String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTokensTable()
-                            + " WHERE user_id = ?";
-
-                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                String QUERY = "DELETE FROM EmailVerificationDO entity WHERE entity.pk.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
+            }
+            {
+                String QUERY = "DELETE FROM EmailVerificationTokensDO entity WHERE entity.pk.user_id = :userid";
+                session.createQuery(QUERY).setParameter("userid", userId).executeUpdate();
             }
             return null;
-        });
+        }, true);
     }
 
     public static void unverifyEmail(Start start, String userId, String email)
@@ -247,21 +236,4 @@ public class EmailVerificationQueries {
         }, true);
     }
 
-    private static class EmailVerificationTokenInfoRowMapper
-            implements RowMapper<EmailVerificationTokenInfo, ResultSet> {
-        private static final EmailVerificationTokenInfoRowMapper INSTANCE = new EmailVerificationTokenInfoRowMapper();
-
-        private EmailVerificationTokenInfoRowMapper() {
-        }
-
-        private static EmailVerificationTokenInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public EmailVerificationTokenInfo map(ResultSet result) throws Exception {
-            return new EmailVerificationTokenInfo(result.getString("user_id"), result.getString("token"),
-                    result.getLong("token_expiry"), result.getString("email"));
-        }
-    }
 }

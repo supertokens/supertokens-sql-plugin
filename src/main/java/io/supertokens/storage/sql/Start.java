@@ -658,10 +658,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(TransactionConnection con,
             String userId, String email) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(this, sqlCon, userId,
-                    email);
+            return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(session, userId, email);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -708,6 +707,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             EmailVerificationQueries.deleteUserInfo(this, userId);
         } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
