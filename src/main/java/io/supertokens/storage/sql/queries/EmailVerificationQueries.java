@@ -20,8 +20,10 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailverification.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
 import java.sql.Connection;
@@ -70,9 +72,13 @@ public class EmailVerificationQueries {
     }
 
     public static void deleteExpiredEmailVerificationTokens(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTokensTable() + " WHERE token_expiry < ?";
-
-        update(start, QUERY, pst -> pst.setLong(1, currentTimeMillis()));
+        ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM EmailVerificationTokensDO where token_expiry < :expiry";
+            CustomQueryWrapper q = session.createQuery(QUERY);
+            q.setParameter("expiry", currentTimeMillis());
+            q.executeUpdate();
+            return null;
+        }, true);
     }
 
     public static void updateUsersIsEmailVerified_Transaction(Start start, Connection con, String userId, String email,
@@ -97,15 +103,16 @@ public class EmailVerificationQueries {
         }
     }
 
-    public static void deleteAllEmailVerificationTokensForUser_Transaction(Start start, Connection con, String userId,
-            String email) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTokensTable()
-                + " WHERE user_id = ? AND email = ?";
-
-        update(con, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        });
+    public static void deleteAllEmailVerificationTokensForUser_Transaction(Start start, Connection unusedCon,
+            String userId, String email) throws SQLException, StorageQueryException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM EmailVerificationTokensDO WHERE pk.user_id = :user_id AND pk.email = :email";
+            CustomQueryWrapper q = session.createQuery(QUERY);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+            q.executeUpdate();
+            return null;
+        }, true);
     }
 
     public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, String token)
@@ -214,24 +221,26 @@ public class EmailVerificationQueries {
 
     public static void unverifyEmail(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTable()
-                + " WHERE user_id = ? AND email = ?";
-
-        update(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        });
+        ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM EmailVerificationDO WHERE pk.user_id = :user_id AND pk.email = :email";
+            CustomQueryWrapper q = session.createQuery(QUERY);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+            q.executeUpdate();
+            return null;
+        }, true);
     }
 
     public static void revokeAllTokens(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getEmailVerificationTokensTable()
-                + " WHERE user_id = ? AND email = ?";
-
-        update(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, email);
-        });
+        ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM EmailVerificationTokensDO WHERE pk.user_id = :user_id AND pk.email = :email";
+            CustomQueryWrapper q = session.createQuery(QUERY);
+            q.setParameter("user_id", userId);
+            q.setParameter("email", email);
+            q.executeUpdate();
+            return null;
+        }, true);
     }
 
     private static class EmailVerificationTokenInfoRowMapper
