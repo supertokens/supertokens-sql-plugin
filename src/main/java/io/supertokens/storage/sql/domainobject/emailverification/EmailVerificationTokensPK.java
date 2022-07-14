@@ -16,7 +16,9 @@
 
 package io.supertokens.storage.sql.domainobject.emailverification;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
@@ -26,6 +28,8 @@ import java.io.Serializable;
 @Embeddable
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmailVerificationTokensPK implements Serializable {
 
     @Column(length = 128, nullable = false)
