@@ -20,6 +20,8 @@ import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.DatabaseConfig;
 import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersDO;
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationDO;
+import io.supertokens.storage.sql.domainobject.emailverification.EmailVerificationTokensDO;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.domainobject.jwtsigning.JWTSigningDO;
@@ -74,7 +76,8 @@ public class HibernateUtils {
                 PasswordResetTokensDO.class, ThirdPartyUsersDO.class, JWTSigningDO.class, UserMetadataDO.class,
                 SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class,
                 PasswordlessCodesDO.class, PasswordlessDevicesDO.class, PasswordlessUsersDO.class, RolesDO.class,
-                UserRolesDO.class, UserRolePermissionsDO.class };
+                UserRolesDO.class, UserRolePermissionsDO.class,
+                EmailVerificationDO.class, EmailVerificationTokensDO.class };
     }
 
     @NotNull
