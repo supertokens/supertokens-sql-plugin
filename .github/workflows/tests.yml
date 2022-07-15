@@ -66,8 +66,12 @@ jobs:
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
       - name: Building and running tests
         run: cd ../supertokens-root && ./startTestingEnv
+      - name: show test report
+        run: pwd && ls -alh ../supertokens-root/supertokens-core/build/reports/tests/test
+      - name: copy test report
+        run: cp -r '../supertokens-root/supertokens-core/build/reports/tests/test' ~/test_report
       - name: Archive test report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Test report
-          path: ../supertokens-root/supertokens-core/build/reports/tests/test
+          path: ~/test_report
