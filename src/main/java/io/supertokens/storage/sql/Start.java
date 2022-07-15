@@ -61,6 +61,7 @@ import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -989,12 +990,25 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             JWTSigningQueries.setJWTSigningKeyInfo_Transaction(session, info);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException && isPrimaryKeyError(((PSQLException) e).getServerErrorMessage(),
-                    Config.getConfig(this).getJWTSigningKeysTable())) {
+        } catch (PersistenceException eTemp) {
+            // when trying to save a Object within same hibernate session
+            // it throws a NonUniqueObjectException
+            // TODO: sql-plugin -> does this really seem like a real scenario
+            // session is not shared between 2 consecutive calls
+            if(eTemp instanceof NonUniqueObjectException) {
                 throw new DuplicateKeyIdException();
             }
 
+            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
+            PostgreSQLConfig config = Config.getConfig(this);
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
+
+           if (isPrimaryKeyError(serverMessage, config.getJWTSigningKeysTable())) {
+               throw new DuplicateKeyIdException();
+            }
+
+            throw new StorageQueryException(eTemp);
+        } catch (SQLException e) {
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
