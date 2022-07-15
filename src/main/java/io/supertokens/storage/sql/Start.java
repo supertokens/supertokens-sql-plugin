@@ -975,9 +975,9 @@ public class Start
     @Override
     public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(TransactionConnection con)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return JWTSigningQueries.getJWTSigningKeys_Transaction(this, sqlCon);
+            return JWTSigningQueries.getJWTSigningKeys_Transaction(session);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -986,9 +986,9 @@ public class Start
     @Override
     public void setJWTSigningKey_Transaction(TransactionConnection con, JWTSigningKeyInfo info)
             throws StorageQueryException, DuplicateKeyIdException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            JWTSigningQueries.setJWTSigningKeyInfo_Transaction(this, sqlCon, info);
+            JWTSigningQueries.setJWTSigningKeyInfo_Transaction(session, info);
         } catch (SQLException e) {
             if (e instanceof PSQLException && isPrimaryKeyError(((PSQLException) e).getServerErrorMessage(),
                     Config.getConfig(this).getJWTSigningKeysTable())) {

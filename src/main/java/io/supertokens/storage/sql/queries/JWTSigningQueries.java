@@ -74,6 +74,7 @@ public class JWTSigningQueries {
     public static void setJWTSigningKeyInfo_Transaction(CustomSessionWrapper session, JWTSigningKeyInfo info)
             throws SQLException {
 
-        session.save(new JWTSigningDO(info.keyId, info.keyString, info.algorithm, info.createdAtTime));
+        session.save(JWTSigningDO.class, info.keyId,
+                new JWTSigningDO(info.keyId, info.keyString, info.algorithm, info.createdAtTime));
     }
 }
