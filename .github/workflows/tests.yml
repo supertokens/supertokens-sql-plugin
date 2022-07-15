@@ -12,7 +12,7 @@ on:
         required: true
       pluginRepoOwnerName:
         description: 'supertokens-plugin-interface repo owner name'
-        default: supertokensjava -XX:+PrintFlagsFinal -version
+        default: supertokens
         required: true
       pluginInterfaceBranch:
         description: 'supertokens-plugin-interface repos branch name'
