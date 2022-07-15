@@ -33,7 +33,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "jwt_signing_keys")
+@Table(name = "user_metadata")
 public class UserMetadataDO extends PrimaryKeyFetchable {
 
     @Id
