@@ -67,8 +67,9 @@ jobs:
         run: java -XX:+PrintFlagsFinal -version | grep -i heapsize
       - name: Building and running tests
         run: cd ../supertokens-root && ./startTestingEnv      
-      - name: Archive test report
+      - name: Copy Test Report
         run: cp -r '../supertokens-root/supertokens-core/build/reports/tests/test' ~/test_report
+      - name: Archive test report      
         uses: actions/upload-artifact@v3
         with:
           name: Test report
