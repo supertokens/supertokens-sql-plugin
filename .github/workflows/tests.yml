@@ -12,7 +12,7 @@ on:
         required: true
       pluginRepoOwnerName:
         description: 'supertokens-plugin-interface repo owner name'
-        default: supertokens
+        default: supertokensjava -XX:+PrintFlagsFinal -version
         required: true
       pluginInterfaceBranch:
         description: 'supertokens-plugin-interface repos branch name'
@@ -55,7 +55,6 @@ jobs:
         with:
           java-version: 15
           distribution: 'zulu'
-          cache: gradle
       - name: Modifying modules.txt in supertokens-root
         run: cd ../supertokens-root && echo "core,${{ github.event.inputs.coreRepoBranch }},${{ github.event.inputs.coreRepoOwnerName }}\nplugin-interface,${{ github.event.inputs.pluginInterfaceBranch }},${{ github.event.inputs.pluginRepoOwnerName }}\nsql-plugin,master" > modules.txt
       - name: Contents of modules.txt
@@ -64,13 +63,12 @@ jobs:
         run: cd ../supertokens-root && ./loadModules
       - name: Copying current supertokens-sql-plugin branch into supertokens-root
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
+      - name: Java Memory show
+        run: java -XX:+PrintFlagsFinal -version | grep -i heapsize
       - name: Building and running tests
-        run: cd ../supertokens-root && ./startTestingEnv
-      - name: show test report
-        run: pwd && ls -alh ../supertokens-root/supertokens-core/build/reports/tests/test
-      - name: copy test report
-        run: cp -r '../supertokens-root/supertokens-core/build/reports/tests/test' ~/test_report
+        run: cd ../supertokens-root && ./startTestingEnv      
       - name: Archive test report
+        run: cp -r '../supertokens-root/supertokens-core/build/reports/tests/test' ~/test_report
         uses: actions/upload-artifact@v3
         with:
           name: Test report
