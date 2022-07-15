@@ -1351,9 +1351,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public JsonObject getUserMetadata_Transaction(TransactionConnection con, String userId)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserMetadataQueries.getUserMetadata_Transaction(this, sqlCon, userId);
+            return UserMetadataQueries.getUserMetadata_Transaction(session, userId);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
