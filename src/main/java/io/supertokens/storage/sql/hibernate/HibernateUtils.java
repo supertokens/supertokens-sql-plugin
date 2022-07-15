@@ -25,6 +25,7 @@ import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
 import io.supertokens.storage.sql.domainobject.session.SessionAccessTokenSigningKeysDO;
 import io.supertokens.storage.sql.domainobject.session.SessionInfoDO;
 import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersDO;
+import io.supertokens.storage.sql.domainobject.jwtsigning.JWTSigningDO;
 import io.supertokens.storage.sql.domainobject.useridmapping.UserIdMappingDO;
 import io.supertokens.storage.sql.domainobject.usermetadata.UserMetadataDO;
 import org.hibernate.SessionFactory;
@@ -64,8 +65,8 @@ public class HibernateUtils {
 
     private static Class<?>[] entities() {
         return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class, EmailPasswordUsersDO.class,
-                PasswordResetTokensDO.class, ThirdPartyUsersDO.class, UserMetadataDO.class, SessionInfoDO.class,
-                SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class };
+                PasswordResetTokensDO.class, ThirdPartyUsersDO.class, JWTSigningDO.class, UserMetadataDO.class,
+                SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class };
     }
 
     @NotNull
