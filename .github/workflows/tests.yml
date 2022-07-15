@@ -63,8 +63,8 @@ jobs:
         run: cd ../supertokens-root && ./loadModules
       - name: Copying current supertokens-sql-plugin branch into supertokens-root
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
-      - name: Java Memory show
-        run: java -XX:+PrintFlagsFinal -version | grep -i heapsize
+      - name: increase java heap and print
+        run: export JAVA_TOOL_OPTIONS=-Xmx4096m && java -XX:+PrintFlagsFinal -version | grep -i heapsize
       - name: Building and running tests
         run: cd ../supertokens-root && ./startTestingEnv      
       - name: Copy Test Report
