@@ -130,10 +130,9 @@ public class SessionQueries {
 
     public static int getNumberOfSessions(Start start) throws SQLException, StorageQueryException {
         return ConnectionPool.withSession(start, (session, con) -> {
-            CustomQueryWrapper<Integer> q = session.createQuery("SELECT COUNT(*) as num FROM SessionInfoDO",
-                    Integer.class);
-            List<Integer> result = q.list();
-            return result.get(0);
+            CustomQueryWrapper<Long> q = session.createQuery("SELECT COUNT(*) as num FROM SessionInfoDO", Long.class);
+            List<Long> result = q.list();
+            return result.get(0).intValue();
         }, false);
     }
 
@@ -232,8 +231,7 @@ public class SessionQueries {
             final JsonParser jsonParser = new JsonParser();
             return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
                     sessionInfoDO.getRefresh_token_hash_2(),
-                    jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
-                    sessionInfoDO.getExpires_at(),
+                    jsonParser.parse(sessionInfoDO.getSession_data()).getAsJsonObject(), sessionInfoDO.getExpires_at(),
                     jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
                     sessionInfoDO.getCreated_at_time());
         }, false);
