@@ -12,3 +12,4 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Adds hibernate dependencies to build.gradle and modifies the implementationDependencies.json file
 - Adds support to export test runs details from github actions
 - Migrate UserMetadata Queries to use Hibernate
+- Migrates SessionInfo to use Hibernate
