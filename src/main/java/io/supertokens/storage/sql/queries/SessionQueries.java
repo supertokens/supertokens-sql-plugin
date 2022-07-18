@@ -19,24 +19,22 @@ package io.supertokens.storage.sql.queries;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.supertokens.pluginInterface.KeyValueInfo;
-import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.session.SessionInfo;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.session.SessionAccessTokenSigningKeysDO;
+import io.supertokens.storage.sql.domainobject.session.SessionInfoDO;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
 import javax.annotation.Nullable;
-import java.sql.Connection;
-import java.sql.ResultSet;
+import javax.persistence.LockModeType;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import static io.supertokens.storage.sql.PreparedStatementValueSetter.NO_OP_SETTER;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
 import static java.lang.System.currentTimeMillis;
 
 public class SessionQueries {
@@ -74,116 +72,115 @@ public class SessionQueries {
     public static void createNewSession(Start start, String sessionHandle, String userId, String refreshTokenHash2,
             JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT, long createdAtTime)
             throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getSessionInfoTable()
-                + "(session_handle, user_id, refresh_token_hash_2, session_data, expires_at, jwt_user_payload, "
-                + "created_at_time)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
 
-        update(start, QUERY, pst -> {
-            pst.setString(1, sessionHandle);
-            pst.setString(2, userId);
-            pst.setString(3, refreshTokenHash2);
-            pst.setString(4, userDataInDatabase.toString());
-            pst.setLong(5, expiry);
-            pst.setString(6, userDataInJWT.toString());
-            pst.setLong(7, createdAtTime);
-        });
+        ConnectionPool.withSession(start, (session, con) -> {
+            final SessionInfoDO sessionInfoDO = new SessionInfoDO(sessionHandle, userId, refreshTokenHash2,
+                    userDataInDatabase.toString(), userDataInJWT.toString(), expiry, createdAtTime);
+
+            session.save(SessionInfoDO.class, sessionHandle, sessionInfoDO);
+            return null;
+        }, true);
     }
 
     static boolean isSessionBlacklisted(Start start, String sessionHandle) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT session_handle FROM " + getConfig(start).getSessionInfoTable()
-                + " WHERE session_handle = ?";
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.session_handle FROM SessionInfoDO entity WHERE entity.session_handle = "
+                    + ":session_handle";
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("session_handle", sessionHandle);
 
-        return execute(start, QUERY, pst -> pst.setString(1, sessionHandle), result -> !result.next());
+            final List<String> result = query.list();
+            return !result.iterator().hasNext();
+        }, false);
     }
 
-    public static SessionInfo getSessionInfo_Transaction(Start start, Connection con, String sessionHandle)
+    public static SessionInfo getSessionInfo_Transaction(CustomSessionWrapper session, String sessionHandle)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-                + "created_at_time, jwt_user_payload FROM " + getConfig(start).getSessionInfoTable()
-                + " WHERE session_handle = ? FOR UPDATE";
-        return execute(con, QUERY, pst -> pst.setString(1, sessionHandle), result -> {
-            if (result.next()) {
-                return SessionInfoRowMapper.getInstance().mapOrThrow(result);
-            }
+
+        String QUERY = "SELECT entity FROM SessionInfoDO entity WHERE entity.session_handle = " + ":session_handle";
+        final CustomQueryWrapper<SessionInfoDO> query = session.createQuery(QUERY, SessionInfoDO.class);
+        query.setParameter("session_handle", sessionHandle);
+        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+
+        final List<SessionInfoDO> result = query.list();
+        if (result.isEmpty()) {
             return null;
-        });
+        }
+        final SessionInfoDO sessionInfoDO = result.get(0);
+        final JsonParser jsonParser = new JsonParser();
+        return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
+                sessionInfoDO.getRefresh_token_hash_2(),
+                jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(), sessionInfoDO.getExpires_at(),
+                jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
+                sessionInfoDO.getCreated_at_time());
     }
 
-    public static void updateSessionInfo_Transaction(Start start, Connection con, String sessionHandle,
+    public static void updateSessionInfo_Transaction(CustomSessionWrapper session, String sessionHandle,
             String refreshTokenHash2, long expiry) throws SQLException, StorageQueryException {
-        String QUERY = "UPDATE " + getConfig(start).getSessionInfoTable()
-                + " SET refresh_token_hash_2 = ?, expires_at = ?" + " WHERE session_handle = ?";
+        String QUERY = "UPDATE SessionInfoDO entity"
+                + " SET entity.refresh_token_hash_2 = :refresh_token_hash_2, entity.expires_at = :expires_at"
+                + " WHERE entity.session_handle = :session_handle";
 
-        update(con, QUERY, pst -> {
-            pst.setString(1, refreshTokenHash2);
-            pst.setLong(2, expiry);
-            pst.setString(3, sessionHandle);
-        });
+        CustomQueryWrapper q = session.createQuery(QUERY);
+        q.setParameter("refresh_token_hash_2", refreshTokenHash2);
+        q.setParameter("expires_at", expiry);
+        q.setParameter("session_handle", sessionHandle);
+        q.executeUpdate();
     }
 
     public static int getNumberOfSessions(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT count(*) as num FROM " + getConfig(start).getSessionInfoTable();
-
-        return execute(start, QUERY, NO_OP_SETTER, result -> {
-            if (result.next()) {
-                return result.getInt("num");
-            }
-            throw new SQLException("Should not have come here.");
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            CustomQueryWrapper<Integer> q = session.createQuery("SELECT COUNT(*) as num FROM SessionInfoDO",
+                    Integer.class);
+            List<Integer> result = q.list();
+            return result.get(0);
+        }, false);
     }
 
     public static int deleteSession(Start start, String[] sessionHandles) throws SQLException, StorageQueryException {
         if (sessionHandles.length == 0) {
             return 0;
         }
-        StringBuilder QUERY = new StringBuilder(
-                "DELETE FROM " + Config.getConfig(start).getSessionInfoTable() + " WHERE session_handle IN (");
-        for (int i = 0; i < sessionHandles.length; i++) {
-            if (i == sessionHandles.length - 1) {
-                QUERY.append("?)");
-            } else {
-                QUERY.append("?, ");
-            }
-        }
 
-        return update(start, QUERY.toString(), pst -> {
-            for (int i = 0; i < sessionHandles.length; i++) {
-                pst.setString(i + 1, sessionHandles[i]);
-            }
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM SessionInfoDO entity where entity.session_handle in (:session_handles)";
+            final CustomQueryWrapper query = session.createQuery(QUERY);
+            query.setParameterList("session_handles", sessionHandles);
+
+            return query.executeUpdate();
+        }, true);
     }
 
     public static void deleteSessionsOfUser(Start start, String userId) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getSessionInfoTable() + " WHERE user_id = ?";
+        ConnectionPool.withSession(start, (session, con) -> {
+            CustomQueryWrapper q = session
+                    .createQuery("DELETE  FROM SessionInfoDO entity WHERE entity.user_id = :user_id");
+            q.setParameter("user_id", userId).executeUpdate();
+            return null;
+        }, true);
 
-        update(start, QUERY.toString(), pst -> pst.setString(1, userId));
     }
 
     public static String[] getAllNonExpiredSessionHandlesForUser(Start start, String userId)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT session_handle FROM " + getConfig(start).getSessionInfoTable()
-                + " WHERE user_id = ? AND expires_at >= ?";
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.session_handle FROM SessionInfoDO entity"
+                    + " WHERE entity.user_id = :user_id AND entity.expires_at >= :expires_at";
+            CustomQueryWrapper<String> q = session.createQuery(QUERY, String.class);
+            q.setParameter("user_id", userId);
+            q.setParameter("expires_at", currentTimeMillis());
 
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setLong(2, currentTimeMillis());
-        }, result -> {
-            List<String> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(result.getString("session_handle"));
-            }
-            String[] finalResult = new String[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+            return q.list().toArray(String[]::new);
+        }, false);
     }
 
     public static void deleteAllExpiredSessions(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getSessionInfoTable() + " WHERE expires_at <= ?";
-
-        update(start, QUERY, pst -> pst.setLong(1, currentTimeMillis()));
+        ConnectionPool.withSession(start, (session, con) -> {
+            CustomQueryWrapper q = session
+                    .createQuery("DELETE  FROM SessionInfoDO entity WHERE entity.expires_at <= :expires_at");
+            q.setParameter("expires_at", currentTimeMillis()).executeUpdate();
+            return null;
+        }, true);
     }
 
     public static int updateSession(Start start, String sessionHandle, @Nullable JsonObject sessionData,
@@ -193,113 +190,89 @@ public class SessionQueries {
             throw new SQLException("sessionData and jwtPayload are null when updating session info");
         }
 
-        String QUERY = "UPDATE " + Config.getConfig(start).getSessionInfoTable() + " SET";
-        boolean somethingBefore = false;
-        if (sessionData != null) {
-            QUERY += " session_data = ?";
-            somethingBefore = true;
-        }
-        if (jwtPayload != null) {
-            QUERY += (somethingBefore ? "," : "") + " jwt_user_payload = ?";
-        }
-        QUERY += " WHERE session_handle = ?";
-
-        return update(start, QUERY, pst -> {
-            int currIndex = 1;
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "UPDATE SessionInfoDO entity SET";
+            boolean somethingBefore = false;
             if (sessionData != null) {
-                pst.setString(currIndex, sessionData.toString());
-                currIndex++;
+                QUERY += " entity.session_data = :session_data";
+                somethingBefore = true;
             }
             if (jwtPayload != null) {
-                pst.setString(currIndex, jwtPayload.toString());
-                currIndex++;
+                QUERY += (somethingBefore ? "," : "") + " entity.jwt_user_payload = :jwt_user_payload";
             }
-            pst.setString(currIndex, sessionHandle);
-        });
+            QUERY += " WHERE entity.session_handle = :session_handle";
+
+            final CustomQueryWrapper query = session.createQuery(QUERY);
+
+            if (sessionData != null) {
+                query.setParameter("session_data", sessionData.toString());
+            }
+            if (jwtPayload != null) {
+                query.setParameter("jwt_user_payload", jwtPayload.toString());
+            }
+            query.setParameter("session_handle", sessionHandle);
+
+            return query.executeUpdate();
+        }, true);
     }
 
     public static SessionInfo getSession(Start start, String sessionHandle) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-                + "created_at_time, jwt_user_payload FROM " + getConfig(start).getSessionInfoTable()
-                + " WHERE session_handle = ?";
-        return execute(start, QUERY, pst -> pst.setString(1, sessionHandle), result -> {
-            if (result.next()) {
-                return SessionInfoRowMapper.getInstance().mapOrThrow(result);
+
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM SessionInfoDO entity WHERE entity.session_handle = :session_handle";
+
+            CustomQueryWrapper<SessionInfoDO> q = session.createQuery(QUERY, SessionInfoDO.class);
+            q.setParameter("session_handle", sessionHandle);
+
+            final List<SessionInfoDO> result = q.list();
+            if (result.isEmpty()) {
+                return null;
             }
-            return null;
-        });
+            final SessionInfoDO sessionInfoDO = result.get(0);
+            final JsonParser jsonParser = new JsonParser();
+            return new SessionInfo(sessionInfoDO.getSession_handle(), sessionInfoDO.getUser_id(),
+                    sessionInfoDO.getRefresh_token_hash_2(),
+                    jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
+                    sessionInfoDO.getExpires_at(),
+                    jsonParser.parse(sessionInfoDO.getJwt_user_payload()).getAsJsonObject(),
+                    sessionInfoDO.getCreated_at_time());
+        }, false);
     }
 
-    public static void addAccessTokenSigningKey_Transaction(Start start, Connection con, long createdAtTime,
+    public static void addAccessTokenSigningKey_Transaction(CustomSessionWrapper session, long createdAtTime,
             String value) throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getAccessTokenSigningKeysTable() + "(created_at_time, value)"
-                + " VALUES(?, ?)";
 
-        update(con, QUERY, pst -> {
-            pst.setLong(1, createdAtTime);
-            pst.setString(2, value);
-        });
+        final SessionAccessTokenSigningKeysDO sessionAccessTokenSigningKeysDO = new SessionAccessTokenSigningKeysDO(
+                createdAtTime, value);
+
+        session.save(SessionAccessTokenSigningKeysDO.class, createdAtTime, sessionAccessTokenSigningKeysDO);
     }
 
-    public static KeyValueInfo[] getAccessTokenSigningKeys_Transaction(Start start, Connection con)
+    public static KeyValueInfo[] getAccessTokenSigningKeys_Transaction(CustomSessionWrapper session)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT * FROM " + getConfig(start).getAccessTokenSigningKeysTable() + " FOR UPDATE";
 
-        return execute(con, QUERY, NO_OP_SETTER, result -> {
-            List<KeyValueInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(AccessTokenSigningKeyRowMapper.getInstance().mapOrThrow(result));
-            }
-            KeyValueInfo[] finalResult = new KeyValueInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        });
+        String QUERY = "SELECT entity FROM SessionAccessTokenSigningKeysDO entity";
+        final CustomQueryWrapper<SessionAccessTokenSigningKeysDO> query = session.createQuery(QUERY,
+                SessionAccessTokenSigningKeysDO.class);
+        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+
+        return query.list().stream()
+                .map(sessionAccessTokenSigningKeysDO -> new KeyValueInfo(sessionAccessTokenSigningKeysDO.getValue(),
+                        sessionAccessTokenSigningKeysDO.getCreated_at_time()))
+                .toArray(KeyValueInfo[]::new);
+
     }
 
     public static void removeAccessTokenSigningKeysBefore(Start start, long time)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getAccessTokenSigningKeysTable()
-                + " WHERE created_at_time < ?";
+        ConnectionPool.withSession(start, ((session, con) -> {
+            String QUERY = "DELETE FROM SessionAccessTokenSigningKeysDO entity "
+                    + "WHERE entity.created_at_time < :created_at_time";
 
-        update(start, QUERY, pst -> pst.setLong(1, time));
+            final CustomQueryWrapper query = session.createQuery(QUERY);
+            query.setParameter("created_at_time", time).executeUpdate();
+            return null;
+        }), true);
     }
 
-    static class SessionInfoRowMapper implements RowMapper<SessionInfo, ResultSet> {
-        public static final SessionInfoRowMapper INSTANCE = new SessionInfoRowMapper();
-
-        private SessionInfoRowMapper() {
-        }
-
-        private static SessionInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public SessionInfo map(ResultSet result) throws Exception {
-            JsonParser jp = new JsonParser();
-            return new SessionInfo(result.getString("session_handle"), result.getString("user_id"),
-                    result.getString("refresh_token_hash_2"),
-                    jp.parse(result.getString("session_data")).getAsJsonObject(), result.getLong("expires_at"),
-                    jp.parse(result.getString("jwt_user_payload")).getAsJsonObject(),
-                    result.getLong("created_at_time"));
-        }
-    }
-
-    private static class AccessTokenSigningKeyRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
-        private static final AccessTokenSigningKeyRowMapper INSTANCE = new AccessTokenSigningKeyRowMapper();
-
-        private AccessTokenSigningKeyRowMapper() {
-        }
-
-        private static AccessTokenSigningKeyRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public KeyValueInfo map(ResultSet result) throws Exception {
-            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
-        }
-    }
 }
