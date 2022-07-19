@@ -210,7 +210,6 @@ public class EmailVerificationQueries {
         }, true);
     }
 
-    // todo: failing
     public static void unverifyEmail(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
