@@ -66,7 +66,6 @@ import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -201,19 +200,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             tries++;
             try {
                 return startTransactionHelper(logic, isolationLevel);
-            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException
-                    | StorageTransactionLogicException e) {
+            } catch (PersistenceException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 Throwable actualException = e;
-                if (e instanceof StorageQueryException) {
+                if (e instanceof PersistenceException) {
+                    actualException = e.getCause();
+                } else if (e instanceof StorageQueryException) {
                     actualException = e.getCause();
                 } else if (e instanceof StorageTransactionLogicException) {
                     actualException = ((StorageTransactionLogicException) e).actualException;
-                } else if (e instanceof LockAcquisitionException) {
+                }
+
+                if (actualException instanceof LockAcquisitionException) {
                     // LockAcquisitionException -> PSQLException
-                    actualException = e.getCause();
-                } else if (e instanceof OptimisticLockException) {
-                    // OptimisticLockException -> LockAcquisitionException -> PSQLException
-                    actualException = e.getCause().getCause();
+                    actualException = actualException.getCause();
                 }
                 String exceptionMessage = actualException.getMessage();
                 if (exceptionMessage == null) {
