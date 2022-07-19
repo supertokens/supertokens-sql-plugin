@@ -283,6 +283,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                     tx.commit();
                 }
                 return result;
+                // when using hibernate
+                // exceptions are thrown when we do a tx.commit()
+                // hence the addition of PersistenceException in the catch block
             } catch (PersistenceException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 if (tx != null) {
                     // the user can't rollback a transaction. So we can do this
