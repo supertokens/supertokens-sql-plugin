@@ -45,7 +45,7 @@ jobs:
           --health-retries 5
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Adds postgres host to devConfig.yaml
         run: "sed -i 's/# postgresql_host:/postgresql_host: postgres/g' ./devConfig.yaml"
       - name: Cloning supertokens-root
@@ -63,4 +63,11 @@ jobs:
       - name: Copying current supertokens-sql-plugin branch into supertokens-root
         run: cd ../supertokens-root && rm -rf ./supertokens-sql-plugin && cp -r ../supertokens-sql-plugin ./
       - name: Building and running tests
-        run: cd ../supertokens-root && ./startTestingEnv
+        run: cd ../supertokens-root && ./startTestingEnv      
+      - name: Copy Test Report
+        run: cp -r '../supertokens-root/supertokens-core/build/reports/tests/test' ~/test_report
+      - name: Archive test report      
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test report
+          path: ~/test_report

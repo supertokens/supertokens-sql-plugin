@@ -10,3 +10,4 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Sets up SessionFactory connection and modifies how initial connection retries are done.
 - Sets up logging handlers for hibernate and jboss
 - Adds hibernate dependencies to build.gradle and modifies the implementationDependencies.json file
+- Adds support to export test runs details from github actions
