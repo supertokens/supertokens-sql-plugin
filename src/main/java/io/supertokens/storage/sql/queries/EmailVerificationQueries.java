@@ -113,9 +113,9 @@ public class EmailVerificationQueries {
             String email) throws SQLException, StorageQueryException {
 
         ConnectionPool.withSession(start, (session, con) -> {
-            final EmailVerificationTokensPK pk1 = new EmailVerificationTokensPK(userId, email, tokenHash);
-            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk1, expiry);
-            session.save(EmailVerificationUsersPK.class, pk1, toInsert);
+            final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
+            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
+            session.save(EmailVerificationUsersPK.class, pk, toInsert);
 
             return null;
         }, true);
@@ -210,6 +210,7 @@ public class EmailVerificationQueries {
         }, true);
     }
 
+    // todo: failing
     public static void unverifyEmail(Start start, String userId, String email)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
