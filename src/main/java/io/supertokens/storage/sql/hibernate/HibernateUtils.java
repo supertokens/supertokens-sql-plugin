@@ -22,16 +22,10 @@ import io.supertokens.storage.sql.domainobject.emailpassword.EmailPasswordUsersD
 import io.supertokens.storage.sql.domainobject.emailpassword.PasswordResetTokensDO;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
-import io.supertokens.storage.sql.domainobject.jwtsigning.JWTSigningDO;
-import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessCodesDO;
-import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessDevicesDO;
-import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessUsersDO;
-import io.supertokens.storage.sql.domainobject.session.SessionAccessTokenSigningKeysDO;
-import io.supertokens.storage.sql.domainobject.session.SessionInfoDO;
 import io.supertokens.storage.sql.domainobject.thirdparty.ThirdPartyUsersDO;
-import io.supertokens.storage.sql.domainobject.usermetadata.UserMetadataDO;
-import io.supertokens.storage.sql.domainobject.useridmapping.UserIdMappingDO;
-import io.supertokens.storage.sql.domainobject.usermetadata.UserMetadataDO;
+import io.supertokens.storage.sql.domainobject.userroles.RolesDO;
+import io.supertokens.storage.sql.domainobject.userroles.UserRolePermissionsDO;
+import io.supertokens.storage.sql.domainobject.userroles.UserRolesDO;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataSources;
@@ -71,7 +65,8 @@ public class HibernateUtils {
         return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class, EmailPasswordUsersDO.class,
                 PasswordResetTokensDO.class, ThirdPartyUsersDO.class, JWTSigningDO.class, UserMetadataDO.class,
                 SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class,
-                PasswordlessCodesDO.class, PasswordlessDevicesDO.class, PasswordlessUsersDO.class };
+                PasswordlessCodesDO.class, PasswordlessDevicesDO.class, PasswordlessUsersDO.class, RolesDO.class, UserRolesDO.class,
+                UserRolePermissionsDO.class };
     }
 
     @NotNull
