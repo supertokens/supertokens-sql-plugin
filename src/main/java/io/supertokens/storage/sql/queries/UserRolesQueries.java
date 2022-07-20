@@ -17,8 +17,14 @@
 package io.supertokens.storage.sql.queries;
 
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.PreparedStatementValueSetter;
 import io.supertokens.storage.sql.Start;
+import io.supertokens.storage.sql.domainobject.userroles.RolesDO;
+import io.supertokens.storage.sql.domainobject.userroles.UserRolesDO;
+import io.supertokens.storage.sql.domainobject.userroles.UserRolesPK;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
 import java.sql.Connection;
@@ -103,10 +109,13 @@ public class UserRolesQueries {
     }
 
     public static boolean deleteRole(Start start, String role) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getRolesTable() + " WHERE role = ? ;";
-        return update(start, QUERY, pst -> {
-            pst.setString(1, role);
-        }) == 1;
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM RolesDO WHERE role = :role";
+            final CustomQueryWrapper query = session.createQuery(QUERY);
+            query.setParameter("role", role);
+
+            return query.executeUpdate() == 1;
+        }, true);
     }
 
     public static boolean doesRoleExist(Start start, String role) throws SQLException, StorageQueryException {
@@ -138,11 +147,15 @@ public class UserRolesQueries {
 
     public static int addRoleToUser(Start start, String userId, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getUserRolesTable() + "(user_id, role) VALUES(?, ?);";
-        return update(start, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, role);
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            final UserRolesPK pk = new UserRolesPK(new RolesDO(role), userId);
+            final UserRolesDO userRolesDO = new UserRolesDO(pk);
+
+            session.save(UserRolesDO.class, pk, userRolesDO);
+
+            // sql-plugin todo -> do we return the default value of 1 ?
+            return 1;
+        }, true);
     }
 
     public static String[] getRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
@@ -157,16 +170,16 @@ public class UserRolesQueries {
         });
     }
 
-    public static boolean deleteRoleForUser_Transaction(Start start, Connection con, String userId, String role)
+    public static boolean deleteRoleForUser_Transaction(CustomSessionWrapper session, String userId, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getUserRolesTable() + " WHERE user_id = ? AND role = ? ;";
+        String QUERY = "DELETE FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id AND entity.pk.userRole.role"
+                + " = :role";
 
-        // store the number of rows updated
-        int rowUpdatedCount = update(con, QUERY, pst -> {
-            pst.setString(1, userId);
-            pst.setString(2, role);
-        });
-        return rowUpdatedCount > 0;
+        final CustomQueryWrapper query = session.createQuery(QUERY);
+        query.setParameter("user_id", userId);
+        query.setParameter("role", role);
+
+        return query.executeUpdate() > 0;
     }
 
     public static boolean doesRoleExist_transaction(Start start, Connection con, String role)
@@ -186,28 +199,26 @@ public class UserRolesQueries {
         });
     }
 
-    public static boolean deletePermissionForRole_Transaction(Start start, Connection con, String role,
+    public static boolean deletePermissionForRole_Transaction(CustomSessionWrapper session, String role,
             String permission) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getUserRolesPermissionsTable()
-                + " WHERE role = ? AND permission = ? ";
+        String QUERY = "DELETE FROM UserRolePermissionsDO entity WHERE entity.pk.userRole.role = :role AND entity.pk"
+                + ".permission = :permission";
 
-        // store the number of rows updated
-        int rowUpdatedCount = update(con, QUERY, pst -> {
-            pst.setString(1, role);
-            pst.setString(2, permission);
-        });
+        final CustomQueryWrapper query = session.createQuery(QUERY);
+        query.setParameter("role", role);
+        query.setParameter("permission", permission);
 
-        return rowUpdatedCount > 0;
+        return query.executeUpdate() > 0;
     }
 
-    public static int deleteAllPermissionsForRole_Transaction(Start start, Connection con, String role)
+    public static int deleteAllPermissionsForRole_Transaction(CustomSessionWrapper session, String role)
             throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM UserRolePermissionsDO entity WHERE entity.pk.userRole.role = :role";
 
-        String QUERY = "DELETE FROM " + getConfig(start).getUserRolesPermissionsTable() + " WHERE role = ? ";
-        // return the number of rows updated
-        return update(con, QUERY, pst -> {
-            pst.setString(1, role);
-        });
+        final CustomQueryWrapper query = session.createQuery(QUERY);
+        query.setParameter("role", role);
+
+        return query.executeUpdate();
 
     }
 
@@ -228,8 +239,14 @@ public class UserRolesQueries {
     }
 
     public static int deleteAllRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + getConfig(start).getUserRolesTable() + " WHERE user_id = ?";
-        return update(start, QUERY, pst -> pst.setString(1, userId));
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "DELETE FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id";
+
+            final CustomQueryWrapper query = session.createQuery(QUERY);
+            query.setParameter("user_id", userId);
+
+            return query.executeUpdate();
+        }, true);
     }
 
 }
