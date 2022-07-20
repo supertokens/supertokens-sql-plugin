@@ -17,3 +17,4 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Migrates Passwordless Queries to use Hibernate
 - Migrates JWTSigning Queries to use Hibernate
 - Mark Non-Implemented Methods with @Deprecated
+- Migrate UserRoles Queries to use Hibernate
