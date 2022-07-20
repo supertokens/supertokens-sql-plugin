@@ -1555,10 +1555,9 @@ public class Start
     @Override
     public boolean deleteRoleForUser_Transaction(TransactionConnection con, String userId, String role)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-
+        final CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deleteRoleForUser_Transaction(this, sqlCon, userId, role);
+            return UserRolesQueries.deleteRoleForUser_Transaction(session, userId, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1598,9 +1597,9 @@ public class Start
     @Override
     public boolean deletePermissionForRole_Transaction(TransactionConnection con, String role, String permission)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deletePermissionForRole_Transaction(this, sqlCon, role, permission);
+            return UserRolesQueries.deletePermissionForRole_Transaction(session, role, permission);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1610,9 +1609,9 @@ public class Start
     public int deleteAllPermissionsForRole_Transaction(TransactionConnection con, String role)
             throws StorageQueryException {
 
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deleteAllPermissionsForRole_Transaction(this, sqlCon, role);
+            return UserRolesQueries.deleteAllPermissionsForRole_Transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
