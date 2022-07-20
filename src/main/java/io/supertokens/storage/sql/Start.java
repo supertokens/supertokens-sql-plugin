@@ -1619,9 +1619,9 @@ public class Start
 
     @Override
     public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.doesRoleExist_transaction(this, sqlCon, role);
+            return UserRolesQueries.doesRoleExist_transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
