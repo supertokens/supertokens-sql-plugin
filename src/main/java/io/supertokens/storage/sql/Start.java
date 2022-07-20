@@ -1566,10 +1566,9 @@ public class Start
     @Override
     public boolean createNewRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(this, sqlCon, role);
+            return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1578,9 +1577,9 @@ public class Start
     @Override
     public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
             String permission) throws StorageQueryException, UnknownRoleException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
+            UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(session, role, permission);
         } catch (SQLException e) {
             if (e instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);

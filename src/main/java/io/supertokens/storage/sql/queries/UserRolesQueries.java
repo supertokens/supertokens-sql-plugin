@@ -19,18 +19,14 @@ package io.supertokens.storage.sql.queries;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
-import io.supertokens.storage.sql.domainobject.userroles.RolesDO;
-import io.supertokens.storage.sql.domainobject.userroles.UserRolesDO;
-import io.supertokens.storage.sql.domainobject.userroles.UserRolesPK;
+import io.supertokens.storage.sql.domainobject.userroles.*;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
 import javax.persistence.LockModeType;
-import java.sql.Connection;
 import java.sql.SQLException;
 
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
 import static io.supertokens.storage.sql.config.Config.getConfig;
 
 public class UserRolesQueries {
@@ -87,22 +83,30 @@ public class UserRolesQueries {
         return "CREATE INDEX user_roles_role_index ON " + getConfig(start).getUserRolesTable() + "(role);";
     }
 
-    public static boolean createNewRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role)
+    public static boolean createNewRoleOrDoNothingIfExists_Transaction(CustomSessionWrapper session, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getRolesTable() + " VALUES(?) ON CONFLICT DO NOTHING;";
-        int rowsUpdated = update(con, QUERY, pst -> pst.setString(1, role));
-        return rowsUpdated > 0;
+
+        RolesDO toInsertOrUpdate = session.get(RolesDO.class, role);
+        if (toInsertOrUpdate == null) {
+            toInsertOrUpdate = new RolesDO(role);
+
+            session.save(UserRolePermissionsDO.class, role, toInsertOrUpdate);
+
+            return true;
+        }
+
+        return false;
     }
 
-    public static void addPermissionToRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role,
+    public static void addPermissionToRoleOrDoNothingIfExists_Transaction(CustomSessionWrapper session, String role,
             String permission) throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getUserRolesPermissionsTable()
-                + " (role, permission) VALUES(?, ?) ON CONFLICT DO NOTHING";
 
-        update(con, QUERY, pst -> {
-            pst.setString(1, role);
-            pst.setString(2, permission);
-        });
+        final UserRolePermissionsPK pk = new UserRolePermissionsPK(new RolesDO(role), permission);
+        UserRolePermissionsDO toInsertOrUpdate = session.get(UserRolePermissionsDO.class, pk);
+        if (toInsertOrUpdate == null) {
+            toInsertOrUpdate = new UserRolePermissionsDO(pk);
+            session.save(UserRolePermissionsDO.class, pk, toInsertOrUpdate);
+        }
     }
 
     public static boolean deleteRole(Start start, String role) throws SQLException, StorageQueryException {

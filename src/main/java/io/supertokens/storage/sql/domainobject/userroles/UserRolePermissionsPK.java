@@ -16,9 +16,7 @@
 
 package io.supertokens.storage.sql.domainobject.userroles;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -28,6 +26,8 @@ import java.io.Serializable;
 @Embeddable
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRolePermissionsPK implements Serializable {
 
     @Getter(value = AccessLevel.PRIVATE)
