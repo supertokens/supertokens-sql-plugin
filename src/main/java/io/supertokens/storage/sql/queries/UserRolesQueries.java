@@ -18,7 +18,6 @@ package io.supertokens.storage.sql.queries;
 
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.sql.ConnectionPool;
-import io.supertokens.storage.sql.PreparedStatementValueSetter;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.domainobject.userroles.RolesDO;
 import io.supertokens.storage.sql.domainobject.userroles.UserRolesDO;
@@ -27,12 +26,10 @@ import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
+import javax.persistence.LockModeType;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
 import static io.supertokens.storage.sql.config.Config.getConfig;
 
@@ -119,61 +116,65 @@ public class UserRolesQueries {
     }
 
     public static boolean doesRoleExist(Start start, String role) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT 1 FROM " + getConfig(start).getRolesTable() + " WHERE role = ?";
-        return execute(start, QUERY, pst -> pst.setString(1, role), ResultSet::next);
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
+
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("role", role);
+
+            return !query.list().isEmpty();
+        }, false);
     }
 
     public static String[] getPermissionsForRole(Start start, String role) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT permission FROM " + getConfig(start).getUserRolesPermissionsTable() + " WHERE role = ?;";
-        return execute(start, QUERY, pst -> pst.setString(1, role), result -> {
-            ArrayList<String> permissions = new ArrayList<>();
-            while (result.next()) {
-                permissions.add(result.getString("permission"));
-            }
-            return permissions.toArray(String[]::new);
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.pk.permission FROM UserRolePermissionsDO entity"
+                    + " WHERE entity.pk.userRole.role = :role";
+
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("role", role);
+
+            return query.list().toArray(String[]::new);
+        }, false);
     }
 
     public static String[] getRoles(Start start) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT role FROM " + getConfig(start).getRolesTable();
-        return execute(start, QUERY, PreparedStatementValueSetter.NO_OP_SETTER, result -> {
-            ArrayList<String> roles = new ArrayList<>();
-            while (result.next()) {
-                roles.add(result.getString("role"));
-            }
-            return roles.toArray(String[]::new);
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.role FROM RolesDO entity";
+
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+
+            return query.list().toArray(String[]::new);
+        }, false);
     }
 
-    public static int addRoleToUser(Start start, String userId, String role)
+    public static void addRoleToUser(Start start, String userId, String role)
             throws SQLException, StorageQueryException {
-        return ConnectionPool.withSession(start, (session, con) -> {
+        ConnectionPool.withSession(start, (session, con) -> {
             final UserRolesPK pk = new UserRolesPK(new RolesDO(role), userId);
             final UserRolesDO userRolesDO = new UserRolesDO(pk);
 
             session.save(UserRolesDO.class, pk, userRolesDO);
 
-            // sql-plugin todo -> do we return the default value of 1 ?
-            return 1;
+            return null;
         }, true);
     }
 
     public static String[] getRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT role FROM " + getConfig(start).getUserRolesTable() + " WHERE user_id = ? ;";
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.pk.userRole.role FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id";
 
-        return execute(start, QUERY, pst -> pst.setString(1, userId), result -> {
-            ArrayList<String> roles = new ArrayList<>();
-            while (result.next()) {
-                roles.add(result.getString("role"));
-            }
-            return roles.toArray(String[]::new);
-        });
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("user_id", userId);
+
+            return query.list().toArray(String[]::new);
+        }, false);
     }
 
     public static boolean deleteRoleForUser_Transaction(CustomSessionWrapper session, String userId, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id AND entity.pk.userRole.role"
-                + " = :role";
+        String QUERY = "DELETE FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id "
+                + "AND entity.pk.userRole.role = :role";
 
         final CustomQueryWrapper query = session.createQuery(QUERY);
         query.setParameter("user_id", userId);
@@ -182,21 +183,26 @@ public class UserRolesQueries {
         return query.executeUpdate() > 0;
     }
 
-    public static boolean doesRoleExist_transaction(Start start, Connection con, String role)
+    public static boolean doesRoleExist_transaction(CustomSessionWrapper session, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT 1 FROM " + getConfig(start).getRolesTable() + " WHERE role = ? FOR UPDATE";
-        return execute(con, QUERY, pst -> pst.setString(1, role), ResultSet::next);
+        String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
+
+        final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+        query.setParameter("role", role);
+        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+
+        return !query.list().isEmpty();
     }
 
     public static String[] getUsersForRole(Start start, String role) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id FROM " + getConfig(start).getUserRolesTable() + " WHERE role = ? ";
-        return execute(start, QUERY, pst -> pst.setString(1, role), result -> {
-            ArrayList<String> userIds = new ArrayList<>();
-            while (result.next()) {
-                userIds.add(result.getString("user_id"));
-            }
-            return userIds.toArray(String[]::new);
-        });
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.pk.user_id FROM UserRolesDO entity WHERE entity.pk.userRole.role = :role";
+
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("role", role);
+
+            return query.list().toArray(String[]::new);
+        }, false);
     }
 
     public static boolean deletePermissionForRole_Transaction(CustomSessionWrapper session, String role,
@@ -219,23 +225,19 @@ public class UserRolesQueries {
         query.setParameter("role", role);
 
         return query.executeUpdate();
-
     }
 
     public static String[] getRolesThatHavePermission(Start start, String permission)
             throws SQLException, StorageQueryException {
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity.pk.userRole.role FROM UserRolePermissionsDO entity WHERE entity.pk"
+                    + ".permission = :permission";
 
-        String QUERY = "SELECT role FROM " + getConfig(start).getUserRolesPermissionsTable() + " WHERE permission = ? ";
+            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            query.setParameter("permission", permission);
 
-        return execute(start, QUERY, pst -> pst.setString(1, permission), result -> {
-            ArrayList<String> roles = new ArrayList<>();
-
-            while (result.next()) {
-                roles.add(result.getString("role"));
-            }
-
-            return roles.toArray(String[]::new);
-        });
+            return query.list().toArray(String[]::new);
+        }, false);
     }
 
     public static int deleteAllRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
