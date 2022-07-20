@@ -28,7 +28,7 @@ import javax.persistence.Table;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "role_permissions")
+@Table(name = "user_roles")
 @Getter
 @Setter
 @NoArgsConstructor
