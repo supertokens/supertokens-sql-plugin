@@ -123,7 +123,7 @@ public class UserRolesQueries {
         return ConnectionPool.withSession(start, (session, con) -> {
             String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
 
-            final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+            final CustomQueryWrapper<Integer> query = session.createQuery(QUERY, Integer.class);
             query.setParameter("role", role);
 
             return !query.list().isEmpty();
@@ -191,7 +191,7 @@ public class UserRolesQueries {
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
 
-        final CustomQueryWrapper<String> query = session.createQuery(QUERY, String.class);
+        final CustomQueryWrapper<Integer> query = session.createQuery(QUERY, Integer.class);
         query.setParameter("role", role);
         query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
