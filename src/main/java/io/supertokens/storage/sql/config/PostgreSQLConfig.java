@@ -317,6 +317,10 @@ public class PostgreSQLConfig implements DatabaseConfig {
         return addSchemaAndPrefixToTableName("roles");
     }
 
+    public String getUserIdMappingTable() {
+        return addSchemaAndPrefixToTableName("userid_mapping");
+    }
+
     @Override
     public String addSchemaAndPrefixToTableName(String tableName) {
         String name = tableName;
