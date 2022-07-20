@@ -66,7 +66,6 @@ public class PasswordlessCodesDO extends PrimaryKeyFetchable {
         return this.getCode_id().hashCode();
     }
 
-
     @Override
     public Serializable getPrimaryKey() {
         return code_id;

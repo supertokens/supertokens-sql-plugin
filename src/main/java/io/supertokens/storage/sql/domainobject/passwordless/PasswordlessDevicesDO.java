@@ -66,7 +66,6 @@ public class PasswordlessDevicesDO extends PrimaryKeyFetchable {
         return this.getDevice_id_hash().hashCode();
     }
 
-
     @Override
     public Serializable getPrimaryKey() {
         return device_id_hash;
