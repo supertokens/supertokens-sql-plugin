@@ -84,7 +84,7 @@ public class UserRolesQueries {
     }
 
     public static boolean createNewRoleOrDoNothingIfExists_Transaction(CustomSessionWrapper session, String role)
-            throws SQLException, StorageQueryException {
+            throws SQLException {
 
         RolesDO toInsertOrUpdate = session.get(RolesDO.class, role);
         if (toInsertOrUpdate == null) {
@@ -99,7 +99,7 @@ public class UserRolesQueries {
     }
 
     public static void addPermissionToRoleOrDoNothingIfExists_Transaction(CustomSessionWrapper session, String role,
-            String permission) throws SQLException, StorageQueryException {
+            String permission) throws SQLException {
 
         final UserRolePermissionsPK pk = new UserRolePermissionsPK(new RolesDO(role), permission);
         UserRolePermissionsDO toInsertOrUpdate = session.get(UserRolePermissionsDO.class, pk);
@@ -155,6 +155,7 @@ public class UserRolesQueries {
     public static void addRoleToUser(Start start, String userId, String role)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
+            // might need to find role before commit
             final UserRolesPK pk = new UserRolesPK(new RolesDO(role), userId);
             final UserRolesDO userRolesDO = new UserRolesDO(pk);
 
@@ -176,7 +177,7 @@ public class UserRolesQueries {
     }
 
     public static boolean deleteRoleForUser_Transaction(CustomSessionWrapper session, String userId, String role)
-            throws SQLException, StorageQueryException {
+            throws SQLException {
         String QUERY = "DELETE FROM UserRolesDO entity WHERE entity.pk.user_id = :user_id "
                 + "AND entity.pk.userRole.role = :role";
 
@@ -187,8 +188,7 @@ public class UserRolesQueries {
         return query.executeUpdate() > 0;
     }
 
-    public static boolean doesRoleExist_transaction(CustomSessionWrapper session, String role)
-            throws SQLException, StorageQueryException {
+    public static boolean doesRoleExist_transaction(CustomSessionWrapper session, String role) throws SQLException {
         String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
 
         final CustomQueryWrapper<Integer> query = session.createQuery(QUERY, Integer.class);
@@ -210,7 +210,7 @@ public class UserRolesQueries {
     }
 
     public static boolean deletePermissionForRole_Transaction(CustomSessionWrapper session, String role,
-            String permission) throws SQLException, StorageQueryException {
+            String permission) throws SQLException {
         String QUERY = "DELETE FROM UserRolePermissionsDO entity WHERE entity.pk.userRole.role = :role AND entity.pk"
                 + ".permission = :permission";
 
@@ -222,7 +222,7 @@ public class UserRolesQueries {
     }
 
     public static int deleteAllPermissionsForRole_Transaction(CustomSessionWrapper session, String role)
-            throws SQLException, StorageQueryException {
+            throws SQLException {
         String QUERY = "DELETE FROM UserRolePermissionsDO entity WHERE entity.pk.userRole.role = :role";
 
         final CustomQueryWrapper query = session.createQuery(QUERY);
