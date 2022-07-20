@@ -63,6 +63,7 @@ import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1464,8 +1465,16 @@ public class Start
 
         try {
             UserRolesQueries.addRoleToUser(this, userId, role);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException) {
+        } catch (PersistenceException | SQLException e) {
+            if (e instanceof PersistenceException) {
+                final ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+                if (cause.getConstraintName().equals("user_roles_pkey")) {
+                    throw new DuplicateUserRoleMappingException();
+                }
+                if (cause.getConstraintName().equals("user_roles_role_fkey")) {
+                    throw new UnknownRoleException();
+                }
+            } else if (e instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);
                 ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
                 if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
