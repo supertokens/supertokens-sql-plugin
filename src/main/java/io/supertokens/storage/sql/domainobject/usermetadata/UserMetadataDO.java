@@ -28,6 +28,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS user_metadata (user_id VARCHAR(128) NOT NULL,
+//user_metadata TEXT NOT NULL,CONSTRAINT user_metadata_pkey PRIMARY KEY(user_id) );
+
 @Getter
 @Setter
 @NoArgsConstructor
