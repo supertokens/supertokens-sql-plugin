@@ -28,6 +28,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS session_access_token_signing_keys (created_at_time BIGINT NOT NULL,
+//value TEXT,CONSTRAINT session_access_token_signing_keys_pkey PRIMARY KEY(created_at_time) );
+
 @Entity
 @Table(name = "session_access_token_signing_keys")
 @Getter
