@@ -66,7 +66,6 @@ import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -201,19 +200,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             tries++;
             try {
                 return startTransactionHelper(logic, isolationLevel);
-            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException
-                    | StorageTransactionLogicException e) {
+            } catch (PersistenceException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 Throwable actualException = e;
-                if (e instanceof StorageQueryException) {
+                if (e instanceof PersistenceException) {
+                    actualException = e.getCause();
+                } else if (e instanceof StorageQueryException) {
                     actualException = e.getCause();
                 } else if (e instanceof StorageTransactionLogicException) {
                     actualException = ((StorageTransactionLogicException) e).actualException;
-                } else if (e instanceof LockAcquisitionException) {
+                }
+
+                if (actualException instanceof LockAcquisitionException) {
                     // LockAcquisitionException -> PSQLException
-                    actualException = e.getCause();
-                } else if (e instanceof OptimisticLockException) {
-                    // OptimisticLockException -> LockAcquisitionException -> PSQLException
-                    actualException = e.getCause().getCause();
+                    actualException = actualException.getCause();
                 }
                 String exceptionMessage = actualException.getMessage();
                 if (exceptionMessage == null) {
@@ -658,10 +657,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(TransactionConnection con,
             String userId, String email) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(this, sqlCon, userId,
-                    email);
+            return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(session, userId, email);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -670,9 +668,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void deleteAllEmailVerificationTokensForUser_Transaction(TransactionConnection con, String userId,
             String email) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(this, sqlCon, userId, email);
+            EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(session, userId, email);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -681,10 +679,10 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void updateIsEmailVerified_Transaction(TransactionConnection con, String userId, String email,
             boolean isEmailVerified) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(this, sqlCon, userId, email,
-                    isEmailVerified);
+            EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(session, userId, email, isEmailVerified);
         } catch (SQLException e) {
             boolean isPSQLPrimKeyError = e instanceof PSQLException && isPrimaryKeyError(
                     ((PSQLException) e).getServerErrorMessage(), Config.getConfig(this).getEmailVerificationTable());
@@ -708,6 +706,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             EmailVerificationQueries.deleteUserInfo(this, userId);
         } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
@@ -717,12 +717,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             EmailVerificationQueries.addEmailVerificationToken(this, emailVerificationInfo.userId,
                     emailVerificationInfo.token, emailVerificationInfo.tokenExpiry, emailVerificationInfo.email);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException && isPrimaryKeyError(((PSQLException) e).getServerErrorMessage(),
-                    Config.getConfig(this).getEmailVerificationTokensTable())) {
+        } catch (PersistenceException eTemp) {
+            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
+            PostgreSQLConfig config = Config.getConfig(this);
+            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
+            if (isPrimaryKeyError(serverMessage, config.getEmailVerificationTokensTable())) {
                 throw new DuplicateEmailVerificationTokenException();
             }
 
+            throw new StorageQueryException(eTemp);
+        } catch (SQLException e) {
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
