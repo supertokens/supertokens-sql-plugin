@@ -41,10 +41,10 @@ import java.io.Serializable;
 public class JWTSigningDO extends PrimaryKeyFetchable {
 
     @Id
-    @Column(nullable = false)
+    @Column(length = 255, nullable = false)
     private String key_id;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String key_string;
 
     @Column(length = 10, nullable = false)
