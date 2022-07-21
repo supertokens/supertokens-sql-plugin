@@ -27,6 +27,11 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS user_roles (user_id VARCHAR(128) NOT NULL,
+//role VARCHAR(255) NOT NULL,CONSTRAINT user_roles_pkey PRIMARY KEY(user_id, role),
+//CONSTRAINT user_roles_role_fkey FOREIGN KEY(role) REFERENCES roles(role) ON DELETE CASCADE );
+
+
 @Entity
 @Table(name = "user_roles")
 @Getter
