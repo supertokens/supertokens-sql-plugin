@@ -25,8 +25,8 @@ import io.supertokens.storage.sql.domainobject.usermetadata.UserMetadataDO;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.LockMode;
 
-import javax.persistence.LockModeType;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -56,7 +56,7 @@ public class UserMetadataQueries {
     }
 
     public static int setUserMetadata_Transaction(CustomSessionWrapper session, String userId, JsonObject metadata)
-            throws SQLException, StorageQueryException {
+            throws SQLException {
         // we want to do an "insert .. on conflict" style query here. There is no
         // direct way of doing that, we so first get it, and then we save or update.
         // We do not apply a pessimistic write lock here because if this function
@@ -80,20 +80,14 @@ public class UserMetadataQueries {
     }
 
     public static JsonObject getUserMetadata_Transaction(CustomSessionWrapper session, String userId)
-            throws SQLException, StorageQueryException {
+            throws SQLException {
+        UserMetadataDO result = session.get(UserMetadataDO.class, userId, LockMode.PESSIMISTIC_WRITE);
 
-        String QUERY = "SELECT entity FROM UserMetadataDO entity WHERE entity.user_id = :user_id";
-
-        CustomQueryWrapper<UserMetadataDO> q = session.createQuery(QUERY, UserMetadataDO.class);
-        q.setParameter("user_id", userId);
-        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-
-        final List<UserMetadataDO> result = q.list();
-        if (result.size() == 0) {
+        if (result == null) {
             return null;
         }
         JsonParser jp = new JsonParser();
-        return jp.parse(result.get(0).getUser_metadata()).getAsJsonObject();
+        return jp.parse(result.getUser_metadata()).getAsJsonObject();
     }
 
     public static JsonObject getUserMetadata(Start start, String userId) throws SQLException, StorageQueryException {
