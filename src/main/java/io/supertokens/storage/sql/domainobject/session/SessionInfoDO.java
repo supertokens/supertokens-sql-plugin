@@ -42,6 +42,7 @@ import java.io.Serializable;
 public class SessionInfoDO extends PrimaryKeyFetchable {
 
     @Id
+    @Column(length = 255)
     private String session_handle;
 
     @Column(length = 128, nullable = false)
