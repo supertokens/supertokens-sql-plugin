@@ -33,6 +33,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.jetbrains.annotations.NotNull;
 
+import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.net.ConnectException;
 import java.sql.Connection;
@@ -282,7 +283,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                     tx.commit();
                 }
                 return result;
-            } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
+            } catch (PersistenceException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 if (tx != null) {
                     // the user can't rollback a transaction. So we can do this
                     // without checking for tx.isActive()

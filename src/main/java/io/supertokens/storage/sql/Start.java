@@ -57,6 +57,7 @@ import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1385,8 +1386,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         try {
             UserRolesQueries.addRoleToUser(this, userId, role);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException) {
+        } catch (PersistenceException | SQLException e) {
+            if (e instanceof PersistenceException) {
+                final ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+                if (cause.getConstraintName().equals("user_roles_pkey")) {
+                    throw new DuplicateUserRoleMappingException();
+                }
+                if (cause.getConstraintName().equals("user_roles_role_fkey")) {
+                    throw new UnknownRoleException();
+                }
+            } else if (e instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);
                 ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
                 if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
@@ -1476,10 +1485,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public boolean deleteRoleForUser_Transaction(TransactionConnection con, String userId, String role)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-
+        final CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deleteRoleForUser_Transaction(this, sqlCon, userId, role);
+            return UserRolesQueries.deleteRoleForUser_Transaction(session, userId, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1488,10 +1496,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public boolean createNewRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(this, sqlCon, role);
+            return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1500,9 +1507,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
             String permission) throws StorageQueryException, UnknownRoleException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
+            UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(session, role, permission);
         } catch (SQLException e) {
             if (e instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);
@@ -1519,9 +1526,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public boolean deletePermissionForRole_Transaction(TransactionConnection con, String role, String permission)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deletePermissionForRole_Transaction(this, sqlCon, role, permission);
+            return UserRolesQueries.deletePermissionForRole_Transaction(session, role, permission);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1531,9 +1538,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public int deleteAllPermissionsForRole_Transaction(TransactionConnection con, String role)
             throws StorageQueryException {
 
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.deleteAllPermissionsForRole_Transaction(this, sqlCon, role);
+            return UserRolesQueries.deleteAllPermissionsForRole_Transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -1541,9 +1548,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return UserRolesQueries.doesRoleExist_transaction(this, sqlCon, role);
+            return UserRolesQueries.doesRoleExist_transaction(session, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
