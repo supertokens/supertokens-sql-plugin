@@ -27,6 +27,10 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS role_permissions (role VARCHAR(255) NOT NULL,
+//permission VARCHAR(255) NOT NULL,CONSTRAINT role_permissions_pkey PRIMARY KEY(role, permission),
+//CONSTRAINT role_permissions_role_fkey FOREIGN KEY(role) REFERENCES roles(role) ON DELETE CASCADE)
+
 @Entity
 @Table(name = "role_permissions")
 @Getter

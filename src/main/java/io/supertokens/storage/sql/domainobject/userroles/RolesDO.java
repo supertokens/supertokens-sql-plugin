@@ -27,6 +27,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS roles (role VARCHAR(255) NOT NULL,
+//CONSTRAINT roles_pkey PRIMARY KEY(role) );
+
+
 @Entity
 @Table(name = "roles")
 @Getter
