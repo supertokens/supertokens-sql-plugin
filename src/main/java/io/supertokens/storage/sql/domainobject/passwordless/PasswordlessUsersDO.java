@@ -28,6 +28,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS passwordless_users (user_id CHAR(36) NOT NULL,email VARCHAR(256) CONSTRAINT
+// passwordless_users_email_key UNIQUE,phone_number VARCHAR(256) CONSTRAINT passwordless_users_phone_number_key
+// UNIQUE,time_joined BIGINT NOT NULL, CONSTRAINT passwordless_users_pkey PRIMARY KEY (user_id));
+
+
 @Entity
 @Table(name = "passwordless_users")
 @Getter
