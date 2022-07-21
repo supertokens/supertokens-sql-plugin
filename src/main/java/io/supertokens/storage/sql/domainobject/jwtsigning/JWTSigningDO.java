@@ -28,6 +28,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS jwt_signing_keys (key_id VARCHAR(255) NOT NULL,
+//key_string TEXT NOT NULL,algorithm VARCHAR(10) NOT NULL,
+//created_at BIGINT,CONSTRAINT jwt_signing_keys_pkey PRIMARY KEY(key_id));
+
 @Getter
 @Setter
 @NoArgsConstructor
