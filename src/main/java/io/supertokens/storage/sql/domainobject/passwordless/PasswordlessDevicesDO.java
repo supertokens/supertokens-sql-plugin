@@ -28,6 +28,10 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS passwordless_devices (device_id_hash CHAR(44) NOT NULL,email VARCHAR(256), phone_number
+// VARCHAR(256),link_code_salt CHAR(44) NOT NULL,failed_attempts INT NOT NULL,CONSTRAINT passwordless_devices_pkey
+// PRIMARY KEY (device_id_hash));
+
 @Entity
 @Table(name = "passwordless_devices")
 @Getter

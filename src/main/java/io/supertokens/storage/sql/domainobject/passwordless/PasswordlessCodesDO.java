@@ -24,6 +24,11 @@ import org.hibernate.annotations.OnDeleteAction;
 import javax.persistence.*;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS passwordless_codes (code_id CHAR(36) NOT NULL,device_id_hash CHAR(44) NOT NULL,
+// link_code_hash CHAR(44) NOT NULL CONSTRAINT passwordless_codes_link_code_hash_key UNIQUE,created_at BIGINT NOT
+// NULL,CONSTRAINT passwordless_codes_pkey PRIMARY KEY (code_id),CONSTRAINT passwordless_codes_device_id_hash_fkey
+// FOREIGN KEY (device_id_hash) REFERENCES passwordless_devices(device_id_hash) ON DELETE CASCADE ON UPDATE CASCADE);
+
 @Entity
 @Table(name = "passwordless_codes")
 @Getter
