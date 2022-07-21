@@ -27,6 +27,10 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS emailverification_verified_emails (user_id VARCHAR(128) NOT NULL,
+//email VARCHAR(256) NOT NULL,CONSTRAINT emailverification_verified_emails_pkey 
+//PRIMARY KEY (user_id, email));
+
 @Getter
 @Setter
 @NoArgsConstructor

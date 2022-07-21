@@ -28,6 +28,11 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import java.io.Serializable;
 
+//CREATE TABLE IF NOT EXISTS emailverification_tokens (user_id VARCHAR(128) NOT NULL,
+//email VARCHAR(256) NOT NULL,token VARCHAR(128) NOT NULL 
+//CONSTRAINT emailverification_tokens_token_key UNIQUE,token_expiry BIGINT NOT NULL,
+//CONSTRAINT emailverification_tokens_pkey PRIMARY KEY (user_id, email, token))
+
 @Getter
 @Setter
 @NoArgsConstructor
