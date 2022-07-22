@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.PASSWORDLESS;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
 
 public class PasswordlessQueries {
     public static String getQueryToCreateUsersTable(Start start) {
@@ -127,21 +125,11 @@ public class PasswordlessQueries {
             Connection sqlCon = (Connection) con.getConnection();
             final CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
             try {
-//                final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO(code.deviceIdHash, email,
-//                        phoneNumber, linkCodeSalt, 0);
-//                session.save(PasswordlessDevicesDO.class, code.deviceIdHash, passwordlessDevicesDO);
+                final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO(code.deviceIdHash, email,
+                        phoneNumber, linkCodeSalt, 0);
+                session.save(PasswordlessDevicesDO.class, code.deviceIdHash, passwordlessDevicesDO);
 
-                String QUERY = "INSERT INTO " + getConfig(start).getPasswordlessDevicesTable()
-                        + "(device_id_hash, email, phone_number, link_code_salt, failed_attempts)"
-                        + " VALUES(?, ?, ?, ?, 0)";
-                update(sqlCon, QUERY, pst -> {
-                    pst.setString(1, code.deviceIdHash);
-                    pst.setString(2, email);
-                    pst.setString(3, phoneNumber);
-                    pst.setString(4, linkCodeSalt);
-                });
-
-                createCode_Transaction(start, (Connection) con.getConnection(), code);
+                createCode_Transaction(session, code);
 
                 sqlCon.commit();
             } catch (SQLException throwables) {
@@ -202,45 +190,27 @@ public class PasswordlessQueries {
         query.executeUpdate();
     }
 
-//    private static void createCode_Transaction(CustomSessionWrapper session, PasswordlessCode code)
-//            throws SQLException {
-//
-//
-//        String hql = "INSERT INTO Student (firstName, lastName, email) " +
-//                "SELECT firstName, lastName, email FROM Student";
-//        Query query = session.createQuery(hql);
-//
-//        final PasswordlessDevicesDO passwordlessDevice = new PasswordlessDevicesDO();
-//        passwordlessDevice.setDevice_id_hash(code.deviceIdHash);
-//        final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevice, code.linkCodeHash,
-//                code.createdAt);
-//        session.save(PasswordlessCodesDO.class, code.id, toInsert);
-//    }
+    private static void createCode_Transaction(CustomSessionWrapper session, PasswordlessCode code)
+            throws SQLException {
 
-    private static void createCode_Transaction(Start start, Connection con, PasswordlessCode code)
-            throws SQLException, StorageQueryException {
-        String QUERY = "INSERT INTO " + getConfig(start).getPasswordlessCodesTable()
-                + "(code_id, device_id_hash, link_code_hash, created_at)" + " VALUES(?, ?, ?, ?)";
-        update(con, QUERY, pst -> {
-            pst.setString(1, code.id);
-            pst.setString(2, code.deviceIdHash);
-            pst.setString(3, code.linkCodeHash);
-            pst.setLong(4, code.createdAt);
-        });
+        final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, code.deviceIdHash);
+
+        final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO, code.linkCodeHash,
+                code.createdAt);
+        session.save(PasswordlessCodesDO.class, code.id, toInsert);
     }
 
     public static void createCode(Start start, PasswordlessCode code)
-            throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransaction(con -> {
-            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
+            throws StorageTransactionLogicException, StorageQueryException, SQLException {
+        ConnectionPool.withSession(start, (session, con) -> {
+            final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO();
+            passwordlessDevicesDO.setDevice_id_hash(code.deviceIdHash);
 
-            try {
-                PasswordlessQueries.createCode_Transaction(start, (Connection) con.getConnection(), code);
-            } catch (SQLException e) {
-                throw new StorageTransactionLogicException(e);
-            }
+            final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO,
+                    code.linkCodeHash, code.createdAt);
+            session.save(PasswordlessCodesDO.class, code.id, toInsert);
             return null;
-        });
+        }, true);
     }
 
     public static PasswordlessCode[] getCodesOfDevice_Transaction(CustomSessionWrapper session, String deviceIdHash)
