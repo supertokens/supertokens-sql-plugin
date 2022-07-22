@@ -1204,6 +1204,8 @@ public class Start
             }
 
             throw new StorageQueryException(e);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
