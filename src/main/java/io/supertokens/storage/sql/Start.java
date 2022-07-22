@@ -62,6 +62,7 @@ import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -999,11 +1000,8 @@ public class Start
                 throw new DuplicateKeyIdException();
             }
 
-            PSQLException psqlException = (PSQLException) e.getCause().getCause();
-            PostgreSQLConfig config = Config.getConfig(this);
-            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
-
-            if (isPrimaryKeyError(serverMessage, config.getJWTSigningKeysTable())) {
+            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+            if (cause.getConstraintName().equalsIgnoreCase("jwt_signing_keys_pkey")) {
                 throw new DuplicateKeyIdException();
             }
 
