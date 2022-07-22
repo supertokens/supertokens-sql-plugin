@@ -297,9 +297,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public KeyValueInfo[] getAccessTokenSigningKeys_Transaction(TransactionConnection con)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return SessionQueries.getAccessTokenSigningKeys_Transaction(this, sqlCon);
+            return SessionQueries.getAccessTokenSigningKeys_Transaction(session);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -308,9 +308,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void addAccessTokenSigningKey_Transaction(TransactionConnection con, KeyValueInfo info)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            SessionQueries.addAccessTokenSigningKey_Transaction(this, sqlCon, info.createdAtTime, info.value);
+            SessionQueries.addAccessTokenSigningKey_Transaction(session, info.createdAtTime, info.value);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -454,9 +454,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public SessionInfo getSessionInfo_Transaction(TransactionConnection con, String sessionHandle)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return SessionQueries.getSessionInfo_Transaction(this, sqlCon, sessionHandle);
+            return SessionQueries.getSessionInfo_Transaction(session, sessionHandle);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -465,9 +465,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void updateSessionInfo_Transaction(TransactionConnection con, String sessionHandle, String refreshTokenHash2,
             long expiry) throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            SessionQueries.updateSessionInfo_Transaction(this, sqlCon, sessionHandle, refreshTokenHash2, expiry);
+            SessionQueries.updateSessionInfo_Transaction(session, sessionHandle, refreshTokenHash2, expiry);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
