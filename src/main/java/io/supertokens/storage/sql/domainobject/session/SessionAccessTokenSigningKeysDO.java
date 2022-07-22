@@ -40,7 +40,7 @@ import java.io.Serializable;
 public class SessionAccessTokenSigningKeysDO extends PrimaryKeyFetchable {
 
     @Id
-    private Long created_at_time;
+    private long created_at_time;
 
     @Column(columnDefinition = "TEXT")
     private String value;
@@ -49,14 +49,14 @@ public class SessionAccessTokenSigningKeysDO extends PrimaryKeyFetchable {
     public boolean equals(Object other) {
         if (other instanceof SessionAccessTokenSigningKeysDO) {
             SessionAccessTokenSigningKeysDO otherDO = (SessionAccessTokenSigningKeysDO) other;
-            return otherDO.getCreated_at_time().equals(this.getCreated_at_time());
+            return otherDO.getCreated_at_time() == this.getCreated_at_time();
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return this.getCreated_at_time().hashCode();
+        return Long.valueOf(this.getCreated_at_time()).hashCode();
     }
 
     @Override
