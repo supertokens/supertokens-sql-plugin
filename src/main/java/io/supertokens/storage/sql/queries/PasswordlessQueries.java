@@ -32,10 +32,12 @@ import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessUsersDO;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.LockModeType;
+import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -120,23 +122,17 @@ public class PasswordlessQueries {
     }
 
     public static void createDeviceWithCode(Start start, String email, String phoneNumber, String linkCodeSalt,
-            PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            final CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
-            try {
-                final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO(code.deviceIdHash, email,
-                        phoneNumber, linkCodeSalt, 0);
-                session.save(PasswordlessDevicesDO.class, code.deviceIdHash, passwordlessDevicesDO);
+            PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException, SQLException {
 
-                createCode_Transaction(session, code);
+        ConnectionPool.withSessionForComplexTransaction(start, TransactionIsolationLevel.REPEATABLE_READ,
+                (session, con) -> {
+                    final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO(code.deviceIdHash,
+                            email, phoneNumber, linkCodeSalt, 0);
+                    session.save(PasswordlessDevicesDO.class, code.deviceIdHash, passwordlessDevicesDO);
 
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
-            }
-            return null;
-        }, TransactionIsolationLevel.REPEATABLE_READ);
+                    createCode_Transaction(session, code);
+                    return null;
+                });
     }
 
     public static PasswordlessDevice getDevice_Transaction(CustomSessionWrapper session, String deviceIdHash)
@@ -203,9 +199,20 @@ public class PasswordlessQueries {
     public static void createCode(Start start, PasswordlessCode code)
             throws StorageTransactionLogicException, StorageQueryException, SQLException {
         ConnectionPool.withSession(start, (session, con) -> {
-            final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO();
-            passwordlessDevicesDO.setDevice_id_hash(code.deviceIdHash);
-
+            /*
+             * Here we do a explicit session.get
+             * since we do not have a reference to th DB object in the Hibernate session
+             * if we do not explicitly call a session.get here,
+             * hibernate will make a get call internally while doing the session.save and will throw an exception
+             * if the passwordless device does not exist
+             */
+            final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class,
+                    code.deviceIdHash);
+            if (passwordlessDevicesDO == null) {
+                throw new PersistenceException(
+                        new ConstraintViolationException("No device found with hash " + code.deviceIdHash, null,
+                                "passwordless_codes_device_id_hash_fkey"));
+            }
             final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO,
                     code.linkCodeHash, code.createdAt);
             session.save(PasswordlessCodesDO.class, code.id, toInsert);
