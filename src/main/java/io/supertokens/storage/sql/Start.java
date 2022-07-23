@@ -691,20 +691,24 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(session, userId, email, isEmailVerified);
-        } catch (SQLException e) {
-            boolean isPSQLPrimKeyError = e instanceof PSQLException && isPrimaryKeyError(
-                    ((PSQLException) e).getServerErrorMessage(), Config.getConfig(this).getEmailVerificationTable());
+        } catch (PersistenceException e) {
+            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+            final boolean isPrimaryKeyError = cause.getConstraintName()
+                    .equalsIgnoreCase("emailverification_verified_emails_pkey");
 
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
-            boolean isDuplicateKeyError = e.getMessage().contains("ERROR: duplicate key")
-                    && e.getMessage().contains("Key (user_id, email)");
+            final boolean isDuplicateKeyError = cause.getCause() instanceof PSQLException
+                    && cause.getCause().getMessage().contains("ERROR: duplicate key")
+                    && cause.getCause().getMessage().contains("Key (user_id, email)");
 
-            if (!isEmailVerified || (!isPSQLPrimKeyError && !isDuplicateKeyError)) {
+            if (!isEmailVerified || (!isPrimaryKeyError && !isDuplicateKeyError)) {
                 throw new StorageQueryException(e);
             }
             // we do not throw an error since the email is already verified
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
