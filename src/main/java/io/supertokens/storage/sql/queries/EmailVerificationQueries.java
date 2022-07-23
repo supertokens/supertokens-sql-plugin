@@ -87,6 +87,7 @@ public class EmailVerificationQueries {
             final EmailVerificationDO toInsert = new EmailVerificationDO(pk);
 
             session.save(EmailVerificationUsersPK.class, pk, toInsert);
+            session.flush();
         } else {
             String QUERY = "DELETE FROM EmailVerificationDO entity "
                     + "WHERE entity.pk.user_id = :user_id AND entity.pk.email = :email";
