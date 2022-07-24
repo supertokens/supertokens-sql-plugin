@@ -51,54 +51,38 @@ public class PasswordlessQueries {
     public static String getQueryToCreateUsersTable(Start start) {
         String schema = Config.getConfig(start).getTableSchema();
         String usersTable = Config.getConfig(start).getPasswordlessUsersTable();
-        // @formatter:off
-        return "CREATE TABLE IF NOT EXISTS " + usersTable
-                + " (" + "user_id CHAR(36) NOT NULL,"
+
+        return "CREATE TABLE IF NOT EXISTS " + usersTable + " (" + "user_id CHAR(36) NOT NULL,"
                 + "email VARCHAR(256) CONSTRAINT " + Utils.getConstraintName(schema, usersTable, "email", "key")
-                + " UNIQUE,"
-                + "phone_number VARCHAR(256) CONSTRAINT " +
-                Utils.getConstraintName(schema, usersTable, "phone_number", "key")
-                + " UNIQUE,"
-                + "time_joined BIGINT NOT NULL, "
-                + "CONSTRAINT " + Utils.getConstraintName(schema, usersTable, null, "pkey")
-                + " PRIMARY KEY (user_id)" + ");";
-        // @formatter:on
+                + " UNIQUE," + "phone_number VARCHAR(256) CONSTRAINT "
+                + Utils.getConstraintName(schema, usersTable, "phone_number", "key") + " UNIQUE,"
+                + "time_joined BIGINT NOT NULL, " + "CONSTRAINT "
+                + Utils.getConstraintName(schema, usersTable, null, "pkey") + " PRIMARY KEY (user_id)" + ");";
     }
 
     public static String getQueryToCreateDevicesTable(Start start) {
         String schema = Config.getConfig(start).getTableSchema();
         String devicesTable = Config.getConfig(start).getPasswordlessDevicesTable();
-        // @formatter:off
-        return "CREATE TABLE IF NOT EXISTS " + devicesTable
-                + " (" + "device_id_hash CHAR(44) NOT NULL,"
-                + "email VARCHAR(256), "
-                + "phone_number VARCHAR(256),"
-                + "link_code_salt CHAR(44) NOT NULL,"
-                + "failed_attempts INT NOT NULL,"
-                + "CONSTRAINT "
-                + Utils.getConstraintName(schema, devicesTable, null, "pkey")
-                + " PRIMARY KEY (device_id_hash));";
-        // @formatter:on
+
+        return "CREATE TABLE IF NOT EXISTS " + devicesTable + " (" + "device_id_hash CHAR(44) NOT NULL,"
+                + "email VARCHAR(256), " + "phone_number VARCHAR(256)," + "link_code_salt CHAR(44) NOT NULL,"
+                + "failed_attempts INT NOT NULL," + "CONSTRAINT "
+                + Utils.getConstraintName(schema, devicesTable, null, "pkey") + " PRIMARY KEY (device_id_hash));";
     }
 
     public static String getQueryToCreateCodesTable(Start start) {
         String schema = Config.getConfig(start).getTableSchema();
         String codesTable = Config.getConfig(start).getPasswordlessCodesTable();
-        // @formatter:off
-        return "CREATE TABLE IF NOT EXISTS " + codesTable
-                + " (" + "code_id CHAR(36) NOT NULL,"
-                + "device_id_hash CHAR(44) NOT NULL,"
-                + "link_code_hash CHAR(44) NOT NULL CONSTRAINT " +
-                Utils.getConstraintName(schema, codesTable, "link_code_hash", "key")
-                + " UNIQUE,"
-                + "created_at BIGINT NOT NULL,"
-                + "CONSTRAINT " + Utils.getConstraintName(schema, codesTable, null, "pkey")
-                + " PRIMARY KEY (code_id),"
-                + "CONSTRAINT " + Utils.getConstraintName(schema, codesTable, "device_id_hash", "fkey") +
-                " FOREIGN KEY (device_id_hash) "
-                + "REFERENCES " + Config.getConfig(start).getPasswordlessDevicesTable()
+
+        return "CREATE TABLE IF NOT EXISTS " + codesTable + " (" + "code_id CHAR(36) NOT NULL,"
+                + "device_id_hash CHAR(44) NOT NULL," + "link_code_hash CHAR(44) NOT NULL CONSTRAINT "
+                + Utils.getConstraintName(schema, codesTable, "link_code_hash", "key") + " UNIQUE,"
+                + "created_at BIGINT NOT NULL," + "CONSTRAINT "
+                + Utils.getConstraintName(schema, codesTable, null, "pkey") + " PRIMARY KEY (code_id)," + "CONSTRAINT "
+                + Utils.getConstraintName(schema, codesTable, "device_id_hash", "fkey")
+                + " FOREIGN KEY (device_id_hash) " + "REFERENCES "
+                + Config.getConfig(start).getPasswordlessDevicesTable()
                 + "(device_id_hash) ON DELETE CASCADE ON UPDATE CASCADE);";
-        // @formatter:on
     }
 
     public static String getQueryToCreateDeviceEmailIndex(Start start) {
