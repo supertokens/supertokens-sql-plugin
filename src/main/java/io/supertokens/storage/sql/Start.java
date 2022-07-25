@@ -1578,7 +1578,6 @@ public class Start
             if ((isForeignKeyConstraintError(serverMessage, Config.getConfig(this).getUserIdMappingTable(),
                     "supertokens_user_id"))) {
                 throw new UnknownSuperTokensUserIdException();
-
             }
 
             if (isUniqueConstraintError(serverMessage, config.getUserIdMappingTable(), "supertokens_user_id")) {
