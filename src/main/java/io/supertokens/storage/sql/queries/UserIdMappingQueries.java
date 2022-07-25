@@ -64,7 +64,7 @@ public class UserIdMappingQueries {
             allAuthUser.setUser_id(superTokensUserId);
             pk.setUser(allAuthUser);
             toInsert.setPk(pk);
-            session.save(UserIdMappingPK.class, pk, toInsert);
+            session.save(UserIdMappingDO.class, pk, toInsert);
             return null;
         }, true);
     }
