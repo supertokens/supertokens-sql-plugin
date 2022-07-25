@@ -425,13 +425,9 @@ public class GeneralQueries {
 
     public static boolean doesUserIdExist(Start start, String userId) throws SQLException, StorageQueryException {
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT entity FROM AllAuthRecipeUsersDO entity WHERE user_id = :userId";
+            AllAuthRecipeUsersDO user = session.get(AllAuthRecipeUsersDO.class, userId);
+            return user != null;
 
-            CustomQueryWrapper<AllAuthRecipeUsersDO> q = session.createQuery(QUERY, AllAuthRecipeUsersDO.class);
-            q.setParameter("userId", userId);
-            List<AllAuthRecipeUsersDO> result = q.list();
-
-            return result.size() > 0;
         }, false);
 
     }

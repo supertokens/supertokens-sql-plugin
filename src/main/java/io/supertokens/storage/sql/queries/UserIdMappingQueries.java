@@ -33,15 +33,6 @@ import java.util.List;
 
 public class UserIdMappingQueries {
 
-    // CREATE TABLE IF NOT EXISTS userid_mapping (
-    // supertokens_user_id CHAR(36) NOT NULL UNIQUE,
-    // external_user_id VARCHAR(128) NOT NULL UNIQUE,
-    // external_user_id_info TEXT,
-    // CONSTRAINT userid_mapping_pkey PRIMARY KEY(supertokens_user_id, external_user_id),
-    // CONSTRAINT userid_mapping_user_id_fkey FOREIGN KEY (supertokens_user_id) REFERENCES all_auth_recipe_users
-    // (user_id) ON DELETE CASCADE
-    // );
-
     public static String getQueryToCreateUserIdMappingTable(Start start) {
         String schema = Config.getConfig(start).getTableSchema();
         String userIdMappingTable = Config.getConfig(start).getUserIdMappingTable();
