@@ -13,3 +13,4 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Adds support to export test runs details from github actions
 - Migrate UserMetadata Queries to use Hibernate
 - Migrates SessionInfo to use Hibernate
+- Adds UserIdMapping Queries to Hibernate
