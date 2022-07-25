@@ -20,11 +20,13 @@ import io.supertokens.pluginInterface.KeyValueInfo;
 import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
 import io.supertokens.storage.sql.ConnectionPool;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.general.KeyValueDO;
+import io.supertokens.storage.sql.domainobject.useridmapping.UserIdMappingDO;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
@@ -208,6 +210,11 @@ public class GeneralQueries {
                     // index
                     update(start, UserRolesQueries.getQueryToCreateUserRolesRoleIndex(start), NO_OP_SETTER);
                 }
+
+                if (!doesTableExists(start, Config.getConfig(start).getUserIdMappingTable())) {
+                    getInstance(start).addState(CREATING_NEW_TABLE, null);
+                    update(start, UserIdMappingQueries.getQueryToCreateUserIdMappingTable(start), NO_OP_SETTER);
+                }
             } catch (Exception e) {
                 if (e.getMessage().contains("schema") && e.getMessage().contains("does not exist")
                         && numberOfRetries < 1) {
@@ -243,8 +250,9 @@ public class GeneralQueries {
 
         {
             String DROP_QUERY = "DROP TABLE IF EXISTS " + getConfig(start).getKeyValueTable() + ","
-                    + getConfig(start).getUsersTable() + "," + getConfig(start).getAccessTokenSigningKeysTable() + ","
-                    + getConfig(start).getSessionInfoTable() + "," + getConfig(start).getEmailPasswordUsersTable() + ","
+                    + getConfig(start).getUserIdMappingTable() + "," + getConfig(start).getUsersTable() + ","
+                    + getConfig(start).getAccessTokenSigningKeysTable() + "," + getConfig(start).getSessionInfoTable()
+                    + "," + getConfig(start).getEmailPasswordUsersTable() + ","
                     + getConfig(start).getPasswordResetTokensTable() + ","
                     + getConfig(start).getEmailVerificationTokensTable() + ","
                     + getConfig(start).getEmailVerificationTable() + "," + getConfig(start).getThirdPartyUsersTable()
@@ -413,6 +421,15 @@ public class GeneralQueries {
         }
 
         return finalResult;
+    }
+
+    public static boolean doesUserIdExist(Start start, String userId) throws SQLException, StorageQueryException {
+        return ConnectionPool.withSession(start, (session, con) -> {
+            AllAuthRecipeUsersDO user = session.get(AllAuthRecipeUsersDO.class, userId);
+            return user != null;
+
+        }, false);
+
     }
 
     private static List<? extends AuthRecipeUserInfo> getUserInfoForRecipeIdFromUserIds(Start start, RECIPE_ID recipeId,
