@@ -32,7 +32,6 @@ import java.io.Serializable;
 // passwordless_users_email_key UNIQUE,phone_number VARCHAR(256) CONSTRAINT passwordless_users_phone_number_key
 // UNIQUE,time_joined BIGINT NOT NULL, CONSTRAINT passwordless_users_pkey PRIMARY KEY (user_id));
 
-
 @Entity
 @Table(name = "passwordless_users")
 @Getter
