@@ -58,18 +58,18 @@ public class CustomSessionWrapper implements Session {
         this.session = session;
     }
 
-    public <T> Serializable save(Class<T> theClass, Serializable id, Object object) {
+    public <T> Serializable save(Class<T> theClass, Serializable id, T object) {
         Serializable result = this.session.save(object);
         this.updateCache(object, theClass.getName(), id);
         return result;
     }
 
-    public <T> void update(Class<T> theClass, Serializable id, Object object) {
+    public <T> void update(Class<T> theClass, Serializable id, T object) {
         this.session.update(object);
         this.updateCache(object, theClass.getName(), id);
     }
 
-    public <T> void delete(Class<T> theClass, Serializable id, Object object) {
+    public <T> void delete(Class<T> theClass, Serializable id, T object) {
         if (this.contains(object)) {
             // if it comes here, it means that the entity is already loaded up in our entity memory or
             // in hibernate's session memory.

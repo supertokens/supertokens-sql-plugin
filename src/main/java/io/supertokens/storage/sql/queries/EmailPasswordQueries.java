@@ -234,7 +234,7 @@ public class EmailPasswordQueries {
             pk.setUser(epUser);
             toInsert.setPk(pk);
             toInsert.setToken_expiry(expiry);
-            session.save(PasswordResetTokensPK.class, pk, toInsert);
+            session.save(PasswordResetTokensDO.class, pk, toInsert);
             return null;
         }, true);
     }
