@@ -32,11 +32,11 @@ import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessUsersDO;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.LockMode;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
-import javax.persistence.LockModeType;
 import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -119,37 +119,29 @@ public class PasswordlessQueries {
                 });
     }
 
-    public static PasswordlessDevice getDevice_Transaction(CustomSessionWrapper session, String deviceIdHash)
-            throws SQLException {
-
-        String QUERY = "SELECT entity FROM PasswordlessDevicesDO entity WHERE entity.device_id_hash = :device_id_hash";
-        final CustomQueryWrapper<PasswordlessDevicesDO> query = session.createQuery(QUERY, PasswordlessDevicesDO.class);
-        query.setParameter("device_id_hash", deviceIdHash);
-        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-
-        return query.list().stream().findFirst().map(PasswordlessQueries::entityToPasswordlessDevice).orElse(null);
-    }
-
     public static void incrementDeviceFailedAttemptCount_Transaction(CustomSessionWrapper session, String deviceIdHash)
             throws SQLException {
-        String QUERY = "UPDATE PasswordlessDevicesDO entity SET entity.failed_attempts = entity.failed_attempts + 1 "
-                + "WHERE entity.device_id_hash = :device_id_hash";
+        final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
+        passwordlessDevicesDO.setFailed_attempts(passwordlessDevicesDO.getFailed_attempts() + 1);
 
-        final CustomQueryWrapper query = session.createQuery(QUERY);
-        query.setParameter("device_id_hash", deviceIdHash);
+        session.update(passwordlessDevicesDO);
+    }
 
-        query.executeUpdate();
+    public static PasswordlessDevice getDevice_Transaction(CustomSessionWrapper session, String deviceIdHash)
+            throws SQLException {
+        final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash,
+                LockMode.PESSIMISTIC_WRITE);
+
+        return entityToPasswordlessDevice(passwordlessDevicesDO);
     }
 
     public static void deleteDevice_Transaction(CustomSessionWrapper session, String deviceIdHash) throws SQLException {
-        String QUERY = "DELETE FROM PasswordlessDevicesDO entity WHERE entity.device_id_hash = :device_id_hash";
+        final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
 
-        final CustomQueryWrapper query = session.createQuery(QUERY);
-        query.setParameter("device_id_hash", deviceIdHash);
-
-        query.executeUpdate();
+        session.delete(passwordlessDevicesDO);
     }
 
+    // todo: see if entity is accessed
     public static void deleteDevicesByPhoneNumber_Transaction(CustomSessionWrapper session, @Nonnull String phoneNumber)
             throws SQLException {
         String QUERY = "DELETE FROM PasswordlessDevicesDO entity WHERE entity.phone_number = :phone_number";
@@ -190,8 +182,10 @@ public class PasswordlessQueries {
              * hibernate will make a get call internally while doing the session.save and will throw an exception
              * if the passwordless device does not exist
              */
-            final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class,
-                    code.deviceIdHash);
+            final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO();
+            passwordlessDevicesDO.setDevice_id_hash(code.deviceIdHash);
+//                    session.get(PasswordlessDevicesDO.class,
+//                    code.deviceIdHash);
             if (passwordlessDevicesDO == null) {
                 throw new PersistenceException(
                         new ConstraintViolationException("No device found with hash " + code.deviceIdHash, null,
@@ -275,7 +269,6 @@ public class PasswordlessQueries {
                 // Even if the user is changed after we read it here (which is unlikely),
                 // we'd only leave devices that will be cleaned up later automatically when they expire.
                 UserInfo user = getUserById(start, userId);
-                ;
                 {
                     String QUERY = "DELETE FROM PasswordlessUsersDO entity WHERE entity.user_id = :user_id";
                     final CustomQueryWrapper query = session.createQuery(QUERY);
@@ -328,12 +321,9 @@ public class PasswordlessQueries {
     public static PasswordlessDevice getDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT entity FROM PasswordlessDevicesDO entity WHERE entity.device_id_hash = :device_id_hash";
-            final CustomQueryWrapper<PasswordlessDevicesDO> query = session.createQuery(QUERY,
-                    PasswordlessDevicesDO.class);
-            query.setParameter("device_id_hash", deviceIdHash);
+            final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
 
-            return query.list().stream().findFirst().map(PasswordlessQueries::entityToPasswordlessDevice).orElse(null);
+            return entityToPasswordlessDevice(passwordlessDevicesDO);
         }, false);
     }
 
@@ -395,12 +385,9 @@ public class PasswordlessQueries {
 
     public static PasswordlessCode getCode(Start start, String codeId) throws StorageQueryException, SQLException {
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT entity FROM PasswordlessCodesDO entity WHERE entity.code_id = :code_id";
-            final CustomQueryWrapper<PasswordlessCodesDO> query = session.createQuery(QUERY, PasswordlessCodesDO.class);
+            final PasswordlessCodesDO passwordlessCodesDO = session.get(PasswordlessCodesDO.class, codeId);
 
-            query.setParameter("code_id", codeId);
-
-            return query.list().stream().findFirst().map(PasswordlessQueries::entityToPasswordlessCode).orElse(null);
+            return entityToPasswordlessCode(passwordlessCodesDO);
         }, false);
     }
 
