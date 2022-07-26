@@ -29,11 +29,11 @@ import io.supertokens.storage.sql.domainobject.general.AllAuthRecipeUsersDO;
 import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessCodesDO;
 import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessDevicesDO;
 import io.supertokens.storage.sql.domainobject.passwordless.PasswordlessUsersDO;
+import io.supertokens.storage.sql.exceptions.ForeignKeyConstraintNotMetException;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 import org.hibernate.LockMode;
-import org.hibernate.exception.ConstraintViolationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -114,7 +114,9 @@ public class PasswordlessQueries {
                             email, phoneNumber, linkCodeSalt, 0);
                     session.save(PasswordlessDevicesDO.class, code.deviceIdHash, passwordlessDevicesDO);
 
-                    createCode_Transaction(session, code);
+                    final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO,
+                            code.linkCodeHash, code.createdAt);
+                    session.save(PasswordlessCodesDO.class, code.id, toInsert);
                     return null;
                 });
     }
@@ -122,6 +124,9 @@ public class PasswordlessQueries {
     public static void incrementDeviceFailedAttemptCount_Transaction(CustomSessionWrapper session, String deviceIdHash)
             throws SQLException {
         final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
+        if (passwordlessDevicesDO == null) {
+            return;
+        }
         passwordlessDevicesDO.setFailed_attempts(passwordlessDevicesDO.getFailed_attempts() + 1);
 
         session.update(passwordlessDevicesDO);
@@ -131,13 +136,18 @@ public class PasswordlessQueries {
             throws SQLException {
         final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash,
                 LockMode.PESSIMISTIC_WRITE);
+        if (passwordlessDevicesDO == null) {
+            return null;
+        }
 
         return entityToPasswordlessDevice(passwordlessDevicesDO);
     }
 
     public static void deleteDevice_Transaction(CustomSessionWrapper session, String deviceIdHash) throws SQLException {
         final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
-
+        if (passwordlessDevicesDO == null) {
+            return;
+        }
         session.delete(passwordlessDevicesDO);
     }
 
@@ -162,16 +172,6 @@ public class PasswordlessQueries {
         query.executeUpdate();
     }
 
-    private static void createCode_Transaction(CustomSessionWrapper session, PasswordlessCode code)
-            throws SQLException {
-
-        final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, code.deviceIdHash);
-
-        final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO, code.linkCodeHash,
-                code.createdAt);
-        session.save(PasswordlessCodesDO.class, code.id, toInsert);
-    }
-
     public static void createCode(Start start, PasswordlessCode code)
             throws StorageTransactionLogicException, StorageQueryException, SQLException {
         ConnectionPool.withSession(start, (session, con) -> {
@@ -182,14 +182,10 @@ public class PasswordlessQueries {
              * hibernate will make a get call internally while doing the session.save and will throw an exception
              * if the passwordless device does not exist
              */
-            final PasswordlessDevicesDO passwordlessDevicesDO = new PasswordlessDevicesDO();
-            passwordlessDevicesDO.setDevice_id_hash(code.deviceIdHash);
-//                    session.get(PasswordlessDevicesDO.class,
-//                    code.deviceIdHash);
+            final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class,
+                    code.deviceIdHash);
             if (passwordlessDevicesDO == null) {
-                throw new PersistenceException(
-                        new ConstraintViolationException("No device found with hash " + code.deviceIdHash, null,
-                                "passwordless_codes_device_id_hash_fkey"));
+                throw new PersistenceException(new ForeignKeyConstraintNotMetException());
             }
             final PasswordlessCodesDO toInsert = new PasswordlessCodesDO(code.id, passwordlessDevicesDO,
                     code.linkCodeHash, code.createdAt);
@@ -322,7 +318,9 @@ public class PasswordlessQueries {
             throws StorageQueryException, SQLException {
         return ConnectionPool.withSession(start, (session, con) -> {
             final PasswordlessDevicesDO passwordlessDevicesDO = session.get(PasswordlessDevicesDO.class, deviceIdHash);
-
+            if (passwordlessDevicesDO == null) {
+                return null;
+            }
             return entityToPasswordlessDevice(passwordlessDevicesDO);
         }, false);
     }
@@ -386,7 +384,9 @@ public class PasswordlessQueries {
     public static PasswordlessCode getCode(Start start, String codeId) throws StorageQueryException, SQLException {
         return ConnectionPool.withSession(start, (session, con) -> {
             final PasswordlessCodesDO passwordlessCodesDO = session.get(PasswordlessCodesDO.class, codeId);
-
+            if (passwordlessCodesDO == null) {
+                return null;
+            }
             return entityToPasswordlessCode(passwordlessCodesDO);
         }, false);
     }

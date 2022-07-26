@@ -58,6 +58,7 @@ import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
 import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.storage.sql.config.Config;
 import io.supertokens.storage.sql.config.PostgreSQLConfig;
+import io.supertokens.storage.sql.exceptions.ForeignKeyConstraintNotMetException;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
@@ -1242,6 +1243,11 @@ public class Start
 //            } else if (cause.getConstraintName().equalsIgnoreCase("passwordless_codes_link_code_hash_key")) {
 //                throw new DuplicateLinkCodeHashException();
 //            }
+
+            // explicit handling for scenarios where device does not exist
+            if (e.getCause() instanceof ForeignKeyConstraintNotMetException) {
+                throw new UnknownDeviceIdHash();
+            }
 
             Throwable actualException = e.getCause().getCause();
 
