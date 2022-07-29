@@ -61,6 +61,7 @@ import io.supertokens.storage.sql.config.PostgreSQLConfig;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
+import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -975,9 +976,9 @@ public class Start
     @Override
     public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(TransactionConnection con)
             throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            return JWTSigningQueries.getJWTSigningKeys_Transaction(this, sqlCon);
+            return JWTSigningQueries.getJWTSigningKeys_Transaction(session);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -986,11 +987,25 @@ public class Start
     @Override
     public void setJWTSigningKey_Transaction(TransactionConnection con, JWTSigningKeyInfo info)
             throws StorageQueryException, DuplicateKeyIdException {
-        Connection sqlCon = (Connection) con.getConnection();
+        CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
-            JWTSigningQueries.setJWTSigningKeyInfo_Transaction(this, sqlCon, info);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException && isPrimaryKeyError(((PSQLException) e).getServerErrorMessage(),
+            JWTSigningQueries.setJWTSigningKeyInfo_Transaction(session, info);
+        } catch (PersistenceException e) {
+            // when trying to save a Object within same hibernate session
+            // it throws a NonUniqueObjectException
+            // TODO: sql-plugin -> does this really seem like a real scenario
+            // session is not shared between 2 consecutive calls
+            if (e instanceof NonUniqueObjectException) {
+                throw new DuplicateKeyIdException();
+            }
+
+//            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+//            if (cause.getConstraintName().equalsIgnoreCase("jwt_signing_keys_pkey")) {
+//                throw new DuplicateKeyIdException();
+//            }
+
+            final Throwable cause = e.getCause().getCause();
+            if (cause instanceof PSQLException && isPrimaryKeyError(((PSQLException) cause).getServerErrorMessage(),
                     Config.getConfig(this).getJWTSigningKeysTable())) {
                 throw new DuplicateKeyIdException();
             }
@@ -998,10 +1013,12 @@ public class Start
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key") && e.getMessage().contains("Key (key_id)")) {
+            if (cause.getMessage().contains("ERROR: duplicate key") && cause.getMessage().contains("Key (key_id)")) {
                 throw new DuplicateKeyIdException();
             }
 
+            throw new StorageQueryException(e);
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }

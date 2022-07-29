@@ -16,25 +16,20 @@
 
 package io.supertokens.storage.sql.queries;
 
-import io.supertokens.pluginInterface.RowMapper;
-import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.jwt.JWTAsymmetricSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSigningKeyInfo;
 import io.supertokens.pluginInterface.jwt.JWTSymmetricSigningKeyInfo;
 import io.supertokens.storage.sql.Start;
 import io.supertokens.storage.sql.config.Config;
+import io.supertokens.storage.sql.domainobject.jwtsigning.JWTSigningDO;
+import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
+import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
+import javax.persistence.LockModeType;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
-
-import static io.supertokens.storage.sql.PreparedStatementValueSetter.NO_OP_SETTER;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.sql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.sql.config.Config.getConfig;
+import java.util.stream.Collectors;
 
 public class JWTSigningQueries {
     static String getQueryToCreateJWTSigningTable(Start start) {
@@ -58,58 +53,28 @@ public class JWTSigningQueries {
         // @formatter:on
     }
 
-    public static List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(Start start, Connection con)
-            throws SQLException, StorageQueryException {
-        String QUERY = "SELECT * FROM " + getConfig(start).getJWTSigningKeysTable()
-                + " ORDER BY created_at DESC FOR UPDATE";
+    public static List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(CustomSessionWrapper session)
+            throws SQLException {
+        String QUERY = "SELECT entity FROM JWTSigningDO entity ORDER BY entity.created_at DESC";
 
-        return execute(con, QUERY, NO_OP_SETTER, result -> {
-            List<JWTSigningKeyInfo> keys = new ArrayList<>();
+        CustomQueryWrapper<JWTSigningDO> q = session.createQuery(QUERY, JWTSigningDO.class);
+        q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
-            while (result.next()) {
-                keys.add(JWTSigningKeyInfoRowMapper.getInstance().mapOrThrow(result));
-            }
-
-            return keys;
-        });
-    }
-
-    private static class JWTSigningKeyInfoRowMapper implements RowMapper<JWTSigningKeyInfo, ResultSet> {
-        private static final JWTSigningKeyInfoRowMapper INSTANCE = new JWTSigningKeyInfoRowMapper();
-
-        private JWTSigningKeyInfoRowMapper() {
-        }
-
-        private static JWTSigningKeyInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public JWTSigningKeyInfo map(ResultSet result) throws Exception {
-            String keyId = result.getString("key_id");
-            String keyString = result.getString("key_string");
-            long createdAt = result.getLong("created_at");
-            String algorithm = result.getString("algorithm");
-
-            if (keyString.contains("|")) {
-                return new JWTAsymmetricSigningKeyInfo(keyId, createdAt, algorithm, keyString);
+        return q.list().stream().map(result -> {
+            if (result.getKey_string().contains("|")) {
+                return new JWTAsymmetricSigningKeyInfo(result.getKey_id(), result.getCreated_at(),
+                        result.getAlgorithm(), result.getKey_string());
             } else {
-                return new JWTSymmetricSigningKeyInfo(keyId, createdAt, algorithm, keyString);
+                return new JWTSymmetricSigningKeyInfo(result.getKey_id(), result.getCreated_at(), result.getAlgorithm(),
+                        result.getKey_string());
             }
-        }
+        }).collect(Collectors.toList());
     }
 
-    public static void setJWTSigningKeyInfo_Transaction(Start start, Connection con, JWTSigningKeyInfo info)
-            throws SQLException, StorageQueryException {
+    public static void setJWTSigningKeyInfo_Transaction(CustomSessionWrapper session, JWTSigningKeyInfo info)
+            throws SQLException {
 
-        String QUERY = "INSERT INTO " + getConfig(start).getJWTSigningKeysTable()
-                + "(key_id, key_string, created_at, algorithm) VALUES(?, ?, ?, ?)";
-
-        update(con, QUERY, pst -> {
-            pst.setString(1, info.keyId);
-            pst.setString(2, info.keyString);
-            pst.setLong(3, info.createdAtTime);
-            pst.setString(4, info.algorithm);
-        });
+        session.save(JWTSigningDO.class, info.keyId,
+                new JWTSigningDO(info.keyId, info.keyString, info.algorithm, info.createdAtTime));
     }
 }

@@ -14,3 +14,4 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Migrate UserMetadata Queries to use Hibernate
 - Migrates SessionInfo to use Hibernate
 - Adds UserIdMapping Queries to Hibernate
+- Migrates JWTSigning Queries to use Hibernate
