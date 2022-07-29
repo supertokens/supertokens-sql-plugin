@@ -62,7 +62,6 @@ import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.NonUniqueObjectException;
-import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1000,8 +999,21 @@ public class Start
                 throw new DuplicateKeyIdException();
             }
 
-            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
-            if (cause.getConstraintName().equalsIgnoreCase("jwt_signing_keys_pkey")) {
+//            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+//            if (cause.getConstraintName().equalsIgnoreCase("jwt_signing_keys_pkey")) {
+//                throw new DuplicateKeyIdException();
+//            }
+
+            final Throwable cause = e.getCause().getCause();
+            if (cause instanceof PSQLException && isPrimaryKeyError(((PSQLException) cause).getServerErrorMessage(),
+                    Config.getConfig(this).getJWTSigningKeysTable())) {
+                throw new DuplicateKeyIdException();
+            }
+
+            // We keep the old exception detection logic to ensure backwards compatibility.
+            // We could get here if the new logic hits a false negative,
+            // e.g., in case someone renamed constraints/tables
+            if (cause.getMessage().contains("ERROR: duplicate key") && cause.getMessage().contains("Key (key_id)")) {
                 throw new DuplicateKeyIdException();
             }
 
