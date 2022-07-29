@@ -284,7 +284,7 @@ public class CustomSessionWrapper implements Session {
 
     @Override
     public void flush() throws HibernateException {
-        this.session.flush();
+        throw new UnsupportedOperationException();
     }
 
     @Override
