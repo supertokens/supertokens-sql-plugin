@@ -76,6 +76,5 @@ public class JWTSigningQueries {
 
         session.save(JWTSigningDO.class, info.keyId,
                 new JWTSigningDO(info.keyId, info.keyString, info.algorithm, info.createdAtTime));
-        session.flush();
     }
 }
