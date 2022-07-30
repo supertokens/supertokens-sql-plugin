@@ -129,7 +129,7 @@ public class PasswordlessQueries {
         }
         passwordlessDevicesDO.setFailed_attempts(passwordlessDevicesDO.getFailed_attempts() + 1);
 
-        session.update(passwordlessDevicesDO);
+        session.update(PasswordlessDevicesDO.class, deviceIdHash, passwordlessDevicesDO);
     }
 
     public static PasswordlessDevice getDevice_Transaction(CustomSessionWrapper session, String deviceIdHash)
@@ -148,7 +148,7 @@ public class PasswordlessQueries {
         if (passwordlessDevicesDO == null) {
             return;
         }
-        session.delete(passwordlessDevicesDO);
+        session.delete(PasswordlessDevicesDO.class, deviceIdHash, passwordlessDevicesDO);
     }
 
     // todo: see if entity is accessed
