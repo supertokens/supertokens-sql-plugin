@@ -1465,18 +1465,19 @@ public class Start
 
         try {
             UserRolesQueries.addRoleToUser(this, userId, role);
-        } catch (PersistenceException | SQLException e) {
-            if (e instanceof PersistenceException) {
-                final ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
-                if (cause.getConstraintName().equals("user_roles_pkey")) {
-                    throw new DuplicateUserRoleMappingException();
-                }
-                if (cause.getConstraintName().equals("user_roles_role_fkey")) {
-                    throw new UnknownRoleException();
-                }
-            } else if (e instanceof PSQLException) {
+        } catch (PersistenceException e) {
+//            final ConstraintViolationException eCause = (ConstraintViolationException) e.getCause();
+//            if (eCause.getConstraintName().equals("user_roles_pkey")) {
+//                throw new DuplicateUserRoleMappingException();
+//            }
+//            if (eCause.getConstraintName().equals("user_roles_role_fkey")) {
+//                throw new UnknownRoleException();
+//            }
+
+            final Throwable cause = e.getCause().getCause();
+            if (cause instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);
-                ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
+                ServerErrorMessage serverErrorMessage = ((PSQLException) cause).getServerErrorMessage();
                 if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
                     throw new UnknownRoleException();
                 }
@@ -1484,6 +1485,9 @@ public class Start
                     throw new DuplicateUserRoleMappingException();
                 }
             }
+
+            throw new StorageQueryException(e);
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
 
@@ -1493,7 +1497,7 @@ public class Start
     public String[] getRolesForUser(String userId) throws StorageQueryException {
         try {
             return UserRolesQueries.getRolesForUser(this, userId);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1502,7 +1506,7 @@ public class Start
     public String[] getUsersForRole(String role) throws StorageQueryException {
         try {
             return UserRolesQueries.getUsersForRole(this, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1511,7 +1515,7 @@ public class Start
     public String[] getPermissionsForRole(String role) throws StorageQueryException {
         try {
             return UserRolesQueries.getPermissionsForRole(this, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1520,7 +1524,7 @@ public class Start
     public String[] getRolesThatHavePermission(String permission) throws StorageQueryException {
         try {
             return UserRolesQueries.getRolesThatHavePermission(this, permission);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1529,7 +1533,7 @@ public class Start
     public boolean deleteRole(String role) throws StorageQueryException {
         try {
             return UserRolesQueries.deleteRole(this, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1538,7 +1542,7 @@ public class Start
     public String[] getRoles() throws StorageQueryException {
         try {
             return UserRolesQueries.getRoles(this);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1547,7 +1551,7 @@ public class Start
     public boolean doesRoleExist(String role) throws StorageQueryException {
         try {
             return UserRolesQueries.doesRoleExist(this, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1556,7 +1560,7 @@ public class Start
     public int deleteAllRolesForUser(String userId) throws StorageQueryException {
         try {
             return UserRolesQueries.deleteAllRolesForUser(this, userId);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1567,7 +1571,7 @@ public class Start
         final CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return UserRolesQueries.deleteRoleForUser_Transaction(session, userId, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1578,7 +1582,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return UserRolesQueries.createNewRoleOrDoNothingIfExists_Transaction(session, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1589,15 +1593,18 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             UserRolesQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(session, role, permission);
-        } catch (SQLException e) {
-            if (e instanceof PSQLException) {
+        } catch (PersistenceException e) {
+            final Throwable cause = e.getCause().getCause();
+            if (cause instanceof PSQLException) {
                 PostgreSQLConfig config = Config.getConfig(this);
-                ServerErrorMessage serverErrorMessage = ((PSQLException) e).getServerErrorMessage();
+                ServerErrorMessage serverErrorMessage = ((PSQLException) cause).getServerErrorMessage();
                 if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesPermissionsTable(), "role")) {
                     throw new UnknownRoleException();
                 }
             }
 
+            throw new StorageQueryException(e);
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1608,7 +1615,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return UserRolesQueries.deletePermissionForRole_Transaction(session, role, permission);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1620,7 +1627,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return UserRolesQueries.deleteAllPermissionsForRole_Transaction(session, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -1630,7 +1637,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return UserRolesQueries.doesRoleExist_transaction(session, role);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
