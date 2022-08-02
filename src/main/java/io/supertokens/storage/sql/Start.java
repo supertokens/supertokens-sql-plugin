@@ -63,7 +63,6 @@ import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
 import org.hibernate.NonUniqueObjectException;
-import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -657,7 +656,7 @@ public class Start
     public void deleteExpiredEmailVerificationTokens() throws StorageQueryException {
         try {
             EmailVerificationQueries.deleteExpiredEmailVerificationTokens(this);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -668,7 +667,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(session, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -679,7 +678,7 @@ public class Start
         CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
         try {
             EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(session, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -692,18 +691,32 @@ public class Start
         try {
             EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(session, userId, email, isEmailVerified);
         } catch (PersistenceException e) {
-            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
-            final boolean isPrimaryKeyError = cause.getConstraintName()
-                    .equalsIgnoreCase("emailverification_verified_emails_pkey");
+//            ConstraintViolationException cause = (ConstraintViolationException) e.getCause();
+//            final boolean isPrimaryKeyError = cause.getConstraintName()
+//                    .equalsIgnoreCase("emailverification_verified_emails_pkey");
+//
+//            // We keep the old exception detection logic to ensure backwards compatibility.
+//            // We could get here if the new logic hits a false negative,
+//            // e.g., in case someone renamed constraints/tables
+//            final boolean isDuplicateKeyError = cause.getCause() instanceof PSQLException
+//                    && cause.getCause().getMessage().contains("ERROR: duplicate key")
+//                    && cause.getCause().getMessage().contains("Key (user_id, email)");
+//
+//            if (!isEmailVerified || (!isPrimaryKeyError && !isDuplicateKeyError)) {
+//                throw new StorageQueryException(e);
+//            }
+            final Throwable cause = e.getCause().getCause();
+            boolean isPSQLPrimKeyError = cause instanceof PSQLException
+                    && isPrimaryKeyError(((PSQLException) cause).getServerErrorMessage(),
+                            Config.getConfig(this).getEmailVerificationTable());
 
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
-            final boolean isDuplicateKeyError = cause.getCause() instanceof PSQLException
-                    && cause.getCause().getMessage().contains("ERROR: duplicate key")
-                    && cause.getCause().getMessage().contains("Key (user_id, email)");
+            boolean isDuplicateKeyError = cause.getMessage().contains("ERROR: duplicate key")
+                    && cause.getMessage().contains("Key (user_id, email)");
 
-            if (!isEmailVerified || (!isPrimaryKeyError && !isDuplicateKeyError)) {
+            if (!isEmailVerified || (!isPSQLPrimKeyError && !isDuplicateKeyError)) {
                 throw new StorageQueryException(e);
             }
             // we do not throw an error since the email is already verified
@@ -718,7 +731,7 @@ public class Start
             EmailVerificationQueries.deleteUserInfo(this, userId);
         } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -729,24 +742,24 @@ public class Start
         try {
             EmailVerificationQueries.addEmailVerificationToken(this, emailVerificationInfo.userId,
                     emailVerificationInfo.token, emailVerificationInfo.tokenExpiry, emailVerificationInfo.email);
-        } catch (PersistenceException eTemp) {
-            PSQLException psqlException = (PSQLException) eTemp.getCause().getCause();
-            PostgreSQLConfig config = Config.getConfig(this);
-            ServerErrorMessage serverMessage = psqlException.getServerErrorMessage();
-            if (isPrimaryKeyError(serverMessage, config.getEmailVerificationTokensTable())) {
+        } catch (PersistenceException e) {
+            final Throwable cause = e.getCause().getCause();
+
+            if (cause instanceof PSQLException && isPrimaryKeyError(((PSQLException) cause).getServerErrorMessage(),
+                    Config.getConfig(this).getEmailVerificationTokensTable())) {
                 throw new DuplicateEmailVerificationTokenException();
             }
 
-            throw new StorageQueryException(eTemp);
-        } catch (SQLException e) {
             // We keep the old exception detection logic to ensure backwards compatibility.
             // We could get here if the new logic hits a false negative,
             // e.g., in case someone renamed constraints/tables
-            if (e.getMessage().contains("ERROR: duplicate key")
-                    && e.getMessage().contains("Key (user_id, email, token)")) {
+            if (cause.getMessage().contains("ERROR: duplicate key")
+                    && cause.getMessage().contains("Key (user_id, email, token)")) {
                 throw new DuplicateEmailVerificationTokenException();
             }
             throw new StorageQueryException(e);
+        } catch (SQLException cause) {
+            throw new StorageQueryException(cause);
         }
     }
 
@@ -754,7 +767,7 @@ public class Start
     public EmailVerificationTokenInfo getEmailVerificationTokenInfo(String token) throws StorageQueryException {
         try {
             return EmailVerificationQueries.getEmailVerificationTokenInfo(this, token);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -763,7 +776,7 @@ public class Start
     public void revokeAllTokens(String userId, String email) throws StorageQueryException {
         try {
             EmailVerificationQueries.revokeAllTokens(this, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -772,7 +785,7 @@ public class Start
     public void unverifyEmail(String userId, String email) throws StorageQueryException {
         try {
             EmailVerificationQueries.unverifyEmail(this, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -782,7 +795,7 @@ public class Start
             throws StorageQueryException {
         try {
             return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser(this, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
@@ -791,7 +804,7 @@ public class Start
     public boolean isEmailVerified(String userId, String email) throws StorageQueryException {
         try {
             return EmailVerificationQueries.isEmailVerified(this, userId, email);
-        } catch (SQLException e) {
+        } catch (PersistenceException | SQLException e) {
             throw new StorageQueryException(e);
         }
     }
