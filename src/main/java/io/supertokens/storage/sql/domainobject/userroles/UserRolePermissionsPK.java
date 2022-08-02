@@ -36,7 +36,7 @@ public class UserRolePermissionsPK implements Serializable {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private RolesDO userRole;
 
-    @Column(nullable = false)
+    @Column(length = 255, nullable = false)
     private String permission;
 
     public String getRole() {

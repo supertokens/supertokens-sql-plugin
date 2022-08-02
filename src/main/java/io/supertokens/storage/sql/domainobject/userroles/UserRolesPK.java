@@ -36,7 +36,7 @@ public class UserRolesPK implements Serializable {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private RolesDO userRole;
 
-    @Column(nullable = false)
+    @Column(length = 128, nullable = false)
     private String user_id;
 
     public String getRole() {
