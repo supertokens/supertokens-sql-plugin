@@ -267,651 +267,781 @@ public class CustomSessionWrapper implements Session {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     // UNSUPPORTED FUNCTIONS BELOW....................
+    @Deprecated
     @Override
     public void update(Object object) {
         throw new UnsupportedOperationException("Please use session.update(Class, Serializable, Object)");
     }
 
+    @Deprecated
     @Override
     public Serializable save(Object object) {
         throw new UnsupportedOperationException("Please use session.save(Class, Serializable, Object)");
     }
 
+    @Deprecated
     @Override
     public SharedSessionBuilder sessionWithOptions() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void flush() throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setFlushMode(FlushModeType flushMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setFlushMode(FlushMode flushMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public FlushModeType getFlushMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void lock(Object entity, LockModeType lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void lock(Object entity, LockModeType lockMode, Map<String, Object> properties) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setHibernateFlushMode(FlushMode flushMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public FlushMode getHibernateFlushMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setCacheMode(CacheMode cacheMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public CacheMode getCacheMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public SessionFactory getSessionFactory() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void cancelQuery() throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isDirty() throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isDefaultReadOnly() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setDefaultReadOnly(boolean readOnly) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Serializable getIdentifier(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean contains(String entityName, Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void evict(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T load(Class<T> theClass, Serializable id, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T load(Class<T> theClass, Serializable id, LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object load(String entityName, Serializable id, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object load(String entityName, Serializable id, LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T load(Class<T> theClass, Serializable id) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object load(String entityName, Serializable id) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void load(Object object, Serializable id) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void replicate(Object object, ReplicationMode replicationMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void replicate(String entityName, Object object, ReplicationMode replicationMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Serializable save(String entityName, Object object) {
         throw new UnsupportedOperationException("Please use session.save(Object) instead");
     }
 
+    @Deprecated
     @Override
     public void saveOrUpdate(Object object) {
         throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
+    @Deprecated
     @Override
     public void saveOrUpdate(String entityName, Object object) {
         throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
+    @Deprecated
     @Override
     public void update(String entityName, Object object) {
         throw new UnsupportedOperationException("Please use session.update(Object) instead");
     }
 
+    @Deprecated
     @Override
     public Object merge(Object object) {
         throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
+    @Deprecated
     @Override
     public Object merge(String entityName, Object object) {
         throw new UnsupportedOperationException("Please do not use this function. Instead use save or update");
     }
 
+    @Deprecated
     @Override
     public void persist(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void remove(Object entity) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, Map<String, Object> properties) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T find(Class<T> entityClass, Object primaryKey, LockModeType lockMode, Map<String, Object> properties) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T getReference(Class<T> entityClass, Object primaryKey) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void persist(String entityName, Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void delete(Object object) {
         throw new UnsupportedOperationException("Use session.delete(Class, Serializable, Object)");
     }
 
+    @Deprecated
     @Override
     public void delete(String entityName, Object object) {
         throw new UnsupportedOperationException("Please use delete(Object)");
     }
 
+    @Deprecated
     @Override
     public void lock(Object object, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void lock(String entityName, Object object, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LockRequest buildLockRequest(LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object entity, Map<String, Object> properties) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object entity, LockModeType lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object entity, LockModeType lockMode, Map<String, Object> properties) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(String entityName, Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object object, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(Object object, LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void refresh(String entityName, Object object, LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LockMode getCurrentLockMode(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query createFilter(Object collection, String queryString) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void clear() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void detach(Object entity) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LockModeType getLockMode(Object entity) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setProperty(String propertyName, Object value) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Map<String, Object> getProperties() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T get(Class<T> entityType, Serializable id, LockOptions lockOptions) {
         throw new UnsupportedOperationException("Please use session.get(..., LockMode) instead");
     }
 
+    @Deprecated
     @Override
     public Object get(String entityName, Serializable id) {
         throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
+    @Deprecated
     @Override
     public Object get(String entityName, Serializable id, LockMode lockMode) {
         throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
+    @Deprecated
     @Override
     public Object get(String entityName, Serializable id, LockOptions lockOptions) {
         throw new UnsupportedOperationException("Please use session.get(Class<T>, ....) instead");
     }
 
+    @Deprecated
     @Override
     public String getEntityName(Object object) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public IdentifierLoadAccess byId(String entityName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> MultiIdentifierLoadAccess<T> byMultipleIds(Class<T> entityClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public MultiIdentifierLoadAccess byMultipleIds(String entityName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> IdentifierLoadAccess<T> byId(Class<T> entityClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public NaturalIdLoadAccess byNaturalId(String entityName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> NaturalIdLoadAccess<T> byNaturalId(Class<T> entityClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public SimpleNaturalIdLoadAccess bySimpleNaturalId(String entityName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> SimpleNaturalIdLoadAccess<T> bySimpleNaturalId(Class<T> entityClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Filter enableFilter(String filterName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Filter getEnabledFilter(String filterName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void disableFilter(String filterName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public SessionStatistics getStatistics() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isReadOnly(Object entityOrProxy) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setReadOnly(Object entityOrProxy, boolean readOnly) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> RootGraph<T> createEntityGraph(Class<T> rootType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public RootGraph<?> createEntityGraph(String graphName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public RootGraph<?> getEntityGraph(String graphName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Connection disconnect() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void reconnect(Connection connection) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isFetchProfileEnabled(String name) throws UnknownProfileException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void enableFetchProfile(String name) throws UnknownProfileException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void disableFetchProfile(String name) throws UnknownProfileException {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public TypeHelper getTypeHelper() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LobHelper getLobHelper() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void addEventListeners(SessionEventListener... listeners) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.query.Query createNamedQuery(String name) {
         throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
+    @Deprecated
     @Override
     public <T> org.hibernate.query.Query<T> createQuery(CriteriaQuery<T> criteriaQuery) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.query.Query createQuery(CriteriaUpdate updateQuery) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.query.Query createQuery(CriteriaDelete deleteQuery) {
         throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
+    @Deprecated
     @Override
     public <T> org.hibernate.query.Query<T> createNamedQuery(String name, Class<T> resultType) {
         throw new UnsupportedOperationException("Please use session.createQuery instead");
     }
 
+    @Deprecated
     @Override
     public NativeQuery createNativeQuery(String sqlString, Class resultClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public StoredProcedureQuery createNamedStoredProcedureQuery(String name) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName, Class... resultClasses) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public StoredProcedureQuery createStoredProcedureQuery(String procedureName, String... resultSetMappings) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void joinTransaction() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T unwrap(Class<T> cls) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object getDelegate() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public EntityManagerFactory getEntityManagerFactory() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public CriteriaBuilder getCriteriaBuilder() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Metamodel getMetamodel() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public NativeQuery createSQLQuery(String queryString) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public NativeQuery createNativeQuery(String sqlString) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public NativeQuery createNativeQuery(String sqlString, String resultSetMapping) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public NativeQuery getNamedNativeQuery(String name) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Session getSession() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String getTenantIdentifier() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isOpen() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isConnected() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Transaction beginTransaction() {
         throw new UnsupportedOperationException("Please use beginTransaction(isolationLevel) function instead");
     }
 
+    @Deprecated
     @Override
     public org.hibernate.query.Query getNamedQuery(String queryName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ProcedureCall getNamedProcedureCall(String name) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName, Class... resultClasses) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ProcedureCall createStoredProcedureCall(String procedureName, String... resultSetMappings) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Criteria createCriteria(Class persistentClass) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Criteria createCriteria(Class persistentClass, String alias) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Criteria createCriteria(String entityName) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Criteria createCriteria(String entityName, String alias) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Integer getJdbcBatchSize() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public void setJdbcBatchSize(Integer jdbcBatchSize) {
         throw new UnsupportedOperationException();
