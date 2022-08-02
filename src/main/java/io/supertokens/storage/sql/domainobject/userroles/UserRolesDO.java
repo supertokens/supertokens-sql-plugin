@@ -31,7 +31,6 @@ import java.io.Serializable;
 //role VARCHAR(255) NOT NULL,CONSTRAINT user_roles_pkey PRIMARY KEY(user_id, role),
 //CONSTRAINT user_roles_role_fkey FOREIGN KEY(role) REFERENCES roles(role) ON DELETE CASCADE );
 
-
 @Entity
 @Table(name = "user_roles")
 @Getter
