@@ -86,7 +86,7 @@ public class EmailVerificationQueries {
             final EmailVerificationUsersPK pk = new EmailVerificationUsersPK(userId, email);
             final EmailVerificationDO toInsert = new EmailVerificationDO(pk);
 
-            session.save(EmailVerificationUsersPK.class, pk, toInsert);
+            session.save(EmailVerificationDO.class, pk, toInsert);
             session.flush();
         } else {
             String QUERY = "DELETE FROM EmailVerificationDO entity "
@@ -116,7 +116,7 @@ public class EmailVerificationQueries {
         ConnectionPool.withSession(start, (session, con) -> {
             final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
             final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
-            session.save(EmailVerificationUsersPK.class, pk, toInsert);
+            session.save(EmailVerificationTokensDO.class, pk, toInsert);
 
             return null;
         }, true);
