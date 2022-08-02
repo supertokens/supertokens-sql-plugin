@@ -124,466 +124,559 @@ public class CustomQueryWrapper<R> implements Query<R> {
 //        throw new UnsupportedOperationException("Please use list(GetPrimaryKey<R> getPrimaryKeyFunc)");
 //    }
 
+    @Deprecated
     @Override
     public QueryProducer getProducer() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Optional<R> uniqueResultOptional() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Stream<R> stream() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> applyGraph(RootGraph graph, GraphSemantic semantic) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<Instant> param, Instant value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<LocalDateTime> param, LocalDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<ZonedDateTime> param, ZonedDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<OffsetDateTime> param, OffsetDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, Instant value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, LocalDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, ZonedDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, OffsetDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, Instant value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, LocalDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, ZonedDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, OffsetDateTime value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ScrollableResults scroll() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ScrollableResults scroll(ScrollMode scrollMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public R uniqueResult() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public FlushMode getHibernateFlushMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public CacheMode getCacheMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String getCacheRegion() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Integer getFetchSize() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LockOptions getLockOptions() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String getComment() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String getQueryString() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public RowSelection getQueryOptions() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public ParameterMetadata getParameterMetadata() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String[] getNamedParameters() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public int getMaxResults() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setFirstResult(int startPosition) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public int getFirstResult() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setHint(String hintName, Object value) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Map<String, Object> getHints() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> Query<R> setParameter(Parameter<T> param, T value) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<Calendar> param, Calendar value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(Parameter<Date> param, Date value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, Object val, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, Calendar value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(String name, Date value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, Object value) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, Calendar value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, Date value, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Set<Parameter<?>> getParameters() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Parameter<?> getParameter(String name) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> Parameter<T> getParameter(String name, Class<T> type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Parameter<?> getParameter(int position) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> Parameter<T> getParameter(int position, Class<T> type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isBound(Parameter<?> param) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T getParameterValue(Parameter<T> param) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object getParameterValue(String name) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Object getParameterValue(int position) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> Query<R> setParameter(QueryParameter<T> parameter, T val) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <P> Query<R> setParameter(int position, P val, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <P> Query<R> setParameter(QueryParameter<P> parameter, P val, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameter(int position, Object val, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <P> Query<R> setParameter(QueryParameter<P> parameter, P val, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <P> Query<R> setParameter(String name, P val, TemporalType temporalType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setFlushMode(FlushModeType flushMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public FlushModeType getFlushMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public LockModeType getLockMode() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <T> T unwrap(Class<T> cls) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setReadOnly(boolean readOnly) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Type[] getReturnTypes() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setHibernateFlushMode(FlushMode flushMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setCacheMode(CacheMode cacheMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isCacheable() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setCacheable(boolean cacheable) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setCacheRegion(String cacheRegion) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Integer getTimeout() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setTimeout(int timeout) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setFetchSize(int fetchSize) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public boolean isReadOnly() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setLockOptions(LockOptions lockOptions) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setLockMode(String alias, LockMode lockMode) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setComment(String comment) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> addQueryHint(String hint) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Iterator<R> iterate() {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public <P> Query<R> setParameterList(QueryParameter<P> parameter, Collection<P> values) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.Query<R> setParameterList(int position, Collection values) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameterList(String name, Collection values, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.Query<R> setParameterList(int position, Collection values, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setParameterList(String name, Object[] values, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.Query<R> setParameterList(int position, Object[] values, Type type) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public org.hibernate.Query<R> setParameterList(int position, Object[] values) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setProperties(Object bean) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setProperties(Map bean) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setEntity(int position, Object val) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setEntity(String name, Object val) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Type determineProperBooleanType(int position, Object value, Type defaultType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Type determineProperBooleanType(String name, Object value, Type defaultType) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public Query<R> setResultTransformer(ResultTransformer transformer) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
     public String[] getReturnAliases() {
         throw new UnsupportedOperationException();
