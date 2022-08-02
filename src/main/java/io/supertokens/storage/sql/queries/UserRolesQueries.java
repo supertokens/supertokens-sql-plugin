@@ -23,8 +23,8 @@ import io.supertokens.storage.sql.domainobject.userroles.*;
 import io.supertokens.storage.sql.hibernate.CustomQueryWrapper;
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.utils.Utils;
+import org.hibernate.LockMode;
 
-import javax.persistence.LockModeType;
 import java.sql.SQLException;
 
 import static io.supertokens.storage.sql.config.Config.getConfig;
@@ -121,14 +121,7 @@ public class UserRolesQueries {
     }
 
     public static boolean doesRoleExist(Start start, String role) throws SQLException, StorageQueryException {
-        return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
-
-            final CustomQueryWrapper<Integer> query = session.createQuery(QUERY, Integer.class);
-            query.setParameter("role", role);
-
-            return !query.list().isEmpty();
-        }, false);
+        return ConnectionPool.withSession(start, (session, con) -> doesRoleExist_transaction(session, role), false);
     }
 
     public static String[] getPermissionsForRole(Start start, String role) throws SQLException, StorageQueryException {
@@ -156,7 +149,6 @@ public class UserRolesQueries {
     public static void addRoleToUser(Start start, String userId, String role)
             throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
-            // might need to find role before commit
             final UserRolesPK pk = new UserRolesPK(new RolesDO(role), userId);
             final UserRolesDO userRolesDO = new UserRolesDO(pk);
 
@@ -190,13 +182,9 @@ public class UserRolesQueries {
     }
 
     public static boolean doesRoleExist_transaction(CustomSessionWrapper session, String role) throws SQLException {
-        String QUERY = "SELECT 1 FROM RolesDO entity WHERE entity.role = :role";
+        final RolesDO rolesDO = session.get(RolesDO.class, role, LockMode.PESSIMISTIC_WRITE);
 
-        final CustomQueryWrapper<Integer> query = session.createQuery(QUERY, Integer.class);
-        query.setParameter("role", role);
-        query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
-
-        return !query.list().isEmpty();
+        return rolesDO != null;
     }
 
     public static String[] getUsersForRole(Start start, String role) throws SQLException, StorageQueryException {
