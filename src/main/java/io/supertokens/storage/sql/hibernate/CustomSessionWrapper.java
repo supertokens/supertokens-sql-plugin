@@ -285,10 +285,10 @@ public class CustomSessionWrapper implements Session {
         throw new UnsupportedOperationException();
     }
 
-    @Deprecated
+//    @Deprecated
     @Override
     public void flush() throws HibernateException {
-        throw new UnsupportedOperationException();
+        this.getSessionImpl().flush();
     }
 
     @Deprecated
