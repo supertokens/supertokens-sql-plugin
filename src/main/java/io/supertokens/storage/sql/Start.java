@@ -62,7 +62,6 @@ import io.supertokens.storage.sql.exceptions.ForeignKeyConstraintNotMetException
 import io.supertokens.storage.sql.hibernate.CustomSessionWrapper;
 import io.supertokens.storage.sql.output.Logging;
 import io.supertokens.storage.sql.queries.*;
-import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.LockAcquisitionException;
 import org.jetbrains.annotations.NotNull;
@@ -1312,8 +1311,8 @@ public class Start
 
             }
             throw new StorageQueryException(e);
-        } catch (StorageTransactionLogicException e) {
-            throw new StorageQueryException(e.actualException);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
@@ -1321,8 +1320,8 @@ public class Start
     public void deletePasswordlessUser(String userId) throws StorageQueryException {
         try {
             PasswordlessQueries.deleteUser(this, userId);
-        } catch (StorageTransactionLogicException e) {
-            throw new StorageQueryException(e.actualException);
+        } catch (PersistenceException | SQLException e) {
+            throw new StorageQueryException(e);
         }
     }
 
