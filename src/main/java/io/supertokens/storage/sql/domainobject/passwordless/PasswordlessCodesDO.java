@@ -53,13 +53,6 @@ public class PasswordlessCodesDO extends PrimaryKeyFetchable {
     @Column(nullable = false)
     private long created_at;
 
-    public String getCode_id() {
-        if (code_id != null) {
-            return code_id.trim();
-        }
-        return code_id;
-    }
-
     public String getDevice_id_hash() {
         return passwordlessDevice.getDevice_id_hash();
     }
