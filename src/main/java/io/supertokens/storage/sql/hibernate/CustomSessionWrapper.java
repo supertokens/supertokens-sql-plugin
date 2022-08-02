@@ -290,7 +290,6 @@ public class CustomSessionWrapper implements Session {
         throw new UnsupportedOperationException();
     }
 
-    @Deprecated
     @Override
     public void setFlushMode(FlushModeType flushMode) {
         throw new UnsupportedOperationException();
