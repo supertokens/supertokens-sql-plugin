@@ -90,7 +90,7 @@ public class UserRolesQueries {
         if (toInsertOrUpdate == null) {
             toInsertOrUpdate = new RolesDO(role);
 
-            session.save(UserRolePermissionsDO.class, role, toInsertOrUpdate);
+            session.save(RolesDO.class, role, toInsertOrUpdate);
 
             return true;
         }
