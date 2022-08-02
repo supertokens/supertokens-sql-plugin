@@ -124,3 +124,10 @@ Table `F`):
   the getter on that to get the primary key. Even the internal `.equals` function should use this manual getter
   function.
 - As an example, see the `PasswordResetTokensPk.java` code.
+
+### Deprecated Methods
+
+Since we maintain a Custom Wrapper over Session and Query interfaces, we allow only certain implementations to be 
+used.  
+Thus, many methods are marked as deprecated so that we can get IDE level assistance to ensure users do not use the 
+methods and find it failing at runtime.
