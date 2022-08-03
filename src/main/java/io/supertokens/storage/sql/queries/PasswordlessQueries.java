@@ -234,7 +234,7 @@ public class PasswordlessQueries {
             }
 
             return null;
-        }, false);
+        }, true);
     }
 
     public static void deleteUser(Start start, String userId) throws SQLException, StorageQueryException {
@@ -273,7 +273,7 @@ public class PasswordlessQueries {
             }
 
             return null;
-        }, false);
+        }, true);
     }
 
     public static int updateUserEmail_Transaction(CustomSessionWrapper session, String userId, String email)
