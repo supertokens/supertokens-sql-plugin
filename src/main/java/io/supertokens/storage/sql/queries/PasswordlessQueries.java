@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.PersistenceException;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,7 +150,6 @@ public class PasswordlessQueries {
         session.delete(PasswordlessDevicesDO.class, deviceIdHash, passwordlessDevicesDO);
     }
 
-    // todo: see if entity is accessed
     public static void deleteDevicesByPhoneNumber_Transaction(CustomSessionWrapper session, @Nonnull String phoneNumber)
             throws SQLException {
         String QUERY = "DELETE FROM PasswordlessDevicesDO entity WHERE entity.phone_number = :phone_number";
@@ -216,79 +214,66 @@ public class PasswordlessQueries {
         query.executeUpdate();
     }
 
-    public static void createUser(Start start, UserInfo user)
-            throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
-            try {
-                {
-                    final AllAuthRecipeUsersDO usersDO = new AllAuthRecipeUsersDO();
-                    usersDO.setUser_id(user.id);
-                    usersDO.setRecipe_id(PASSWORDLESS.toString());
-                    usersDO.setTime_joined(user.timeJoined);
+    public static void createUser(Start start, UserInfo user) throws SQLException, StorageQueryException {
 
-                    session.save(AllAuthRecipeUsersDO.class, user.id, usersDO);
-                }
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                final AllAuthRecipeUsersDO usersDO = new AllAuthRecipeUsersDO();
+                usersDO.setUser_id(user.id);
+                usersDO.setRecipe_id(PASSWORDLESS.toString());
+                usersDO.setTime_joined(user.timeJoined);
 
-                {
-                    final PasswordlessUsersDO passwordlessUsersDO = new PasswordlessUsersDO(user.id, user.email,
-                            user.phoneNumber, user.timeJoined);
-
-                    session.save(PasswordlessUsersDO.class, user.id, passwordlessUsersDO);
-                }
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+                session.save(AllAuthRecipeUsersDO.class, user.id, usersDO);
             }
+
+            {
+                final PasswordlessUsersDO passwordlessUsersDO = new PasswordlessUsersDO(user.id, user.email,
+                        user.phoneNumber, user.timeJoined);
+
+                session.save(PasswordlessUsersDO.class, user.id, passwordlessUsersDO);
+            }
+
             return null;
-        });
+        }, true);
     }
 
-    public static void deleteUser(Start start, String userId)
-            throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
-            Connection sqlCon = (Connection) con.getConnection();
-            CustomSessionWrapper session = (CustomSessionWrapper) con.getSession();
-            try {
-                {
-                    String QUERY = "DELETE FROM AllAuthRecipeUsersDO entity "
-                            + "WHERE entity.user_id = :user_id AND entity.recipe_id = :recipe_id";
+    public static void deleteUser(Start start, String userId) throws SQLException, StorageQueryException {
 
-                    final CustomQueryWrapper query = session.createQuery(QUERY);
-                    query.setParameter("user_id", userId);
-                    query.setParameter("recipe_id", PASSWORDLESS.toString());
+        ConnectionPool.withSession(start, (session, con) -> {
+            {
+                String QUERY = "DELETE FROM AllAuthRecipeUsersDO entity "
+                        + "WHERE entity.user_id = :user_id AND entity.recipe_id = :recipe_id";
 
-                    query.executeUpdate();
-                }
+                final CustomQueryWrapper query = session.createQuery(QUERY);
+                query.setParameter("user_id", userId);
+                query.setParameter("recipe_id", PASSWORDLESS.toString());
 
-                // Even if the user is changed after we read it here (which is unlikely),
-                // we'd only leave devices that will be cleaned up later automatically when they expire.
-                UserInfo user = getUserById(start, userId);
-                {
-                    String QUERY = "DELETE FROM PasswordlessUsersDO entity WHERE entity.user_id = :user_id";
-                    final CustomQueryWrapper query = session.createQuery(QUERY);
-
-                    query.setParameter("user_id", userId);
-
-                    query.executeUpdate();
-                }
-
-                if (user != null) {
-                    if (user.email != null) {
-                        deleteDevicesByEmail_Transaction(session, user.email);
-                    }
-                    if (user.phoneNumber != null) {
-                        deleteDevicesByPhoneNumber_Transaction(session, user.phoneNumber);
-                    }
-                }
-
-                sqlCon.commit();
-            } catch (SQLException throwables) {
-                throw new StorageTransactionLogicException(throwables);
+                query.executeUpdate();
             }
+
+            // Even if the user is changed after we read it here (which is unlikely),
+            // we'd only leave devices that will be cleaned up later automatically when they expire.
+            UserInfo user = getUserById(start, userId);
+            {
+                String QUERY = "DELETE FROM PasswordlessUsersDO entity WHERE entity.user_id = :user_id";
+                final CustomQueryWrapper query = session.createQuery(QUERY);
+
+                query.setParameter("user_id", userId);
+
+                query.executeUpdate();
+            }
+
+            if (user != null) {
+                if (user.email != null) {
+                    deleteDevicesByEmail_Transaction(session, user.email);
+                }
+                if (user.phoneNumber != null) {
+                    deleteDevicesByPhoneNumber_Transaction(session, user.phoneNumber);
+                }
+            }
+
             return null;
-        });
+        }, true);
     }
 
     public static int updateUserEmail_Transaction(CustomSessionWrapper session, String userId, String email)

@@ -70,9 +70,8 @@ public class HibernateUtils {
     private static Class<?>[] entities() {
         return new Class[] { KeyValueDO.class, AllAuthRecipeUsersDO.class, EmailPasswordUsersDO.class,
                 PasswordResetTokensDO.class, ThirdPartyUsersDO.class, JWTSigningDO.class, UserMetadataDO.class,
-                SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class,
-                UserIdMappingDO.class, PasswordlessCodesDO.class, PasswordlessDevicesDO.class,
-                PasswordlessUsersDO.class };
+                SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class,
+                PasswordlessCodesDO.class, PasswordlessDevicesDO.class, PasswordlessUsersDO.class };
     }
 
     @NotNull
