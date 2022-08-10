@@ -125,6 +125,28 @@ Table `F`):
   function.
 - As an example, see the `PasswordResetTokensPk.java` code.
 
+### Usage of `session.flush`
+
+Hibernate uses the practice of a delayed write.  
+This can be problematic in certain cases, and we need to do an explicit `session.flush`. The criteria for this is
+
+- The action is happening inside a `Transaction` that does multiple queries (It is usually represented by having the `_Transaction` suffix in the merthod names).
+- The action needs explicit handling for a scenario and that throws a custom exception.
+   <details>
+   Custom exceptions here can be understood as 
+   exception that can be bubbled up to the `supertokens-core` interface.
+   For example: `UnknownRoleException`, `DuplicateUserRoleMappingException` etc.
+   </details>
+
+As an example, see the
+flow for `Start::addPermissionToRoleOrDoNothingIfExists_Transaction` and `UserRolesQueries::addPermissionToRoleOrDoNothingIfExists_Transaction` 
+<details>
+Here since we are throwing a custom exception
+we have used `session.flush` in `UserRolesQueries::addPermissionToRoleOrDoNothingIfExists_Transaction` to ensure the validation is done immediately by the database and we can take necessary action if an exception is thrown.
+</details>
+
+In these cases we want to use the `session.flush` method to ensure that we get the data synced to the DB and not wait until the transaction commit, where a previous query would throw an exception.  
+
 ### Deprecated Methods
 
 Since we maintain a Custom Wrapper over Session and Query interfaces, we allow only certain implementations to be 
