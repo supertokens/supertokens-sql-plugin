@@ -253,6 +253,11 @@ public class CustomSessionWrapper implements Session {
         return this.session.getTransaction();
     }
 
+    @Override
+    public void flush() throws HibernateException {
+        this.getSessionImpl().flush();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -282,12 +287,6 @@ public class CustomSessionWrapper implements Session {
     @Deprecated
     @Override
     public SharedSessionBuilder sessionWithOptions() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Deprecated
-    @Override
-    public void flush() throws HibernateException {
         throw new UnsupportedOperationException();
     }
 
