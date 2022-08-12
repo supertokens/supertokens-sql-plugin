@@ -220,7 +220,7 @@ public class Start
                     actualException = e.getCause();
                 } else if (e instanceof OptimisticLockException) {
                     // OptimisticLockException -> LockAcquisitionException -> PSQLException
-                    actualException = e.getCause().getCause().getCause();
+                    actualException = e.getCause().getCause();
                 }
                 String exceptionMessage = actualException.getMessage();
                 if (exceptionMessage == null) {
