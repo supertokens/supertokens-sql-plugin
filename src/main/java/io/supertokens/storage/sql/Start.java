@@ -208,7 +208,8 @@ public class Start
             tries++;
             try {
                 return startTransactionHelper(logic, isolationLevel);
-            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
+            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException
+                    | StorageTransactionLogicException e) {
                 Throwable actualException = e;
                 if (e instanceof StorageQueryException) {
                     actualException = e.getCause();

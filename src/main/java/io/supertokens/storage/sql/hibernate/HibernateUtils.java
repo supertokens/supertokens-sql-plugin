@@ -76,8 +76,8 @@ public class HibernateUtils {
                 PasswordResetTokensDO.class, ThirdPartyUsersDO.class, JWTSigningDO.class, UserMetadataDO.class,
                 SessionInfoDO.class, SessionAccessTokenSigningKeysDO.class, UserIdMappingDO.class,
                 PasswordlessCodesDO.class, PasswordlessDevicesDO.class, PasswordlessUsersDO.class, RolesDO.class,
-                UserRolesDO.class, UserRolePermissionsDO.class,
-                EmailVerificationDO.class, EmailVerificationTokensDO.class };
+                UserRolesDO.class, UserRolePermissionsDO.class, EmailVerificationDO.class,
+                EmailVerificationTokensDO.class };
     }
 
     @NotNull
