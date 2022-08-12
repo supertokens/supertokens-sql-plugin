@@ -114,7 +114,7 @@ public class EmailVerificationQueries {
             throws SQLException, StorageQueryException {
 
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity " + "WHERE entity.pk.token = :token";
+            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity WHERE entity.pk.token = :token";
 
             CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY,
                     EmailVerificationTokensDO.class);
@@ -129,6 +129,18 @@ public class EmailVerificationQueries {
         }, false);
     }
 
+    public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
+                                                 String email) throws SQLException, StorageQueryException {
+
+        ConnectionPool.withSession(start, (session, con) -> {
+            final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
+            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
+            session.save(EmailVerificationTokensDO.class, pk, toInsert);
+
+            return null;
+        }, true);
+    }
+
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(
             CustomSessionWrapper session, String userId, String email) throws SQLException {
 
@@ -141,18 +153,6 @@ public class EmailVerificationQueries {
         q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
         return entityToEmailVerificationTokenInfos(q.list());
-    }
-
-    public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
-                                                 String email) throws SQLException, StorageQueryException {
-
-        ConnectionPool.withSession(start, (session, con) -> {
-            final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
-            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
-            session.save(EmailVerificationTokensDO.class, pk, toInsert);
-
-            return null;
-        }, true);
     }
 
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(Start start, String userId,
