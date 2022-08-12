@@ -186,13 +186,10 @@ public class EmailVerificationQueries {
             throws SQLException, StorageQueryException {
 
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT entity FROM EmailVerificationDO entity WHERE entity.pk.user_id = :user_id AND "
-                    + "entity.pk.email = :email";
-            CustomQueryWrapper<EmailVerificationDO> q = session.createQuery(QUERY, EmailVerificationDO.class);
-            q.setParameter("user_id", userId);
-            q.setParameter("email", email);
+            EmailVerificationUsersPK id = new EmailVerificationUsersPK(userId, email);
+            EmailVerificationDO emailVerificationDO = session.get(EmailVerificationDO.class, id);
 
-            return q.list().size() > 0;
+            return emailVerificationDO != null;
         }, false);
     }
 
