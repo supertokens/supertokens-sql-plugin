@@ -72,6 +72,7 @@ import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -207,19 +208,18 @@ public class Start
             tries++;
             try {
                 return startTransactionHelper(logic, isolationLevel);
-            } catch (PersistenceException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
+            } catch (OptimisticLockException | LockAcquisitionException | SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 Throwable actualException = e;
-                if (e instanceof PersistenceException) {
-                    actualException = e.getCause();
-                } else if (e instanceof StorageQueryException) {
+                if (e instanceof StorageQueryException) {
                     actualException = e.getCause();
                 } else if (e instanceof StorageTransactionLogicException) {
                     actualException = ((StorageTransactionLogicException) e).actualException;
-                }
-
-                if (actualException instanceof LockAcquisitionException) {
+                } else if (e instanceof LockAcquisitionException) {
                     // LockAcquisitionException -> PSQLException
-                    actualException = actualException.getCause();
+                    actualException = e.getCause();
+                } else if (e instanceof OptimisticLockException) {
+                    // OptimisticLockException -> LockAcquisitionException -> PSQLException
+                    actualException = e.getCause().getCause().getCause();
                 }
                 String exceptionMessage = actualException.getMessage();
                 if (exceptionMessage == null) {
