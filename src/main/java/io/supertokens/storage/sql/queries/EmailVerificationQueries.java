@@ -110,18 +110,6 @@ public class EmailVerificationQueries {
         q.executeUpdate();
     }
 
-    public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
-            String email) throws SQLException, StorageQueryException {
-
-        ConnectionPool.withSession(start, (session, con) -> {
-            final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
-            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
-            session.save(EmailVerificationTokensDO.class, pk, toInsert);
-
-            return null;
-        }, true);
-    }
-
     public static EmailVerificationTokenInfo getEmailVerificationTokenInfo(Start start, String token)
             throws SQLException, StorageQueryException {
 
@@ -153,6 +141,18 @@ public class EmailVerificationQueries {
         q.setLockMode(LockModeType.PESSIMISTIC_WRITE);
 
         return entityToEmailVerificationTokenInfos(q.list());
+    }
+
+    public static void addEmailVerificationToken(Start start, String userId, String tokenHash, long expiry,
+                                                 String email) throws SQLException, StorageQueryException {
+
+        ConnectionPool.withSession(start, (session, con) -> {
+            final EmailVerificationTokensPK pk = new EmailVerificationTokensPK(userId, email, tokenHash);
+            final EmailVerificationTokensDO toInsert = new EmailVerificationTokensDO(pk, expiry);
+            session.save(EmailVerificationTokensDO.class, pk, toInsert);
+
+            return null;
+        }, true);
     }
 
     public static EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(Start start, String userId,
