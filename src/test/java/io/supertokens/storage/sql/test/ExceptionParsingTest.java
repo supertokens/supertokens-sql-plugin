@@ -213,12 +213,18 @@ public class ExceptionParsingTest {
             String userId = "userId";
             String userEmail = "useremail@asdf.fdas";
 
-            storage.startTransaction(conn -> {
-                storage.updateIsEmailVerified_Transaction(conn, userId, userEmail, true);
-                // The insert in this call throws, but it's swallowed in the method
-                storage.updateIsEmailVerified_Transaction(conn, userId, userEmail, true);
-                return true;
-            });
+            {
+                storage.startTransaction(conn -> {
+                    storage.updateIsEmailVerified_Transaction(conn, userId, userEmail, true);
+                    return true;
+                });
+
+                storage.startTransaction(conn -> {
+                    storage.updateIsEmailVerified_Transaction(conn, userId, userEmail, true);
+                    // The insert in this call throws, but it's swallowed in the method
+                    return true;
+                });
+            }
 
             storage.startTransaction(conn -> {
                 try {
