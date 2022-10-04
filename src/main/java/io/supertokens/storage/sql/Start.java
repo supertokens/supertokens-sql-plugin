@@ -20,6 +20,7 @@ package io.supertokens.storage.sql;
 import ch.qos.logback.classic.Logger;
 import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.KeyValueInfo;
+import io.supertokens.pluginInterface.LOG_LEVEL;
 import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.STORAGE_TYPE;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
@@ -77,7 +78,10 @@ import javax.persistence.PersistenceException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class Start
         implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage, ThirdPartySQLStorage,
@@ -120,8 +124,8 @@ public class Start
     }
 
     @Override
-    public void loadConfig(String configFilePath) {
-        Config.loadConfig(this, configFilePath);
+    public void loadConfig(String configFilePath, Set<LOG_LEVEL> logLevels) {
+        Config.loadConfig(this, configFilePath, logLevels);
     }
 
     @Override
@@ -1745,5 +1749,24 @@ public class Start
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
+    }
+
+    @Override
+    public boolean isUserIdBeingUsedInNonAuthRecipe(String className, String userId) throws StorageQueryException {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public void addInfoToNonAuthRecipesBasedOnUserId(String className, String userId) throws StorageQueryException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public HashMap<String, String> getUserIdMappingForSuperTokensIds(ArrayList<String> userIds)
+            throws StorageQueryException {
+        // TODO Auto-generated method stub
+        return null;
     }
 }
