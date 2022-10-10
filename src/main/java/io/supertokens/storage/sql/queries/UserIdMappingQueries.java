@@ -29,6 +29,8 @@ import io.supertokens.storage.sql.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class UserIdMappingQueries {
@@ -121,6 +123,42 @@ public class UserIdMappingQueries {
             return userIdMapping;
         }, false);
 
+    }
+
+    public static HashMap<String, String> getUserIdMappingWithUserIds(Start start, ArrayList<String> userIds)
+            throws SQLException, StorageQueryException {
+
+        if (userIds.size() == 0) {
+            return new HashMap<>();
+        }
+
+        List<UserIdMappingDO> mappingsFromQuery = ConnectionPool.withSession(start, (session, con) -> {
+            CustomQueryWrapper<UserIdMappingDO> q;
+            StringBuilder userIdCondition = new StringBuilder();
+
+            userIdCondition.append("entity.pk.user.user_id IN (:user_ids);");
+
+            String userIdConditionAsString = userIdCondition.toString();
+
+            String QUERY = "SELECT entity FROM UserIdMappingDO entity WHERE " + userIdConditionAsString;
+
+            String[] userIdsToIncludeStr = new String[userIds.size()];
+            for (int i = 0; i < userIds.size(); i++) {
+                userIdsToIncludeStr[i] = userIds.get(i).toString();
+            }
+
+            q = session.createQuery(QUERY, UserIdMappingDO.class);
+            q.setParameterList("user_ids", userIdsToIncludeStr);
+            return q.list();
+        }, false);
+
+        HashMap<String, String> userIdMappings = new HashMap<>();
+        for (int i = 0; i < mappingsFromQuery.size(); i++) {
+            userIdMappings.put(mappingsFromQuery.get(i).getPk().getSuperTokensUserId(),
+                    mappingsFromQuery.get(i).getPk().getSuperTokensUserId());
+        }
+
+        return userIdMappings;
     }
 
     public static boolean deleteUserIdMappingWithSuperTokensUserId(Start start, String userId)
