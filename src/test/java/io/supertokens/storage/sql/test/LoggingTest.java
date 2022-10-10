@@ -208,6 +208,7 @@ public class LoggingTest {
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
         ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
 
+        Utils.setValueInConfig("log_level", "DEBUG");
         Utils.setValueInConfig("info_log_path", "\"null\"");
         Utils.setValueInConfig("error_log_path", "\"null\"");
 
@@ -243,6 +244,7 @@ public class LoggingTest {
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
         ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
 
+        Utils.setValueInConfig("log_level", "DEBUG");
         Utils.setValueInConfig("info_log_path", "null");
         Utils.setValueInConfig("error_log_path", "null");
 
