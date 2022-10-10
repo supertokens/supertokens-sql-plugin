@@ -1774,7 +1774,7 @@ public class Start
             } catch (SQLException e) {
                 throw new StorageQueryException(e);
             }
-        } else if (className.equals(JWTRecipeSQLStorage.class.getName())) {
+        } else if (className.equals(JWTRecipeStorage.class.getName())) {
             return false;
         } else {
             throw new IllegalStateException("ClassName: " + className + " is not part of NonAuthRecipeStorage");

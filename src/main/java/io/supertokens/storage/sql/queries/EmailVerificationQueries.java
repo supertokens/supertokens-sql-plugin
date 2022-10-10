@@ -74,10 +74,11 @@ public class EmailVerificationQueries {
             throws SQLException, StorageQueryException {
 
         return ConnectionPool.withSession(start, (session, con) -> {
-            String QUERY = "SELECT * FROM EmailVerificationDo WHERE entity.pk.user.user_id = :userId";
-            CustomQueryWrapper<EmailVerificationDO> q = session.createQuery(QUERY, EmailVerificationDO.class);
-            q.setParameter("user_id", userId);
-            List<EmailVerificationDO> result = q.list();
+            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity WHERE entity.pk.user_id = :userId";
+            CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY,
+                    EmailVerificationTokensDO.class);
+            q.setParameter("userId", userId);
+            List<EmailVerificationTokensDO> result = q.list();
             return result.size() > 0;
         }, false);
     }
