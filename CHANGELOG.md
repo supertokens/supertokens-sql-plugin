@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Updates `password_hash` and `third_party_user_id` column sizes
+- Adds remaining changes for UserId mapping queries
+- Adds LOG_LEVEL support
 - Sets up SessionFactory connection and modifies how initial connection retries are done.
 - Sets up logging handlers for hibernate and jboss
 - Adds hibernate dependencies to build.gradle and modifies the implementationDependencies.json file
