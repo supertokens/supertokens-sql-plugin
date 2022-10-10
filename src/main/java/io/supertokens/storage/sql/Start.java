@@ -1837,7 +1837,10 @@ public class Start
     @Override
     public HashMap<String, String> getUserIdMappingForSuperTokensIds(ArrayList<String> userIds)
             throws StorageQueryException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return UserIdMappingQueries.getUserIdMappingWithUserIds(this, userIds);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 }

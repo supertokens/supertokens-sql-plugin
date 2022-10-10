@@ -136,7 +136,7 @@ public class UserIdMappingQueries {
             CustomQueryWrapper<UserIdMappingDO> q;
             StringBuilder userIdCondition = new StringBuilder();
 
-            userIdCondition.append("entity.pk.user.user_id IN (:user_ids);");
+            userIdCondition.append("entity.pk.user.user_id IN (:user_ids)");
 
             String userIdConditionAsString = userIdCondition.toString();
 
@@ -155,7 +155,7 @@ public class UserIdMappingQueries {
         HashMap<String, String> userIdMappings = new HashMap<>();
         for (int i = 0; i < mappingsFromQuery.size(); i++) {
             userIdMappings.put(mappingsFromQuery.get(i).getPk().getSuperTokensUserId(),
-                    mappingsFromQuery.get(i).getPk().getSuperTokensUserId());
+                    mappingsFromQuery.get(i).getPk().getExternal_user_id());
         }
 
         return userIdMappings;
