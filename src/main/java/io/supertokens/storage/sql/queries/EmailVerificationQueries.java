@@ -70,6 +70,19 @@ public class EmailVerificationQueries {
                 + Config.getConfig(start).getEmailVerificationTokensTable() + "(token_expiry);";
     }
 
+    public static boolean isUserIdBeingUsedForEmailVerification(Start start, String userId)
+            throws SQLException, StorageQueryException {
+
+        return ConnectionPool.withSession(start, (session, con) -> {
+            String QUERY = "SELECT entity FROM EmailVerificationTokensDO entity WHERE entity.pk.user_id = :userId";
+            CustomQueryWrapper<EmailVerificationTokensDO> q = session.createQuery(QUERY,
+                    EmailVerificationTokensDO.class);
+            q.setParameter("userId", userId);
+            List<EmailVerificationTokensDO> result = q.list();
+            return result.size() > 0;
+        }, false);
+    }
+
     public static void deleteExpiredEmailVerificationTokens(Start start) throws SQLException, StorageQueryException {
         ConnectionPool.withSession(start, (session, con) -> {
             String QUERY = "DELETE FROM EmailVerificationTokensDO where token_expiry < :expiry";
